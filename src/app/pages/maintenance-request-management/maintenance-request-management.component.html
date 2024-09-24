@@ -1,0 +1,789 @@
+<!-- Maintenance Requests Section -->
+<div class="card">
+  <p-toast></p-toast>
+  <p-table
+    #dt
+    [value]="filteredTickets"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    [tableStyle]="{
+      'white-space': 'nowrap',
+      'font-family': 'Arial, sans-serif',
+      'font-size': '14px',
+      'border-collapse': 'collapse',
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis'
+    }"
+    styleClass="p-datatable-sm"
+    [globalFilterFields]="[
+      'region',
+      'branch',
+      'hub',
+      'registrationNumber',
+      'currentStage'
+    ]"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="columns"
+    [exportFilename]="generateExportName()"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Maintenance Requests</h5>
+        <div>
+          <button
+            *ngIf="roleId == 1"
+            pButton
+            pRipple
+            label="New"
+            icon="pi pi-plus"
+            class="m-1 p-element p-button-success p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleCreateRequestDialog()"
+            rounded="true"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="{{ isFilterApplied ? 'Modify' : 'Filter' }}"
+            icon="{{ isFilterApplied ? 'pi pi-filter-slash' : 'pi pi-filter' }}"
+            class="m-1 p-element p-button-info p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleFilterDialog()"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="dt.exportCSV()"
+            rounded="true"
+          ></button>
+          <span class="p-input-icon-left m-1">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal(searchInput.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th>
+          <div class="d-flex align-items-center">
+            Region
+            <p-columnFilter type="text" field="region" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Branch
+            <p-columnFilter type="text" field="branch" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Estimate
+            <p-columnFilter
+              type="text"
+              field="totalEstimatedCost"
+              display="menu"
+            />
+          </div>
+        </th>
+        <th>
+          <div pSortableColumn="isVehicleOffRoad">
+            Vehicle Status
+            <p-sortIcon field="isVehicleOffRoad"></p-sortIcon>
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Registration No
+            <p-columnFilter
+              type="text"
+              field="registrationNumber"
+              display="menu"
+            />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Status
+            <p-columnFilter type="text" field="currentStage" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Created On
+            <p-columnFilter type="date" field="createdOn" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-calendar
+                  #calendar
+                  dateFormat="dd-mm-yy"
+                  [ngModel]="value"
+                  (onSelect)="filter(calendar.value)"
+                ></p-calendar>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-ticket>
+      <tr>
+        <td>{{ ticket.region }}</td>
+        <td>{{ ticket.branch | removeParenthesisText }}</td>
+        <td>
+          {{
+            ticket.totalEstimatedCost
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }}
+        </td>
+        <td>
+          <p-tag [severity]="!ticket.isVehicleOffRoad ? 'success' : 'danger'">
+            {{ ticket.isVehicleOffRoad ? "Off Road" : "On Road" }}</p-tag
+          >
+        </td>
+        <td>{{ ticket.registrationNumber }}</td>
+        <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
+        <td>
+          <div class="col d-flex justify-content-start">
+            <button
+              pButton
+              pRipple
+              class="p-button-rounded p-button-primary rounded-circle m-0"
+              icon="pi pi-eye"
+              (click)="viewTicket(ticket.id)"
+              pTooltip="View Request"
+              tooltipPosition="bottom"
+            ></button>
+            <button
+              *ngIf="
+                roleId == 1 &&
+                !ticket.hasAdvanceApproved &&
+                !ticket.hasFinanceUserApproved
+              "
+              pButton
+              pRipple
+              class="p-button-rounded p-button-warning rounded-circle mx-2"
+              icon="pi pi-pencil"
+              (click)="editTicket(ticket.id)"
+              pTooltip="Edit Request"
+              tooltipPosition="bottom"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8">No Vehicle Maintenance Requests Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+<!-- End of Maintenance Requests Section -->
+
+<!-- Filter Maintenance Requests Dialog -->
+<p-dialog
+  [(visible)]="showFilterDialog"
+  header="Filter Maintenance Requests"
+  modal="true"
+  [style]="{ width: '500px', height: '500px' }"
+>
+  <ng-template pTemplate="content">
+    <div class="container">
+      <p-tree
+        [value]="filters"
+        selectionMode="checkbox"
+        class="w-full md:w-30rem"
+        [(selection)]="selectedZones"
+        (onNodeSelect)="viewNodes($event)"
+      >
+      </p-tree>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      type="button"
+      label="Cancel"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="toggleFilterDialog()"
+    ></button>
+    <button
+      *ngIf="isFilterApplied"
+      pButton
+      pRipple
+      label="Reset"
+      icon="pi pi-undo"
+      class="p-button-text"
+      iconPos="right"
+      type="button"
+      (click)="resetFilters()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="Apply"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      class="p-button-text"
+      type="button"
+      (click)="applyFilter()"
+      [disabled]="!hasSelections()"
+    ></button>
+  </ng-template>
+</p-dialog>
+<!-- End of Filter Maintenance Requests Dialog -->
+
+<!-- View Maintenance Request Dialog -->
+<p-dialog
+  [(visible)]="showTicketDetailsDialog"
+  maximizable="true"
+  [style]="{ width: '80vw', height: '85vh' }"
+  header="Maintenance Request Details"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="container">
+      <!-- Vehicle Details -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Service Id:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.id }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Date of last service:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.dateOfLastService !== "NA"
+                  ? (selectedTicket.dateOfLastService
+                    | date : "MMM d, yyyy h:mm a")
+                  : "NA"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <strong>Off-road status updated:</strong>
+            </div>
+            <div class="col-md-6">
+              {{
+                (selectedTicket.offRoadStatusChangeDate
+                  | date : "MMM d, yyyy h:mm a") || "NA"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Model:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.model }}</div>
+          </div>
+          <!-- <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Total Km Run:</strong></div>
+            <div class="col-md-6">0</div>
+          </div> -->
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vendor:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.vendorName }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>View Quotation:</strong></div>
+            <div class="col-md-6">
+              <a href="#">{{ selectedTicket.quotationAttachment }}</a>
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Overall Comment:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.overallComment }}</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Reg. No.:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.registrationNumber }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <strong>Vehicle off-road status:</strong>
+            </div>
+            <div class="col-md-6">
+              {{ selectedTicket.isVehicleOffRoad ? "Off Road" : "On Road" }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Age:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.vehicleAge }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Manufacturer:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.manufacturer }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Service Request type:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.serviceRequestType }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Quotation Amount:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.totalEstimatedCost
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Advance amount:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.advanceAmount
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End of Vehicle Details -->
+
+      <!-- Component Details Table -->
+      <table class="table table-bordered table-striped mt-2">
+        <thead class="thead-dark">
+          <tr>
+            <th>SR. NO.</th>
+            <th>SYSTEM NAME</th>
+            <th>DEFECT NAME</th>
+            <th>TOTAL COST</th>
+            <th>COMMENT</th>
+            <th>ALERT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let component of this.selectedTicket.componentDetails;
+              let i = index
+            "
+          >
+            <td>{{ i + 1 }}</td>
+            <td>{{ component.systemName }}</td>
+            <td>{{ component.partName }}</td>
+            <td>
+              {{
+                (component.laborCost || 0) +
+                  (component.spareCost || 0) +
+                  (component.laborGst || 0) +
+                  (component.spareGst || 0)
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </td>
+            <td>{{ component.comment || "NA" }}</td>
+            <td>{{ component.alert || "NA" }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr />
+      <!-- End of Component Details Table -->
+
+      <!-- Maintenance Request Approval/Rejection Timeline Details -->
+      <strong>Vehicle Service Approval Details</strong>
+      <table class="table table-bordered table-striped mt-2">
+        <thead class="thead-dark">
+          <tr>
+            <th>SR. NO.</th>
+            <th>STATUS</th>
+            <th>STATUS CHANGED TIME</th>
+            <th>USER NAME</th>
+            <th>COMMENT</th>
+            <th>ATTACHMENT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let step of selectedTicketApprovalStages">
+            <td>{{ step.id }}</td>
+            <td>{{ step.status }}</td>
+            <td>{{ step.timestamp | date : "dd MMM, yyyy h:mm a" }}</td>
+            <td>{{ step.label }}</td>
+            <td>{{ step.comment || "NA" }}</td>
+            <td>{{ step.attachment || "NA" }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- End of Maintenance Request Approval/Rejection Timeline Details -->
+
+      <hr />
+
+      <!-- Approve/Reject Buttons -->
+      <div
+        *ngIf="showApproveRejectButtons()"
+        class="d-flex justify-content-between"
+      >
+        <p-button
+          label="Reject"
+          (onClick)="toggleRejectTicketDialog()"
+          icon="pi pi-times"
+          severity="danger"
+          iconPos="right"
+        />
+        <p-button
+          label="Approve"
+          (onClick)="toggleApproveTicketDialog()"
+          icon="pi pi-check-circle"
+          severity="success"
+          iconPos="right"
+        />
+      </div>
+      <div *ngIf="showUploadInvoiceButton()" class="d-flex justify-content-end">
+        <p-button
+          label="Upload Invoice"
+          (onClick)="toggleApproveTicketDialog(true)"
+          icon="pi pi-file-arrow-up"
+          severity="info"
+          iconPos="right"
+        />
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Approve Ticket Dialog -->
+  <p-dialog
+    [(visible)]="showApproveTicketDialog"
+    [style]="{ width: '50vw' }"
+    header="{{ this.uploadMode ? 'Upload Invoice' : 'Approve Request' }}"
+    [modal]="true"
+    appendTo="body"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <p *ngIf="!this.uploadMode">
+        Are you sure you want to approve the vehicle service request for vehicle
+        with registration number
+        <strong>{{ selectedTicket.registrationNumber }}</strong> with total
+        estimated cost of
+        <strong
+          >{{
+            selectedTicket.totalEstimatedCost
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }} </strong
+        >?
+      </p>
+      <p *ngIf="this.uploadMode">
+        Please confirm your decision to submit the approval for the vehicle
+        service request for the vehicle with registration number
+        <strong>{{ selectedTicket.registrationNumber }}</strong> and total
+        estimated cost
+        <strong>{{
+          selectedTicket.totalEstimatedCost
+            | currency : "INR" : "symbol-narrow" : "0.2-2"
+        }}</strong
+        >.
+        <br />
+        <br />
+        <span class="text-secondary"
+          >You are required to upload the invoice to proceed.</span
+        >
+      </p>
+      <br />
+      <form #addOptionalDetails="ngForm" ngNativeValidate>
+        <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
+          <div class="form-group">
+            <label for="uploadAttachment" class="form-label">{{
+              uploadMode
+                ? "Invoice (acceptable formats: img/pdf)"
+                : "Attachment (acceptable formats: img/pdf)"
+            }}</label>
+            <div>
+              <p-button
+                *ngIf="!optionalDetails.attachment"
+                label="{{
+                  uploadMode ? 'Upload Invoice' : 'Upload Attachment'
+                }}"
+                (onClick)="toggleUploadAttachmentDialog()"
+                icon="pi pi-file-arrow-up"
+                severity="info"
+                [style]="{ width: 'fit-content' }"
+                iconPos="right"
+                autofocus="false"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="row"
+          *ngIf="!uploadMode && !this.selectedTicket.isInvoiceUploaded"
+        >
+          <label for="comment" class="form-label">Comment</label>
+          <div>
+            <textarea
+              #comment="ngModel"
+              name="comment"
+              class="form-control"
+              id="comment"
+              rows="2"
+              [(ngModel)]="optionalDetails.comment"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-3">
+          <p-button
+            label="{{ uploadMode ? 'Submit' : 'Approve' }}"
+            (onClick)="approveTicket()"
+            icon="pi pi-check-circle"
+            severity="success"
+            iconPos="right"
+          ></p-button>
+        </div>
+      </form>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Approve Ticket Dialog -->
+
+  <!-- Reject Ticket Dialog -->
+  <p-dialog
+    [(visible)]="showRejectTicketDialog"
+    [style]="{ width: '50vw' }"
+    header="Reject Request"
+    [modal]="true"
+    appendTo="body"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <p>
+        Are you sure you want to reject the vehicle service request for vehicle
+        with registration number
+        <strong>{{ selectedTicket.registrationNumber }}</strong> with total
+        estimated cost of
+        <strong
+          >{{
+            selectedTicket.totalEstimatedCost
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }} </strong
+        >?
+      </p>
+      <br />
+      <form #addOptionalDetails="ngForm" ngNativeValidate>
+        <div class="row">
+          <label for="comment" class="form-label"
+            >Comment <span class="text-danger">*</span></label
+          >
+          <div>
+            <textarea
+              #comment="ngModel"
+              name="comment"
+              class="form-control"
+              id="comment"
+              rows="2"
+              [(ngModel)]="optionalDetails.comment"
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-3">
+          <p-button
+            label="Reject"
+            (onClick)="rejectTicket()"
+            [disabled]="!optionalDetails.comment"
+            icon="pi pi-times"
+            severity="danger"
+            iconPos="right"
+          ></p-button>
+        </div>
+      </form>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Reject Ticket Dialog -->
+</p-dialog>
+<!-- End of View Maintenance Request Dialog -->
+
+<!-- Select Zone, Region, Branch and Hub Dialog for Creating Vehicle Maintenance Request -->
+<form #locationFormRef="ngForm" (submit)="createTicket()" ngNativeValidate>
+  <p-dialog
+    [(visible)]="showCreateRequestDialog"
+    [style]="{ width: '550px' }"
+    header="New Maintenance Request"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <!-- Zone and Region Selection -->
+      <div class="row">
+        <div class="col">
+          <div class="field form-group">
+            <label for="zone" class="form-label">Zone</label>
+            <select
+              #zone="ngModel"
+              name="zone"
+              id="zone"
+              [(ngModel)]="newTicket.zone"
+              (ngModelChange)="loadRegions()"
+              class="form-select {{
+                zone.invalid && (zone.dirty || zone.touched) ? 'is-invalid' : ''
+              }}"
+              required
+              autofocus
+            >
+              <option value="" disabled selected>Select Zone</option>
+              <option *ngFor="let zone of zones" [value]="zone">
+                {{ zone.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="zone.invalid && (zone.dirty || zone.touched)"
+              class="form-text text-danger"
+            >
+              Zone is required
+            </p>
+          </div>
+        </div>
+        <!-- End of Zone Select -->
+        <div class="col" *ngIf="this.newTicket.zone">
+          <div class="field form-group">
+            <label for="region" class="form-label">Region</label>
+            <select
+              #region="ngModel"
+              name="region"
+              id="region"
+              [(ngModel)]="newTicket.region"
+              (ngModelChange)="loadBranches()"
+              autocomplete="off"
+              [disabled]="!this.newTicket.zone"
+              class="form-select {{
+                region.invalid && (region.dirty || region.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+            >
+              <option value="" disabled selected>Select Region</option>
+              <option *ngFor="let region of regions" [value]="region">
+                {{ region.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="region.invalid && (region.dirty || region.touched)"
+              class="form-text text-danger"
+            >
+              Region is required
+            </p>
+          </div>
+        </div>
+        <!-- End of Region Select -->
+      </div>
+      <!-- End of Zone and Region Selection -->
+      <!-- Branch and Hub Selection -->
+      <div class="row">
+        <div class="col" *ngIf="this.newTicket.region">
+          <div class="field form-group">
+            <label for="branch" class="form-label">Branch</label>
+            <select
+              #branch="ngModel"
+              name="branch"
+              id="branch"
+              [(ngModel)]="newTicket.branch"
+              (ngModelChange)="loadHubs()"
+              autocomplete="off"
+              [disabled]="!this.newTicket.region"
+              class="form-select {{
+                branch.invalid && (branch.dirty || branch.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+            >
+              <option value="" disabled selected>Select Branch</option>
+
+              <option *ngFor="let branch of branches" [value]="branch">
+                {{ branch.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="branch.invalid && (branch.dirty || branch.touched)"
+              class="form-text text-danger"
+            >
+              Branch is required
+            </p>
+          </div>
+        </div>
+        <div class="col" *ngIf="this.newTicket.branch">
+          <div class="field form-group">
+            <label for="location" class="form-label">Hub</label>
+            <select
+              #location="ngModel"
+              name="location"
+              id="location"
+              [(ngModel)]="newTicket.hub"
+              autocomplete="off"
+              [disabled]="!this.newTicket.region"
+              class="form-select {{
+                location.invalid && (location.dirty || location.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+            >
+              <option value="" disabled selected>Select Hub</option>
+
+              <option *ngFor="let hub of locations" [value]="hub">
+                {{ hub.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="location.invalid && (location.dirty || location.touched)"
+              class="form-text text-danger"
+            >
+              Hub is required
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- End of Branch and Hub Selection -->
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        pRipple
+        type="button"
+        label="Cancel"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="toggleCreateRequestDialog()"
+      ></button>
+      <button
+        pButton
+        [disabled]="locationFormRef.invalid"
+        pRipple
+        label="Proceed"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        class="p-button-text"
+        type="submit"
+      ></button>
+    </ng-template>
+  </p-dialog>
+</form>
+<!-- End of Select Zone, Region, Branch and Hub Dialog for Creating Vehicle Maintenance Request -->
+
+<p-confirmDialog [style]="{ width: '450px' }" />
+<app-loader *ngIf="showLoader"> </app-loader>

@@ -1,0 +1,204 @@
+<p-dialog
+  [(visible)]="showRoleSelectDialog"
+  maximizable="false"
+  [style]="{ width: '30vw', height: '42vh' }"
+  header="Select Your Role"
+  [modal]="true"
+  styleClass="p-fluid"
+  [closable]="false"
+>
+  <ng-template pTemplate="content">
+    <div class="container p-fluid">
+      <form #roleSelect="ngForm" (submit)="assignRole()" ngNativeValidate>
+        <div class="field form-group">
+          <label for="role" class="form-label">Role</label>
+          <select
+            #role="ngModel"
+            name="role"
+            id="role"
+            [(ngModel)]="selectedRoleId"
+            class="form-select {{
+              role.invalid && (role.dirty || role.touched) ? 'is-invalid' : ''
+            }}"
+            required
+          >
+            <option [ngValue]="undefined" disabled selected>
+              Select a Role
+            </option>
+            <option
+              *ngFor="let role of sharedService.roleOptions"
+              [value]="role.code"
+            >
+              {{ role.name }}
+            </option>
+          </select>
+          <p
+            *ngIf="role.invalid && (role.dirty || role.touched)"
+            class="form-text text-danger"
+          >
+            Role is required
+          </p>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      [disabled]="!selectedRoleId"
+      pRipple
+      label="Proceed"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      class="p-button-text"
+      type="submit"
+      (click)="assignRole()"
+    ></button>
+  </ng-template>
+</p-dialog>
+<div class="sidebar {{ this.isSidebarOpen ? '' : 'close' }}">
+  <div class="logo-details d-flex justify-content-center">
+    <img class="p-1" src="assets/img/cms-w-lg.svg" alt="" />
+  </div>
+  <ul class="nav-links mt-3">
+    <li
+      routerLink="dashboard"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <div class="icon-link">
+        <a routerLink="/dashboard"
+          ><i class="bx bxs-car-mechanic"></i>
+          <span class="link_name">Maintenance Requests</span>
+        </a>
+      </div>
+      <ul class="sub-menu blank">
+        <li>
+          <a class="link_name" href="#">Maintenance Requests</a>
+        </li>
+      </ul>
+      <!-- Sidebar Item -->
+    </li>
+    <li
+      *ngIf="isAdminUser"
+      routerLink="user-management"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <div class="icon-link">
+        <a routerLink="/user-management">
+          <i class="bx bx-user"></i>
+          <span class="link_name">User Management</span>
+        </a>
+      </div>
+      <ul class="sub-menu blank">
+        <li>
+          <a class="link_name" href="#">User Management</a>
+        </li>
+      </ul>
+      <!-- Sidebar Item -->
+    </li>
+
+    <li
+      *ngIf="isAdminUser"
+      [routerLinkActive]="isUploadRoute ? 'active' : ''"
+      class="{{ isSubMenuOpen ? 'showMenu' : '' }}"
+    >
+      <div class="icon-link" (click)="toggleSubMenu()">
+        <a>
+          <i class="bx bx-upload"></i>
+          <span class="link_name">Bulk Upload</span>
+        </a>
+        <i class="bx bxs-chevron-down arrow"></i>
+      </div>
+      <ul class="sub-menu">
+        <li>
+          <a
+            routerLink="/bulk-upload/vehicle"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >Vehicle</a
+          >
+          <a
+            routerLink="/bulk-upload/vendor"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >Vendor</a
+          >
+          <a
+            routerLink="/bulk-upload/system-part"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >System and Part</a
+          >
+          <a
+            routerLink="/bulk-upload/history"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >History</a
+          >
+        </li>
+      </ul>
+    </li>
+    <!-- Sidebar Item With Sub Menu-->
+
+    <li
+      [routerLinkActive]="isReportsRoute ? 'active' : ''"
+      class="{{ isReportsMenuOpen ? 'showMenu' : '' }}"
+    >
+      <div class="icon-link" (click)="toggleReportsMenu()">
+        <a>
+          <i class="bx bxs-report"></i>
+          <span class="link_name">Reports</span>
+        </a>
+        <i class="bx bxs-chevron-down arrow"></i>
+      </div>
+      <ul class="sub-menu">
+        <li>
+          <a
+            routerLink="/reports/fastag"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >FASTag Transaction</a
+          >
+        </li>
+      </ul>
+    </li>
+    <!-- Reports Sidebar Item with Sub Menu -->
+
+    <li (click)="logout()">
+      <div class="logout-section">
+        <a>
+          <i class="bx bx-exit"></i> <span class="link_name">Sign out</span>
+        </a>
+      </div>
+    </li>
+    <!-- Sign Out Button -->
+  </ul>
+</div>
+
+<section class="home-section">
+  <div class="home-content d-flex justify-content-between me-4">
+    <div>
+      <i class="bx bx-menu" (click)="toggleSidebar()"></i>
+      <span class="fs-4 display-5 ms-1">{{ routeTitle }}</span>
+    </div>
+    <div
+      role="button"
+      (click)="
+        this.sharedService.userHasMultipleRoles()
+          ? toggleSelectRoleDialog()
+          : null
+      "
+    >
+      <span class="me-0">{{ role }}</span>
+      <i
+        *ngIf="this.sharedService.userHasMultipleRoles()"
+        class="bx bx-chevron-down me-2"
+      ></i>
+    </div>
+  </div>
+  <router-outlet></router-outlet>
+</section>
+
+<app-loader *ngIf="showLoader"></app-loader>

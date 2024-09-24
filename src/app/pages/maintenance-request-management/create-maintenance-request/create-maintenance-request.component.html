@@ -1,0 +1,984 @@
+<div class="card">
+  <div class="container">
+    <p-toast></p-toast>
+    <div class="row mb-2">
+      <div class="col-9">
+        <nav style="--bs-breadcrumb-divider: '>'" aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a
+                routerLink="/dashboard"
+                class="display-6 fs-5 text-decoration-none"
+                >Dashboard</a
+              >
+            </li>
+            <li
+              class="breadcrumb-item active display-6 fs-5"
+              aria-current="page"
+            >
+              {{ editMode ? "Edit" : "Create New" }} Maintenance Request
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <form #addRequestDetails="ngForm" ngNativeValidate>
+      <p-stepper orientation="horizontal" [linear]="true">
+        <p-stepperPanel header="Vehicle Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addVehicleDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleRegistrationNumber" class="form-label"
+                        >Vehicle Registration Number
+                        <span class="text-danger">*</span>
+                      </label>
+                      <p-dropdown
+                        #registrationNumber="ngModel"
+                        name="registrationNumber"
+                        [options]="registrationNumbers"
+                        [(ngModel)]="newTicket.registrationNumber"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        (ngModelChange)="loadVehicleDetails()"
+                        placeholder="Select Registration Number"
+                        [disabled]="editMode"
+                        required
+                        autofocus
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle registration number is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleAge" class="form-label"
+                        >Vehicle Age</label
+                      >
+                      <input
+                        #vehicleAge="ngModel"
+                        name="vehicleAge"
+                        class="form-control"
+                        id="vehicleAge"
+                        [(ngModel)]="newTicket.vehicleAge"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="manufacturer" class="form-label"
+                        >Manufacturer</label
+                      >
+                      <input
+                        #manufacturer="ngModel"
+                        name="manufacturer"
+                        class="form-control"
+                        id="manufacturer"
+                        [(ngModel)]="newTicket.manufacturer"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="model" class="form-label">Model</label>
+                      <input
+                        #model="ngModel"
+                        name="model"
+                        class="form-control"
+                        id="model"
+                        [(ngModel)]="newTicket.model"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="dateOfLastService" class="form-label"
+                        >Date of Last Service</label
+                      >
+                      <p-calendar
+                        #dateOfLastService
+                        name="dateOfLastService"
+                        [(ngModel)]="dates.dateOfLastService"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column"
+                        inputId="icondisplay"
+                        [dateFormat]="dateFormat"
+                        showButtonBar
+                        disabled
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                      ></p-calendar>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-check mt-4">
+                      <label class="form-label" for="flexCheckDefault">
+                        Vehicle Off Road Status
+                      </label>
+                      <input
+                        #isVehicleOffroad="ngModel"
+                        name="isVehicleOffroad"
+                        id="isVehicleOffroad"
+                        class="form-check-input"
+                        [(ngModel)]="newTicket.isVehicleOffRoad"
+                        (ngModelChange)="goToBottomAfter(50)"
+                        type="checkbox"
+                        value="1"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row" *ngIf="!newTicket.isVehicleOffRoad">
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="vehicleSubStatus" class="form-label"
+                        >Vehicle Sub Status
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #vehicleSubStatus="ngModel"
+                        name="vehicleSubStatus"
+                        id="vehicleSubStatus"
+                        [(ngModel)]="newTicket.vehicleSubStatus"
+                        [disabled]="newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Vehicle Sub Status
+                        </option>
+                        <option
+                          *ngFor="let entry of onRoadSubStatuses"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle sub status is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="row" *ngIf="newTicket.isVehicleOffRoad">
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="offRoadReason" class="form-label"
+                        >Off Road Reason
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #offRoadReason="ngModel"
+                        name="offRoadReason"
+                        id="offRoadReason"
+                        [(ngModel)]="newTicket.offRoadReason"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Off Road Reason
+                        </option>
+                        <option
+                          *ngFor="let entry of offRoadReasons"
+                          [value]="entry.reason"
+                        >
+                          {{ entry.reason }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle Off Road reason is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="offRoadStatusChangeDate" class="form-label"
+                        >Off Road Status Change Date
+                        <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #offRoadStatusChangeDate="ngModel"
+                        [(ngModel)]="dates.offRoadStatusChangeDate"
+                        (ngModelChange)="convertDateToString(2)"
+                        name="offRoadStatusChangeDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        [dateFormat]="dateFormat"
+                        showButtonBar
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle off road status change date is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <hr />
+                <div class="row">
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="serviceRequestType" class="form-label"
+                        >Service Request Type
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #serviceRequestType="ngModel"
+                        name="serviceRequestType"
+                        id="serviceRequestType"
+                        [(ngModel)]="newTicket.serviceRequestType"
+                        class="form-select {{
+                          serviceRequestType.invalid &&
+                          (serviceRequestType.dirty ||
+                            serviceRequestType.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Service Request Type
+                        </option>
+                        <option
+                          *ngFor="let entry of serviceRequestTypes"
+                          [value]="entry.type"
+                        >
+                          {{ entry.type }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          serviceRequestType.invalid &&
+                          (serviceRequestType.dirty ||
+                            serviceRequestType.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Service request type is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="vendorName" class="form-label"
+                        >Vendor Name <span class="text-danger">*</span></label
+                      >
+                      <p-dropdown
+                        #vendorName="ngModel"
+                        name="vendorName"
+                        id="vendorName"
+                        [options]="vendorNames"
+                        [virtualScroll]="true"
+                        [virtualScrollItemSize]="30"
+                        [(ngModel)]="newTicket.vendorName"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newTicket.vendorName && vendorName.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        placeholder="Select Vendor Name"
+                        required
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newTicket.vendorName &&
+                          (vendorName.touched || vendorName.dirty)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vendor name is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex py-4 flex-row-reverse">
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="addVehicleDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+
+        <p-stepperPanel header="Component Details">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card class="dynamic-section">
+              <form #addServiceDetails="ngForm" ngNativeValidate>
+                <p class="display-5 fs-5">Component Details</p>
+                <!-- Start of Dynamic Sections -->
+                <div
+                  *ngFor="
+                    let detail of newTicket.componentDetails;
+                    let i = index
+                  "
+                  class="dynamic-section"
+                >
+                  <div
+                    class="row"
+                    *ngIf="newTicket.componentDetails.length > 1"
+                  >
+                    <div class="col d-flex flex-row-reverse">
+                      <button
+                        pButton
+                        pRipple
+                        type="button"
+                        label="Remove Section"
+                        icon="pi pi-trash"
+                        class="p-element p-button p-button-danger p-component ng-star-inserted"
+                        (click)="removeSection(i)"
+                      ></button>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="systemName{{ i }}" class="form-label"
+                          >System Name <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #systemName="ngModel"
+                          name="systemName{{ i }}"
+                          id="systemName{{ i }}"
+                          [(ngModel)]="detail.systemName"
+                          (ngModelChange)="loadPartNames(i)"
+                          class="form-select {{
+                            systemName.invalid &&
+                            (systemName.dirty || systemName.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                          autofocus
+                        >
+                          <option value="" disabled selected>
+                            Select System Name
+                          </option>
+                          <option
+                            *ngFor="let system of systemNames"
+                            [value]="system"
+                          >
+                            {{ system.toUpperCase() }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            systemName.invalid &&
+                            (systemName.dirty || systemName.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          System name is required
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="partName{{ i }}" class="form-label"
+                          >Part Name <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #partName="ngModel"
+                          name="partName{{ i }}"
+                          id="partName{{ i }}"
+                          [(ngModel)]="detail.partName"
+                          [disabled]="!detail.systemName"
+                          class="form-select {{
+                            partName.invalid &&
+                            (partName.dirty || partName.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                          autofocus
+                        >
+                          <option value="" disabled selected>
+                            Select Part Name
+                          </option>
+                          <option
+                            *ngFor="let part of detail.partNames"
+                            [value]="part"
+                          >
+                            {{ part.toUpperCase() }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            partName.invalid &&
+                            (partName.dirty || partName.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Part name is required
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <!-- Spare Cost and GST -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="spareCost{{ i }}" class="form-label"
+                          >Spare Cost</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #spareCost
+                            name="spareCost{{ i }}"
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="detail.spareCost"
+                            (ngModelChange)="updateTotalSpareCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="spareGst{{ i }}" class="form-label"
+                          >Spare Cost GST</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #spareGst
+                            name="spareGst{{ i }}"
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="detail.spareGst"
+                            (ngModelChange)="updateTotalSpareCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Labor Cost and GST -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborCost{{ i }}" class="form-label"
+                          >Labor Cost</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #laborCost
+                            name="laborCost{{ i }}"
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="detail.laborCost"
+                            (ngModelChange)="updateTotalLaborCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborGst{{ i }}" class="form-label"
+                          >Labor Cost GST</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #laborGst
+                            name="laborGst{{ i }}"
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="detail.laborGst"
+                            (ngModelChange)="updateTotalLaborCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End of Spare and Labor Cost Row -->
+
+                  <div class="row">
+                    <div class="col">
+                      <label for="comment{{ i }}" class="form-label"
+                        >Comment</label
+                      >
+                      <textarea
+                        #comment
+                        name="comment{{ i }}"
+                        class="form-control"
+                        id="comment{{ i }}"
+                        rows="2"
+                        [(ngModel)]="detail.comment"
+                      ></textarea>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="alert{{ i }}" class="form-label"
+                          >Alert</label
+                        >
+                        <input
+                          type="text"
+                          class="form-control"
+                          disabled
+                          placeholder="NA"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row my-3">
+                    <div class="col d-flex flex-row-reverse">
+                      <button
+                        pButton
+                        pRipple
+                        type="button"
+                        label="Add Section"
+                        class="p-element p-button p-button-success p-component ng-star-inserted"
+                        (click)="addSection()"
+                        icon="pi pi-plus"
+                        *ngIf="i === newTicket.componentDetails.length - 1"
+                      ></button>
+                    </div>
+                  </div>
+                  <hr *ngIf="i < newTicket.componentDetails.length - 1" />
+                </div>
+
+                <!-- End of Dynamic Section -->
+
+                <div class="d-flex justify-content-between py-4">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    icon="pi pi-arrow-right"
+                    [disabled]="addServiceDetails.invalid"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+
+        <p-stepperPanel header="Advance Details">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addAdvanceDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="totalEstimatedCost" class="form-label"
+                          >Total Estimated Cost (With GST)</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            type="text"
+                            disabled
+                            class="form-control"
+                            [value]="
+                              newTicket.totalEstimatedCost
+                                | number : '1.2-5' : 'en-IN'
+                            "
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="totalSpareCost" class="form-label"
+                        >Total Spare Cost (With GST)</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="text"
+                          disabled
+                          class="form-control"
+                          [value]="
+                            newTicket.totalSpareCost
+                              | number : '1.2-5' : 'en-IN'
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="totalLaborCost" class="form-label"
+                        >Total Labor Cost (With GST)</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="text"
+                          disabled
+                          class="form-control"
+                          [value]="
+                            newTicket.totalLaborCost
+                              | number : '1.2-5' : 'en-IN'
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-group">
+                      <label for="uploadQuotation" class="form-label"
+                        >Quotation Pic (acceptable formats: img/pdf)
+                        <span class="text-danger">*</span></label
+                      >
+                      <button
+                        *ngIf="!newTicket.quotationAttachment"
+                        pButton
+                        pRipple
+                        [rounded]="true"
+                        icon="pi pi-file-arrow-up"
+                        label="Upload Quotation Picture"
+                        type="button"
+                        class="p-button-primary m-0"
+                        (click)="toggleUploadQuotationDialog()"
+                      ></button>
+                    </div>
+                  </div>
+                </div>
+                <!-- End of Row -->
+                <hr />
+                <div class="row">
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="isAdvanceRequired" class="form-label"
+                        >Is Advance Payment Required?
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #isAdvanceRequired="ngModel"
+                        name="isAdvanceRequired"
+                        id="isAdvanceRequired"
+                        [(ngModel)]="newTicket.isAdvanceRequired"
+                        (ngModelChange)="checkValidAdvanceAmount()"
+                        class="form-select {{
+                          isAdvanceRequired.invalid &&
+                          (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Advance Payment Required
+                        </option>
+                        <option [ngValue]="false">No</option>
+                        <option [ngValue]="true">Yes</option>
+                      </select>
+                      <p
+                        *ngIf="
+                          isAdvanceRequired.invalid &&
+                          (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Select if advance payment is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div
+                      *ngIf="this.newTicket!.isAdvanceRequired"
+                      class="form-group"
+                    >
+                      <label for="advanceAmount" class="form-label"
+                        >Advance Amount
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #advanceAmount="ngModel"
+                          name="advanceAmount"
+                          type="number"
+                          class="form-control {{
+                            !isValidAdvanceAmount &&
+                            (advanceAmount.dirty || advanceAmount.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newTicket!.advanceAmount"
+                          (ngModelChange)="checkValidAdvanceAmount()"
+                          [disabled]="!newTicket.isAdvanceRequired"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          advanceAmount.invalid &&
+                          (advanceAmount.dirty || advanceAmount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Advance amount is required
+                      </p>
+                      <p
+                        *ngIf="
+                          newTicket.isAdvanceRequired &&
+                          !isValidAdvanceAmount &&
+                          (advanceAmount.dirty || advanceAmount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Advance amount exceeds the permitted limit.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between py-4">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    icon="pi pi-arrow-right"
+                    [disabled]="
+                      addAdvanceDetails.invalid || !isValidAdvanceAmount
+                    "
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+
+        <p-stepperPanel header="Confirmation">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <p>
+                Are you sure you want to
+                {{ editMode ? "update" : "create" }} this maintenance request
+                for vehicle with registration number
+                <strong>{{ newTicket.registrationNumber }}</strong> with total
+                estimated cost of
+                <strong
+                  >{{
+                    newTicket.totalEstimatedCost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }} </strong
+                >? <br />
+                Please review the details and click on
+                {{ editMode ? "Update" : "Create" }} Maintenance Request.
+              </p>
+              <div class="row mt-1">
+                <div class="col">
+                  <label for="comment" class="form-label"
+                    >Overall Comment</label
+                  >
+                  <textarea
+                    #overallComment
+                    name="overallComment"
+                    class="form-control"
+                    id="comment"
+                    rows="2"
+                    [(ngModel)]="newTicket!.overallComment"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  class="me-1"
+                  [disabled]="showLoader || formActionsDisabled"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="{{
+                    editMode ? 'Update' : 'Create'
+                  }} Maintenance Request"
+                  (onClick)="submitTicketRequest()"
+                  [disabled]="showLoader || formActionsDisabled"
+                  icon="pi pi-file-check"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+      </p-stepper>
+    </form>
+  </div>
+</div>
+
+<!-- Create/Edit User Dialog -->
+<form #submissionQuotationForm="ngForm" ngNativeValidate>
+  <p-dialog
+    [(visible)]="showUploadQuotationDialog"
+    [style]="{ width: '450px' }"
+    header="Upload Quotation Pic"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <div class="field form-group">
+        <label for="name" class="form-label"
+          >Select the file to be uploaded</label
+        >
+        <p-fileUpload
+          name="quotation[]"
+          customUpload="true"
+          (uploadHandler)="onUpload($event)"
+          [multiple]="true"
+          accept="image/*,.pdf"
+          maxFileSize="10000000"
+        >
+          <ng-template pTemplate="content">
+            <ul *ngIf="uploadedFiles.length">
+              <li *ngFor="let file of uploadedFiles">
+                {{ file.name }} - {{ file.size }} bytes
+              </li>
+            </ul>
+          </ng-template>
+        </p-fileUpload>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        pRipple
+        type="button"
+        label="Cancel"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="toggleUploadQuotationDialog()"
+      ></button>
+    </ng-template>
+  </p-dialog>
+</form>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<app-loader *ngIf="showLoader"></app-loader>

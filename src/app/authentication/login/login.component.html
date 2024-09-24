@@ -1,0 +1,117 @@
+<div class="container">
+  <div class="form">
+    <div
+      [ngClass]="{ 'focus-on-input': isInputFocusedOrTyped }"
+      class="sign-in-section"
+    >
+      <div class="d-flex justify-content-center">
+        <img
+          class="mb-2 logo"
+          src="assets/img/CMS_RMS_logo-removebg.png"
+          alt=""
+        />
+      </div>
+
+      <p class="mt-2 fs-4">Fleet Management System</p>
+      <p class="header text-1000 mb-3 display-2 fw-1 fs-4">Sign In</p>
+
+      <form #login="ngForm" (submit)="onSubmit()" ngNativeValidate>
+        <div>
+          <div class="form-group">
+            <label for="email">Employee Code</label>
+            <input
+              #email="ngModel"
+              [(ngModel)]="this.loginForm.employeecode"
+              (focus)="onInputFocusOrTyping()"
+              (blur)="onInputBlur()"
+              (input)="onInputFocusOrTyping()"
+              class="form-control {{
+                !email.invalid && !showInvalidCredentials ? 'is-valid' : ''
+              }}{{ showInvalidCredentials ? 'is-invalid' : '' }}"
+              type="text"
+              name="employeecode"
+              id="employeecode"
+              required
+            />
+          </div>
+          <!-- group -->
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              #password="ngModel"
+              [type]="this.passwordType ? 'password' : 'text'"
+              [(ngModel)]="this.loginForm.password"
+              (focus)="onInputFocusOrTyping()"
+              (blur)="onInputBlur()"
+              (input)="onInputFocusOrTyping()"
+              required
+              name="password"
+              id="password"
+              minlength="8"
+              class="form-control {{
+                showInvalidCredentials ? 'is-invalid' : ''
+              }}"
+            />
+            <!-- input -->
+            <p
+              *ngIf="showInvalidCredentials"
+              class="form-text text-danger text-start nowrap"
+            >
+              Invalid credentials. Please check your employee code and password.
+            </p>
+            <p
+              *ngIf="showAccountBlocked"
+              class="form-text text-danger text-start nowrap"
+            >
+              <em>Account Blocked:</em> Your account has been blocked for 15
+              minutes due to multiple incorrect attempts.
+            </p>
+            <p
+              *ngIf="showTooManyRequests"
+              class="form-text text-danger text-start nowrap"
+            >
+              <em>Request limit exceeded:</em>
+              Please retry after 1 minute.
+            </p>
+            <p
+              *ngIf="showAccountInactive"
+              class="form-text text-danger text-start nowrap"
+            >
+              <em>Account Inactive:</em> Kindly reach out to the administrator
+              for further assistance.
+            </p>
+          </div>
+          <!-- group -->
+
+          <div class="form-text text-end">
+            <a
+              routerLink="/auth/forgot-password"
+              class="link-underline link-underline-opacity-0"
+            >
+              Forgot Password
+            </a>
+          </div>
+          <!-- form-text -->
+
+          <div class="text-center mt-3">
+            <button
+              [disabled]="login.invalid"
+              type="submit"
+              class="btn btn-primary btn-block w-50 mb-1"
+            >
+              Sign In
+            </button>
+          </div>
+          <!-- center -->
+
+          <!-- <div class="text-center">
+            <a routerLink="/auth/signup" class="link-underline link-underline-opacity-0">Create an account</a>
+          </div>center -->
+        </div>
+      </form>
+      <!-- form -->
+    </div>
+  </div>
+</div>
+<app-loader *ngIf="showLoader"></app-loader>

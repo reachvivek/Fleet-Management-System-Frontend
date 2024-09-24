@@ -1,0 +1,407 @@
+/* You can add global styles to this file, and also import other style files */
+/* You can add global styles to this file, and also import other style files */
+@import "variables.scss";
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeicons/primeicons.css";
+@import "custom-cms-theme.scss";
+
+html,
+body {
+  background-color: #f4f7fb;
+  margin: 0;
+}
+
+.form-label {
+  font-size: 14px;
+  margin: 0 0 4px;
+  color: rgba(13, 19, 33, 0.6);
+}
+
+.form-select,
+.form-control {
+  font-size: 16px;
+  border: 1px solid $border-color;
+  border-radius: 0.3rem;
+
+  &:focus,
+  &:hover {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: $primary !important;
+  }
+
+  &:focus + .input-group-text,
+  &:hover + .input-group-text {
+    border-color: $primary;
+  }
+}
+
+.card {
+  background: var(--surface-card);
+  padding: 1.5rem;
+  margin: 0 1rem;
+  border: none;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  height: fit-content;
+}
+
+.btn {
+  padding: 0.4rem 1.4rem;
+  border-radius: 60px;
+  font-size: 15px;
+
+  &:focus-visible,
+  &:focus,
+  &:hover {
+    outline: none;
+    box-shadow: none;
+  }
+}
+
+.password-rules {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 10px);
+  z-index: 999;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  width: 15rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.password-rules ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.password-rules li {
+  margin-bottom: 5px;
+  font-size: 14px;
+  position: relative;
+  padding-left: 25px;
+}
+
+.password-rules li span {
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.password-rules li.valid span:before {
+  content: "\2713";
+  color: green;
+}
+
+.form-group {
+  margin: 0 0 1rem;
+  position: relative;
+
+  label {
+    font-size: 14px;
+    color: rgba($color: $text-black, $alpha: 0.6);
+    margin: 0 0 4px;
+  }
+
+  .form-check-label {
+    font-size: 16px;
+    color: $text-black;
+  }
+
+  textarea {
+    min-height: 40px;
+    height: auto !important;
+  }
+
+  .pointer-default {
+    cursor: default;
+  }
+
+  .input-group {
+    .btn {
+      border-radius: $border-raidus;
+    }
+  }
+
+  .form-check-input:focus,
+  .form-check-input:checked {
+    background-color: $primary;
+    border-color: $primary;
+    box-shadow: none;
+  }
+
+  .small-input {
+    max-width: 125px;
+  }
+
+  .checkbox-dropdown {
+    background: transparent;
+  }
+
+  .search-dropdown {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #fff;
+    box-shadow: 0px 3px 6px 1px rgba($color: #000000, $alpha: 0.1);
+    z-index: 1000;
+    border-radius: 8px;
+
+    .item {
+      font-size: 16px;
+      padding: 1rem;
+      cursor: pointer;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid $border-color;
+      }
+
+      &:hover {
+        background-color: $secondary-color;
+        color: #fff;
+      }
+    }
+  }
+}
+
+.form-select,
+.form-control {
+  font-size: 16px;
+  border: 1px solid $border-color;
+  border-radius: 0.3rem;
+
+  &:focus,
+  &:hover {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: $primary !important;
+  }
+
+  &:focus + .input-group-text,
+  &:hover + .input-group-text {
+    border-color: $primary;
+  }
+}
+
+.p-datatable.p-datatable-sm .p-datatable-header {
+  padding: 0.4rem 0.4rem !important;
+}
+
+.p-component {
+  outline: none;
+}
+
+.p-button {
+  font-size: 120px !important;
+  padding: 5px 15px !important;
+}
+
+.p-input-icon-left .p-inputtext {
+  padding: 8px 35px;
+}
+
+.p-inputtext {
+  font-size: 12px !important;
+}
+
+.p-component {
+  font-size: 14px !important;
+}
+
+.p-tag-value {
+  font-size: 12px !important;
+}
+
+.pi {
+  font-size: 14px !important;
+}
+
+td .form-control {
+  font-size: 12px !important;
+}
+
+.p-button.p-button-icon-only.p-button-rounded {
+  height: 35px;
+  width: 35px;
+}
+
+.p-multiselect .p-multiselect-label {
+  padding: 0.4rem 0.75rem !important;
+}
+
+.p-multiselect-filter.p-inputtext.p-component {
+  padding: 0.3rem 0.6rem !important;
+}
+
+.p-multiselect-items.p-component.ng-star-inserted {
+  padding: 0 !important;
+}
+
+.p-dropdown-filter.p-inputtext.p-component {
+  padding: 0.5rem 1rem !important;
+}
+
+.p-dropdown-items.p-component.ng-star-inserted {
+  padding: 0 !important;
+}
+
+.p-datepicker {
+  min-width: 50% !important;
+  min-height: 50% !important;
+}
+
+.p-calendar-disabled > input {
+  background-color: lightgray;
+}
+
+.p-dropdown {
+  width: 100% !important;
+}
+
+.p-dropdown .p-dropdown-label {
+  padding: 0.6rem 1rem !important;
+}
+
+.p-dropdown .p-dropdown-items-wrapper {
+  max-width: none;
+}
+
+.p-dropdown .p-dropdown-panel {
+  max-width: none;
+}
+
+.p-dropdown,
+.p-focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+textarea:focus,
+.p-dropdown:focus,
+textarea.form-control:focus,
+input.form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="checkbox"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+[type="text"].form-control:focus,
+[type="password"].form-control:focus,
+[type="email"].form-control:focus,
+[type="tel"].form-control:focus,
+[contenteditable].form-control:focus {
+  box-shadow: inset 0 0px 0 #ddd;
+}
+
+.p-menu-list .p-reset {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.p-menuitem-content > a {
+  text-decoration: none !important;
+}
+
+.p-tieredmenu {
+  width: 15rem;
+}
+
+.p-inputtext {
+  padding: 6px;
+  outline: none;
+}
+
+.p-dropdown-label {
+  padding: 14px !important;
+}
+
+.p-dropdown-items {
+  padding: 0;
+}
+
+.p-dropdown-item {
+  padding: 0.75rem;
+}
+
+.hidden {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+select option:disabled {
+  color: gray !important;
+}
+
+select.form-select.invalid-option {
+  color: gray !important;
+}
+
+select {
+  color: black !important;
+}
+
+option[disabled] {
+  display: none;
+}
+option {
+  color: black;
+}
+
+.p-datatable-table {
+  font-size: 13px;
+  table-layout: auto;
+}
+
+.p-card {
+  box-shadow: 0 2px 1px -5px rgba(0, 0, 0, 0.2),
+    0 1px 1px -10px rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12) !important;
+  border-radius: 15px;
+}
+
+.p-card .p-card-body {
+  padding: 0 1.25rem !important;
+}
+
+.dynamic-section > .p-card {
+  margin: 0.5rem 0;
+  border-radius: 10px;
+}
+
+.dynamic-section > .p-card > p {
+  font-size: 1.3rem;
+}
+
+.p-confirm-dialog-icon {
+  font-size: 2rem !important;
+}
+
+.not-fixed {
+  table-layout: auto;
+}
+
+.not-fixed > .p-datatable-wrapper > table {
+  table-layout: auto !important;
+}
+
+th {
+  white-space: nowrap !important;
+}
+
+.nowrap > td {
+  white-space: nowrap !important;
+}
+.form-select {
+  font-size: 16px !important;
+}
+
+.nowrap .p-datatable-tbody > tr > td {
+  white-space: nowrap !important;
+}

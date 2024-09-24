@@ -1,0 +1,436 @@
+<div class="card">
+  <p-toast></p-toast>
+
+  <p-table
+    #dt
+    [value]="users"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    [tableStyle]="{
+      'white-space': 'nowrap',
+      'font-family': 'Arial, sans-serif',
+      'font-size': '14px',
+      'border-collapse': 'collapse',
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis',
+      'overflow-y': 'scroll !important',
+    'overflow-x': 'hidden !important',
+    }"
+    styleClass="p-datatable-sm not-fixed"
+    [globalFilterFields]="['empName', 'empEmail', 'empMobNo']"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">User Details</h5>
+        <div>
+          <button
+            pButton
+            pRipple
+            label="New"
+            icon="pi pi-plus"
+            class="m-1 p-element p-button-success mr-2 p-button p-component ng-star-inserted rounded-pill"
+            (click)="toggleDialog()"
+            rounded="true"
+          ></button>
+          <span class="p-input-icon-left m-1">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal(searchInput.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="empName">
+          Name <p-sortIcon field="empName"></p-sortIcon>
+        </th>
+        <th pSortableColumn="empMobNo">
+          Mobile No <p-sortIcon field="empMobNo"></p-sortIcon>
+        </th>
+        <th pSortableColumn="empEmail">
+          Email ID <p-sortIcon field="empEmail"></p-sortIcon>
+        </th>
+        <th pSortableColumn="active">
+          Status <p-sortIcon field="active"></p-sortIcon>
+        </th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td>{{ user.empName }}</td>
+        <td>{{ user.empMobNo }}</td>
+        <td>{{ user.empEmail }}</td>
+        <td>
+          <p-tag
+            [value]="user.active ? 'Active' : 'Inactive'"
+            [severity]="getSeverity(user.active)"
+          ></p-tag>
+        </td>
+        <td>
+          <div class="row d-flex justify-content-start">
+            <div class="col-md-4">
+              <button
+                pButton
+                pRipple
+                [rounded]="true"
+                icon="pi pi-user-edit"
+                pTooltip="Edit User"
+                tooltipPosition="bottom"
+                class="p-button-rounded p-button-success rounded-circle m-0"
+                (click)="toggleDialog(true, user)"
+              ></button>
+            </div>
+            <div class="col-md-4">
+              <button
+                *ngIf="user.active == 1"
+                pButton
+                pRipple
+                class="p-button-rounded p-button-danger rounded-circle m-0"
+                icon="pi pi-ban"
+                pTooltip="Suspend User"
+                tooltipPosition="bottom"
+                (click)="suspendUser(user)"
+              ></button>
+              <button
+                *ngIf="user.active == 0"
+                pButton
+                pRipple
+                class="p-button-rounded p-button-warning rounded-circle m-0"
+                icon="pi pi-undo"
+                pTooltip="Activate User"
+                tooltipPosition="bottom"
+                (click)="activateUser(user)"
+              ></button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Create/Edit User Dialog -->
+<form #userFormRef="ngForm" (submit)="saveUser()" ngNativeValidate>
+  <p-dialog
+    [(visible)]="showUserDialog"
+    [style]="{ width: '500px' }"
+    header="{{ !isEditMode ? 'Create New User' : 'Edit User' }}"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <div class="formgrid grid row">
+        <div class="col">
+          <div class="field form-group">
+            <label for="name" class="form-label">Name</label>
+            <input
+              #empName="ngModel"
+              [(ngModel)]="newUser.empName"
+              pInputText
+              type="text"
+              id="name"
+              (input)="this.isEditMode ? checkChanges() : null"
+              name="empName"
+              autocomplete="off"
+              class="form-control {{
+                empName.invalid && (empName.dirty || empName.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+              autofocus
+            />
+            <p
+              *ngIf="empName.invalid && (empName.dirty || empName.touched)"
+              class="form-text text-danger"
+            >
+              Name is required
+            </p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="field form-group">
+            <label for="empCode" class="form-label">Employee Code</label>
+            <input
+              #empCode="ngModel"
+              [(ngModel)]="newUser.empCode"
+              pInputText
+              type="text"
+              id="name"
+              (input)="this.isEditMode ? checkChanges() : null"
+              name="empCode"
+              autocomplete="off"
+              class="form-control {{
+                empCode.invalid && (empCode.dirty || empCode.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+              autofocus
+            />
+            <p
+              *ngIf="empCode.invalid && (empCode.dirty || empCode.touched)"
+              class="form-text text-danger"
+            >
+              Employee Code is required
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="formgrid grid row">
+        <div class="col">
+          <div class="field form-group">
+            <label for="description" class="form-label row"
+              >Mobile Number</label
+            >
+            <div class="input-group">
+              <span class="input-group-text">+91</span>
+              <input
+                #empMobNo="ngModel"
+                [(ngModel)]="newUser.empMobNo"
+                pInputNo
+                mode="decimal"
+                inputId="withoutgrouping"
+                (input)="this.isEditMode ? checkChanges() : null"
+                name="empMobNo"
+                id="description"
+                class="form-control {{
+                  empMobNo.invalid && (empMobNo.dirty || empMobNo.touched)
+                    ? 'is-invalid'
+                    : ''
+                }}"
+                minlength="10"
+                type="text"
+                maxlength="10"
+                onKeyPress="if(this.value.length>10 || event.key =='.') return false;"
+                onkeydown="if(event.keyCode === 189) return false;"
+                required
+              />
+            </div>
+            <p
+              *ngIf="empMobNo.invalid && (empMobNo.dirty || empMobNo.touched)"
+              class="form-text text-danger d-inline"
+            >
+              Mobile number is required
+            </p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="field form-group">
+            <label for="EmpEmail" class="form-label">Email ID</label>
+
+            <input
+              #empEmail="ngModel"
+              name="empEmail"
+              id="email"
+              [(ngModel)]="newUser.empEmail"
+              type="email"
+              (input)="this.isEditMode ? checkChanges() : null"
+              email
+              autocomplete="off"
+              class="form-control {{
+                empEmail.invalid && (empEmail.dirty || empEmail.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              pInputText
+              required
+              autofocus
+            />
+            <p
+              *ngIf="empEmail.invalid && (empEmail.dirty || empEmail.touched)"
+              class="form-text text-danger"
+            >
+              Email address is required
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <div class="field form-group">
+            <label for="Active" class="form-label">Active</label>
+            <select
+              #active="ngModel"
+              name="active"
+              id="active"
+              [(ngModel)]="newUser.active"
+              (input)="this.isEditMode ? checkChanges() : null"
+              autocomplete="off"
+              [ngClass]="{
+                'form-select': true,
+                'is-invalid':
+                  active.invalid && (active.dirty || active.touched),
+                'invalid-option': active.value === undefined || !active.value
+              }"
+              required
+              autofocus
+            >
+              <option [ngValue]="undefined" disabled selected>
+                Select Status
+              </option>
+              <option *ngFor="let obj of statuses" [value]="obj.value">
+                {{ obj.label }}
+              </option>
+            </select>
+            <p
+              *ngIf="active.invalid && (active.dirty || active.touched)"
+              class="form-text text-danger"
+            >
+              Status is required
+            </p>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="field form-group">
+            <label for="Role" class="form-label">Role</label>
+
+            <p-multiSelect
+              #selectRoles="ngModel"
+              id="selectRoles"
+              name="selectRoles"
+              [(ngModel)]="selectedRoles"
+              (ngModelChange)="updateRoles()"
+              [options]="this.assignableRoles"
+              optionLabel="name"
+              appendTo="body"
+              placeholder="Select Roles"
+              required
+            ></p-multiSelect>
+            <p
+              *ngIf="
+                selectedRoles.length == 0 &&
+                (selectRoles.dirty || selectRoles.touched)
+              "
+              class="form-text text-danger"
+            >
+              Role is required
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="formgrid grid row">
+        <div class="col-6">
+          <div class="field form-group">
+            <label for="accessLevel" class="form-label">Access Level</label>
+            <select
+              #accessLevel="ngModel"
+              name="accessLevel"
+              id="accessLevel"
+              [(ngModel)]="newUser.accessLevel"
+              (input)="this.isEditMode ? checkChanges() : null"
+              (ngModelChange)="fetchAccessScope()"
+              autocomplete="off"
+              [ngClass]="{
+                'form-select': true,
+                'is-invalid':
+                  accessLevel.invalid &&
+                  (accessLevel.dirty || accessLevel.touched),
+                'invalid-option':
+                  accessLevel.value === undefined || !accessLevel.value
+              }"
+              required
+              autofocus
+            >
+              <option [ngValue]="undefined" disabled selected>
+                Select Access Level
+              </option>
+              <option *ngFor="let level of accessLevels" [value]="level">
+                {{ level }}
+              </option>
+            </select>
+            <p
+              *ngIf="
+                accessLevel.invalid &&
+                (accessLevel.dirty || accessLevel.touched)
+              "
+              class="form-text text-danger"
+            >
+              Access level is required
+            </p>
+          </div>
+        </div>
+        <div
+          class="col-6"
+          *ngIf="newUser.accessLevel && newUser.accessLevel != 'National'"
+        >
+          <div class="field form-group">
+            <label for="accessScope" class="form-label">Access Scope</label>
+
+            <p-multiSelect
+              #accessScope="ngModel"
+              id="accessScope"
+              name="accessScope"
+              [(ngModel)]="selectedAccessScope"
+              [options]="this.accessScopes"
+              [selectionLimit]="20"
+              appendTo="body"
+              placeholder="Select Access Scope"
+              required
+            ></p-multiSelect>
+            <p
+              *ngIf="
+                selectedAccessScope.length == 0 &&
+                (accessScope.dirty || accessScope.touched)
+              "
+              class="form-text text-danger"
+            >
+              Access scope is required
+            </p>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        pRipple
+        label="Cancel"
+        icon="pi pi-times"
+        type="button"
+        class="p-button-text"
+        (click)="toggleDialog()"
+      ></button>
+      <button
+        *ngIf="!isEditMode"
+        pButton
+        [disabled]="userFormRef.invalid"
+        pRipple
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-text"
+        type="submit"
+      ></button>
+      <button
+        *ngIf="isEditMode"
+        pButton
+        [disabled]="userFormRef.invalid || checkChanges()"
+        pRipple
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-text"
+        type="submit"
+      ></button>
+    </ng-template>
+  </p-dialog>
+</form>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<app-loader *ngIf="showLoader"> </app-loader>

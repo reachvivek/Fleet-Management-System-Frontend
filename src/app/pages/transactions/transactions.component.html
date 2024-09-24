@@ -1,0 +1,191 @@
+<div class="card">
+  <p-toast />
+  <div class="row mb-2">
+    <div class="col-3 pt-2">
+      <div class="row">
+        <label for="dateRange" class="form-label m-0">
+          Select Transaction Date Range
+        </label>
+        <p-calendar
+          [style]="{ width: '240px' }"
+          [(ngModel)]="rangeDates"
+          (ngModelChange)="applyDates()"
+          dateFormat="dd/mm/yy"
+          selectionMode="range"
+          [readonlyInput]="true"
+          showIcon="true"
+          [iconDisplay]="'input'"
+          [maxDate]="maxDate"
+        />
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="form-group">
+        <label for="vehicleNumber" class="form-label">Vehicle Number</label>
+        <input
+          #vehicleNumber="ngModel"
+          name="vehicleNumber"
+          class="form-control"
+          id="vehicleNumber"
+          [(ngModel)]="filter.vehicleNumber"
+        />
+      </div>
+    </div>
+    <div class="col mt-4">
+      <button
+        *ngIf="rangeDates.length || filter.vehicleNumber"
+        pButton
+        pRipple
+        label="Filter"
+        icon="pi pi-filter"
+        iconPos="right"
+        class="p-element p-button-info p-button p-component ng-star-inserted rounded-pill mt-1"
+        (click)="loadTransactions()"
+        rounded="true"
+      ></button>
+      <button
+        *ngIf="rangeDates.length || filter.vehicleNumber"
+        pButton
+        pRipple
+        label="Clear"
+        icon="pi pi-filter-slash"
+        iconPos="right"
+        class="p-element p-button-secondary p-button p-component ng-star-inserted rounded-pill mt-1 ms-2"
+        (click)="clearFilters()"
+        rounded="true"
+      ></button>
+    </div>
+  </div>
+
+  <p-table
+    #dt
+    [value]="transactions"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    [tableStyle]="{
+      'white-space': 'nowrap',
+      'font-family': 'Arial, sans-serif',
+      'font-size': '14px',
+      'border-collapse': 'collapse',
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis'
+    }"
+    styleClass="p-datatable-sm"
+    [globalFilterFields]="[
+      'processingDateTime',
+      'transactionDateTime',
+      'transactionAmount',
+      'transactionId',
+      'hexTagId',
+      'vehicleNumber',
+      'laneCode',
+      'plazaCode',
+      'transactionStatus',
+      'transactionReferenceNumber',
+      'plazaName'
+    ]"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="transactionId"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="columns"
+    [exportFilename]="generateExportName()"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Fastag Transaction Records</h5>
+        <div>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="dt.exportCSV()"
+            rounded="true"
+          ></button>
+          <span class="p-input-icon-left m-1">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal(searchInput.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="processingDateTime">
+          Processing Date <p-sortIcon field="processingDateTime"></p-sortIcon>
+        </th>
+        <th pSortableColumn="transactionDateTime">
+          Transaction Date <p-sortIcon field="transactionDateTime"></p-sortIcon>
+        </th>
+        <th pSortableColumn="transactionAmount">
+          Amount <p-sortIcon field="transactionAmount"></p-sortIcon>
+        </th>
+        <th pSortableColumn="transactionId">
+          Transaction ID <p-sortIcon field="transactionId"></p-sortIcon>
+        </th>
+        <th pSortableColumn="hexTagId">
+          Hex Tag ID <p-sortIcon field="hexTagId"></p-sortIcon>
+        </th>
+        <th pSortableColumn="vehicleNumber">
+          Vehicle Number <p-sortIcon field="vehicleNumber"></p-sortIcon>
+        </th>
+        <th pSortableColumn="laneCode">
+          Lane Code <p-sortIcon field="laneCode"></p-sortIcon>
+        </th>
+        <th pSortableColumn="plazaCode">
+          Plaza Code <p-sortIcon field="plazaCode"></p-sortIcon>
+        </th>
+        <th pSortableColumn="transactionStatus">
+          Status <p-sortIcon field="transactionStatus"></p-sortIcon>
+        </th>
+        <th pSortableColumn="transactionReferenceNumber">
+          Reference Number
+          <p-sortIcon field="transactionReferenceNumber"></p-sortIcon>
+        </th>
+        <th pSortableColumn="plazaName">
+          Plaza Name <p-sortIcon field="plazaName"></p-sortIcon>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-transaction>
+      <tr class="nowrap">
+        <td>
+          {{ transaction.processingDateTime | date : "d MMM, yyyy h:mm a" }}
+        </td>
+        <td>
+          {{ transaction.transactionDateTime | date : "d MMM, yyyy h:mm a" }}
+        </td>
+        <td>
+          {{
+            transaction.transactionAmount
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }}
+        </td>
+        <td>{{ transaction.transactionId }}</td>
+        <td>{{ transaction.hexTagId }}</td>
+        <td>{{ transaction.vehicleNumber }}</td>
+        <td>{{ transaction.laneCode }}</td>
+        <td>{{ transaction.plazaCode }}</td>
+        <td>{{ transaction.transactionStatus }}</td>
+        <td>{{ transaction.transactionReferenceNumber }}</td>
+        <td>{{ transaction.plazaName }}</td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="11">No Transactions Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+<app-loader *ngIf="showLoader"></app-loader>

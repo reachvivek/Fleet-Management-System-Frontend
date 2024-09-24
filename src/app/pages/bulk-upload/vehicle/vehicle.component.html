@@ -1,0 +1,227 @@
+<div class="card">
+  <div class="container">
+    <p-toast></p-toast>
+    <p-table
+      #dt
+      [value]="vehicles"
+      [rows]="5"
+      [rowsPerPageOptions]="[5, 10, 25]"
+      [paginator]="true"
+      [tableStyle]="{
+        'white-space': 'nowrap',
+        'font-family': 'Arial, sans-serif',
+        'font-size': '14px',
+        'border-collapse': 'collapse',
+        overflow: 'hidden',
+        'text-overflow': 'ellipsis'
+      }"
+      styleClass="p-datatable-sm nowrap"
+      [globalFilterFields]="[
+        'registration_No',
+        'asset_Type',
+        'manufacturer',
+        'model_Name',
+        'registration_Date',
+        'owner_Name',
+        'vehicleSubStatus',
+        'off_Road',
+        'offroad_Reason',
+        'zone_Name',
+        'branch_Name',
+        'region_Name',
+        'hub_Name'
+      ]"
+      [tableStyle]="{ 'min-width': '50rem' }"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+      [showCurrentPageReport]="true"
+    >
+      <ng-template pTemplate="caption">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5 class="m-0">Vehicle Master</h5>
+          <div>
+            <button
+              pButton
+              pRipple
+              label="Bulk Upload"
+              icon="pi pi-upload"
+              class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+              (click)="toggleUploadDialog()"
+              rounded="true"
+            ></button>
+            <span class="p-input-icon-left m-1">
+              <i class="pi pi-search"></i>
+              <input
+                #searchInput
+                pInputText
+                type="text"
+                (input)="dt.filterGlobal(searchInput.value, 'contains')"
+                placeholder="Search..."
+              />
+            </span>
+          </div>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="registration_No">
+            Registration No <p-sortIcon field="registration_No"></p-sortIcon>
+          </th>
+          <th pSortableColumn="asset_Type">
+            Asset Type <p-sortIcon field="asset_Type"></p-sortIcon>
+          </th>
+          <th pSortableColumn="manufacturer">
+            Manufacturer <p-sortIcon field="manufacturer"></p-sortIcon>
+          </th>
+          <th pSortableColumn="model_Name">
+            Model Name <p-sortIcon field="model_Name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="registration_Date">
+            Registration Date
+            <p-sortIcon field="registration_Date"></p-sortIcon>
+          </th>
+          <th pSortableColumn="owner_Name">
+            Owner Name <p-sortIcon field="owner_Name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="off_Road">
+            Off Road <p-sortIcon field="off_Road"></p-sortIcon>
+          </th>
+          <th pSortableColumn="vehicleSubStatus">
+            Sub Status <p-sortIcon field="vehicleSubStatus"></p-sortIcon>
+          </th>
+          <th pSortableColumn="offroad_Date">
+            Off Road From<p-sortIcon field="offroad_Date"></p-sortIcon>
+          </th>
+          <th pSortableColumn="offroad_ToDate">
+            Off Road To<p-sortIcon field="offroad_ToDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="onRoute_FromDate">
+            On Route From<p-sortIcon field="onRoute_FromDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="onRoute_ToDate">
+            On Route To<p-sortIcon field="onRoute_ToDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="standBy_FromDate">
+            Stand By From<p-sortIcon field="standBy_FromDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="standBy_ToDate">
+            Stand By To<p-sortIcon field="standBy_ToDate"></p-sortIcon>
+          </th>
+
+          <th pSortableColumn="offroad_Reason">
+            Offroad Reason <p-sortIcon field="offroad_Reason"></p-sortIcon>
+          </th>
+          <th pSortableColumn="zone_Name">
+            Zone <p-sortIcon field="zone_Name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="region_Name">
+            Region <p-sortIcon field="region_Name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="hub_Name">
+            Hub <p-sortIcon field="hub_Name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="branch_Name">
+            Branch <p-sortIcon field="branch_Name"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-vehicle>
+        <tr>
+          <td>{{ vehicle.registration_No }}</td>
+          <td>{{ vehicle.asset_Type }}</td>
+          <td>{{ vehicle.manufacturer }}</td>
+          <td>{{ vehicle.model_Name }}</td>
+          <td>{{ vehicle.registration_Date }}</td>
+          <td>{{ vehicle.owner_Name }}</td>
+          <td>
+            <p-tag
+              [severity]="vehicle.off_Road === 'TRUE' ? 'danger' : 'success'"
+            >
+              {{ vehicle.off_Road === "TRUE" ? "Off Road" : "On Road" }}
+            </p-tag>
+          </td>
+          <td>{{ vehicle.vehicleSubStatus || "NA" }}</td>
+          <td>
+            {{
+              vehicle.offroad_Date == "NA"
+                ? "NA"
+                : (vehicle.offroad_Date | date)
+            }}
+          </td>
+          <td>{{ (vehicle.offroad_ToDate | date) || "NA" }}</td>
+          <td>{{ (vehicle.onRoute_FromDate | date) || "NA" }}</td>
+          <td>{{ (vehicle.onRoute_ToDate | date) || "NA" }}</td>
+          <td>{{ (vehicle.standBy_FromDate | date) || "NA" }}</td>
+          <td>{{ (vehicle.standBy_ToDate | date) || "NA" }}</td>
+          <td>{{ vehicle.offroad_Reason }}</td>
+          <td>{{ vehicle.zone_Name }}</td>
+          <td>{{ vehicle.region_Name }}</td>
+          <td>{{ vehicle.hub_Name }}</td>
+          <td>{{ vehicle.branch_Name }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="showUploadDialog"
+  [style]="{ width: '450px' }"
+  header="Upload Vehicle Master"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="field form-group">
+      <label for="name" class="form-label"
+        >Select the file to be uploaded (.csv)*</label
+      >
+      <p-fileUpload
+        name="file[]"
+        customUpload="true"
+        [files]="uploadedFiles"
+        (onSelect)="showCSVDetails($event)"
+        (onRemove)="clearUpload($event)"
+        (onClear)="clearUpload($event)"
+        (uploadHandler)="onUpload($event)"
+        [showUploadButton]="isValidCSV && totalRecords! > 0"
+        [multiple]="false"
+        accept=".csv"
+        maxFileSize="90000000"
+      >
+        <ng-template pTemplate="content">
+          <ul *ngIf="uploadedFiles.length">
+            <li *ngFor="let file of uploadedFiles">
+              {{ file.name }} - {{ file.size }} bytes
+            </li>
+          </ul>
+          <strong *ngIf="totalRecords">Total rows : {{ totalRecords }}</strong>
+          <br />
+          <span class="text-danger" *ngIf="totalRecords">{{
+            estimateUploadTime(totalRecords!)
+          }}</span>
+          <p *ngIf="!totalRecords && !isValidCSV" class="text-danger">
+            Invalid CSV file selected. Please ensure the file has the correct
+            columns. You can download the Sample File for reference.
+          </p>
+          <p *ngIf="totalRecords == 0" class="text-danger">
+            No records found. Please ensure the file has at least 1 record.
+          </p>
+        </ng-template>
+      </p-fileUpload>
+    </div>
+    <div class="row mt-2 justify-content-end">
+      <div class="col-auto">
+        <button
+          pButton
+          severity="success"
+          icon="pi pi-file-excel"
+          label="Download Sample File"
+          (click)="downloadSampleFile()"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>
+<app-loader *ngIf="showLoader"></app-loader>
