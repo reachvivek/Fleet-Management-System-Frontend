@@ -10,7 +10,8 @@
  * Do not edit the class manually.
  */
 
-export interface CreateTicketDto { 
+export interface UpdateBatteryRequestDto { 
+    id?: number;
     zone?: string;
     region?: string;
     branch?: string;
@@ -21,20 +22,28 @@ export interface CreateTicketDto {
     model?: string;
     vehicleSubStatus?: string;
     isVehicleOffRoad?: number;
-    dateOfLastService?: string;
     offRoadReason?: string;
     offRoadStatusChangeDate?: string;
-    serviceRequestType?: string;
-    vendorName?: string;
-    totalSpareCost?: number;
-    totalLaborCost?: number;
-    totalEstimatedCost?: number;
+    battery_Serial_Number?: string;
+    battery_Make?: string;
+    battery_Model?: string;
+    battery_Invoice_Date?: string;
+    battery_Warranty?: number;
+    battery_Vendor_Name?: string;
+    battery_Cost?: number;
+    battery_Age?: number;
+    battery_Scrap_Value?: number;
+    new_Battery_Make?: string;
+    new_Battery_Model?: string;
+    new_Battery_VendorId?: string;
+    new_Battery_Cost?: number;
+    new_Battery_GST?: number;
+    new_Battery_Estimated_Cost?: number;
+    current_Battery_Serial_Number?: string;
     quotationAttachment?: string;
-    componentDetails?: string;
-    overallComment?: string;
     isAdvanceRequired?: number;
     advanceAmount?: number;
-    isHFMApprovalRequired?: number;
+    overallComment?: string;
     isRMApprovalRequired?: number;
     isNFMApprovalRequired?: number;
     isZMApprovalRequired?: number;

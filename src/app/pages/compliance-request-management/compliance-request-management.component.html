@@ -1,0 +1,1852 @@
+<div class="card">
+  <p-toast></p-toast>
+  <p-table
+    #dt
+    [value]="filteredTickets"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    [tableStyle]="{
+      'white-space': 'nowrap',
+      'font-family': 'Arial, sans-serif',
+      'font-size': '14px',
+      'border-collapse': 'collapse',
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis'
+    }"
+    styleClass="p-datatable-sm"
+    [globalFilterFields]="[
+      'region',
+      'branch',
+      'hub',
+      'registrationNumber',
+      'currentStage'
+    ]"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="columns"
+    [exportFilename]="generateExportName()"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Compliance Requests</h5>
+        <div>
+          <button
+            *ngIf="roleId == 1"
+            pButton
+            pRipple
+            label="New"
+            icon="pi pi-plus"
+            class="m-1 p-element p-button-success p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleCreateRequestDialog()"
+            rounded="true"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="{{ isFilterApplied ? 'Modify' : 'Filter' }}"
+            icon="{{ isFilterApplied ? 'pi pi-filter-slash' : 'pi pi-filter' }}"
+            class="m-1 p-element p-button-info p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleFilterDialog()"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="dt.exportCSV()"
+            rounded="true"
+          ></button>
+          <span class="p-input-icon-left m-1">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal(searchInput.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th>
+          <div class="d-flex align-items-center">
+            Region
+            <p-columnFilter type="text" field="region" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Branch
+            <p-columnFilter type="text" field="branch" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Type
+            <p-columnFilter
+              type="text"
+              field="typeOfCompliance"
+              display="menu"
+            />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Estimate
+            <p-columnFilter type="text" field="finalAmount" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div pSortableColumn="isVehicleOffRoad">
+            Vehicle Status
+            <p-sortIcon field="isVehicleOffRoad"></p-sortIcon>
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Reg No
+            <p-columnFilter
+              type="text"
+              field="registrationNumber"
+              display="menu"
+            />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Status
+            <p-columnFilter type="text" field="currentStage" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Created On
+            <p-columnFilter type="date" field="createdOn" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-calendar
+                  #calendar
+                  dateFormat="dd-mm-yy"
+                  [ngModel]="value"
+                  (onSelect)="filter(calendar.value)"
+                ></p-calendar>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-ticket>
+      <tr>
+        <td>{{ ticket.region }}</td>
+        <td>{{ ticket.branch | removeParenthesisText }}</td>
+        <td>{{ ticket.typeOfCompliance }}</td>
+        <td>
+          {{
+            ticket.finalAmount | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }}
+        </td>
+        <td>
+          <p-tag [severity]="!ticket.isVehicleOffRoad ? 'success' : 'danger'">
+            {{ ticket.isVehicleOffRoad ? "Off Road" : "On Road" }}</p-tag
+          >
+        </td>
+        <td>{{ ticket.registrationNumber }}</td>
+        <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
+        <td>
+          <div class="col d-flex justify-content-start">
+            <button
+              pButton
+              pRipple
+              class="p-button-rounded p-button-primary rounded-circle m-0"
+              icon="pi pi-eye"
+              (click)="viewTicket(ticket.id)"
+              pTooltip="View Request"
+              tooltipPosition="bottom"
+            ></button>
+            <button
+              *ngIf="
+                roleId == 1 &&
+                !ticket.hasAdvanceApproved &&
+                !ticket.hasFinanceUserApproved &&
+                !ticket.isClosed &&
+                !ticket.isInvoiceUploaded
+              "
+              pButton
+              pRipple
+              class="p-button-rounded p-button-warning rounded-circle mx-2"
+              icon="pi pi-pencil"
+              (click)="editTicket(ticket.id)"
+              pTooltip="Edit Request"
+              tooltipPosition="bottom"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8">No Vehicle Compliance Requests Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <!-- End of Compliance Requests Section -->
+</div>
+
+<!-- View Compliance Request Dialog -->
+<p-dialog
+  [(visible)]="showTicketDetailsDialog"
+  maximizable="true"
+  [style]="{ width: '80vw', height: '85vh' }"
+  header="Compliance Request Details"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="container">
+      <!-- Vehicle Details -->
+      <strong>Compliance Request Details</strong>
+      <hr class="my-1 mb-3" />
+      <div class="row">
+        <!-- Left Side Columns -->
+        <div class="col-md-6">
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Service Id:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.id }}</div>
+          </div>
+          <!-- <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Age:</strong></div>
+            <div class="col-md-6">
+              {{ selectedTicket.vehicleAge }}
+            </div>
+          </div> -->
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <strong>Off-road status updated:</strong>
+            </div>
+            <div class="col-md-6">
+              {{
+                (selectedTicket.offRoadStatusChangeDate
+                  | date : "MMM d, yyyy h:mm a") || "NA"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Model:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.model }}</div>
+          </div>
+          <!-- <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Total Km Run:</strong></div>
+            <div class="col-md-6">0</div>
+          </div> -->
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Type Of Compliance:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.typeOfCompliance }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vendor:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.vendorName }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Agent Fees:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.agentFees
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>GST:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.gstAmount
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <strong>View Quotation:</strong>
+            </div>
+            <div class="col-md-6">
+              <a href="#">Download Attachment</a>
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Comment:</strong></div>
+            <div class="col-md-6">
+              {{ selectedTicket.overallComment || "NA" }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side Columns -->
+        <div class="col-md-6">
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Reg. No.:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.registrationNumber }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <strong>Vehicle off-road status:</strong>
+            </div>
+            <div class="col-md-6">
+              {{ selectedTicket.isVehicleOffRoad ? "Off Road" : "On Road" }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Age:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.vehicleAge }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Manufacturer:</strong></div>
+            <div class="col-md-6">{{ selectedTicket.manufacturer }}</div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Renewal Fees:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.renewalFees
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Misc Amount:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.miscAmount
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Penalty Fees:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.penaltyFees
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Quotation Amount:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.finalAmount
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6"><strong>Advance amount:</strong></div>
+            <div class="col-md-6">
+              {{
+                selectedTicket.advanceAmount
+                  | currency : "INR" : "symbol-narrow" : "0.2-2"
+              }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End of Vehicle Details -->
+
+      <!-- Compliance Request Approval/Rejection Timeline Details -->
+      <strong>Compliance Approval Details</strong>
+      <table class="table table-bordered table-striped mt-2">
+        <thead class="thead-dark">
+          <tr>
+            <th>SR. NO.</th>
+            <th>STATUS</th>
+            <th>STATUS CHANGED TIME</th>
+            <th>USER NAME</th>
+            <th>COMMENT</th>
+            <th>ATTACHMENT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let step of selectedTicketApprovalStages">
+            <td>{{ step.id }}</td>
+            <td>{{ step.status }}</td>
+            <td>{{ step.timestamp | date : "dd MMM, yyyy h:mm a" }}</td>
+            <td>{{ step.label }}</td>
+            <td>{{ step.comment || "NA" }}</td>
+            <td>{{ step.attachment || "NA" }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- End of Compliance Request Approval/Rejection Timeline Details -->
+
+      <hr />
+
+      <!-- Actual Compliance Completion Details -->
+      <div *ngIf="selectedTicket.isInvoiceUploaded">
+        <strong>Compliance Completion Details</strong>
+        <hr class="my-1 mb-3" />
+        <div class="row">
+          <!-- Left Side Columns -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Actual Cost :</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.invoiceAmount
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>HSN :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.hsn }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Compliance Price :</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.compliancePrice
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Agent Cost :</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.agentCost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Agent GST :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.invoiceGst }}%</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Ownership :</strong></div>
+              <div class="col-md-6">NA</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Name :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.vendorName }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Code :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorId }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor PAN :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorPan || "NA" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor GST :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorGst || "NA" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>From Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.fromDate | date : "MMM d, yyyy h:mm a" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Type :</strong></div>
+              <div class="col-md-6">NA</div>
+            </div>
+          </div>
+
+          <!-- Right Side Column -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Mode of Payment :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.modeOfPayment }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Compliance Qty :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.complianceQty }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>SAC Code :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.sacCode }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Agent Qty :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.agentQty }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Number :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.invoiceNumber }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.invoiceDate | date : "MMM d, yyyy h:mm a" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Type :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.invoiceType }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>GL Code :</strong></div>
+              <div class="col-md-6">NA</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Advance Amount :</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.advanceAmount
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>To Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.toDate | date : "MMM d, yyyy h:mm a" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Attachment :</strong></div>
+              <div class="col-md-6">
+                <a href="#">Download Attachment</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+        <!-- End of Component Details Table -->
+      </div>
+
+      <!-- Approve/Reject Buttons -->
+      <div class="d-flex justify-content-between">
+        <p-button
+          *ngIf="showApproveRejectButtons()"
+          label="Reject"
+          (onClick)="toggleRejectTicketDialog()"
+          icon="pi pi-ban"
+          severity="danger"
+          iconPos="right"
+        />
+        <p-button
+          *ngIf="showTicketCloseButton()"
+          label="Close"
+          (onClick)="confirmTicketClose()"
+          icon="pi pi-times"
+          class="mx-auto"
+          severity="warning"
+          iconPos="right"
+        />
+        <p-button
+          *ngIf="showTicketReopenButton()"
+          label="Reopen"
+          (onClick)="confirmTicketReopen()"
+          icon="pi pi-undo"
+          class="mx-auto"
+          severity="warning"
+          iconPos="right"
+        />
+        <p-button
+          *ngIf="showApproveRejectButtons()"
+          label="{{
+            this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+          }}"
+          (onClick)="toggleApproveTicketDialog()"
+          icon="pi pi-check-circle"
+          severity="success"
+          iconPos="right"
+        />
+      </div>
+
+      <!-- Fill Invoice Details Button -->
+      <div *ngIf="showUploadInvoiceButton()" class="d-flex justify-content-end">
+        <p-button
+          label="Fill Invoice Details"
+          (onClick)="toggleUploadInvoiceDialog()"
+          icon="pi pi-file-arrow-up"
+          severity="info"
+          iconPos="right"
+        />
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Approve Ticket Dialog -->
+  <p-dialog
+    [(visible)]="showApproveTicketDialog"
+    [style]="{ width: '50vw' }"
+    header="{{
+      this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+    }} Request"
+    [modal]="true"
+    appendTo="body"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <p>
+        Are you sure you want to
+        {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }} the
+        compliance request for vehicle with registration number
+        <strong>{{ selectedTicket.registrationNumber }}</strong> with total
+        estimated cost of
+        <strong
+          >{{
+            selectedTicket.finalAmount
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }} </strong
+        >?
+      </p>
+      <br />
+      <form #addOptionalDetails="ngForm" ngNativeValidate>
+        <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
+          <div class="form-group">
+            <label for="uploadAttachment" class="form-label">
+              Attachment (acceptable formats: img/pdf)</label
+            >
+            <div>
+              <p-button
+                *ngIf="!optionalDetails.attachment"
+                label="Upload Attachment"
+                (onClick)="toggleUploadAttachmentDialog()"
+                icon="pi pi-file-arrow-up"
+                severity="info"
+                [style]="{ width: 'fit-content' }"
+                iconPos="right"
+                autofocus="false"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <label for="comment" class="form-label">Comment</label>
+          <div>
+            <textarea
+              #comment="ngModel"
+              name="comment"
+              class="form-control"
+              id="comment"
+              rows="2"
+              [(ngModel)]="optionalDetails.comment"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-3">
+          <p-button
+            label="{{
+              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+            }}"
+            (onClick)="approveTicket()"
+            icon="pi pi-check-circle"
+            severity="success"
+            iconPos="right"
+          ></p-button>
+        </div>
+      </form>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Approve Ticket Dialog -->
+
+  <!-- Reject Ticket Dialog -->
+  <p-dialog
+    [(visible)]="showRejectTicketDialog"
+    [style]="{ width: '50vw' }"
+    header="Reject Request"
+    [modal]="true"
+    appendTo="body"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <p>
+        Are you sure you want to reject the vehicle service request for vehicle
+        with registration number
+        <strong>{{ selectedTicket.registrationNumber }}</strong> with total
+        estimated cost of
+        <strong
+          >{{
+            selectedTicket.totalEstimatedCost
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }} </strong
+        >?
+      </p>
+      <br />
+      <form #addOptionalDetails="ngForm" ngNativeValidate>
+        <div class="row">
+          <label for="comment" class="form-label"
+            >Comment <span class="text-danger">*</span></label
+          >
+          <div>
+            <textarea
+              #comment="ngModel"
+              name="comment"
+              class="form-control"
+              id="comment"
+              rows="2"
+              [(ngModel)]="optionalDetails.comment"
+              required
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center mt-3">
+          <p-button
+            label="Reject"
+            (onClick)="rejectTicket()"
+            [disabled]="!optionalDetails.comment"
+            icon="pi pi-times"
+            severity="danger"
+            iconPos="right"
+          ></p-button>
+        </div>
+      </form>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Reject Ticket Dialog -->
+
+  <!-- Upload Invoice Dialog -->
+  <p-dialog
+    [(visible)]="showUploadInvoiceDialog"
+    [style]="{ width: '90vw', height: '90vh' }"
+    header="Invoice Details"
+    [maximizable]="true"
+    [modal]="true"
+    appendTo="body"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <p-stepper orientation="vertical" [linear]="true">
+        <!-- Actual Component Details Panel -->
+        <p-stepperPanel header="Actual Compliance Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card class="compliance-section">
+              <form #actualComplianceDetails="ngForm" ngNativeValidate>
+                <!-- HSN, Compliance Qty, Compliance Price, and SAC Code -->
+                <div class="row">
+                  <!-- HSN, Compliance Qty, Compliance Price, and SAC Code -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="hsn" class="form-label"
+                        >HSN <span class="text-danger">*</span></label
+                      >
+                      <input
+                        #hsn="ngModel"
+                        name="hsn"
+                        type="text"
+                        class="form-control {{
+                          hsn.invalid && (hsn.dirty || hsn.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        [(ngModel)]="newInvoice.hsn"
+                        placeholder="9987"
+                        onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && !(event.charCode === 43 || event.charCode === 45)"
+                        onpaste="return false"
+                        maxlength="10"
+                        required
+                      />
+                      <p
+                        *ngIf="hsn.invalid && (hsn.dirty || hsn.touched)"
+                        class="form-text text-danger"
+                      >
+                        HSN is required
+                      </p>
+                    </div>
+                  </div>
+                  <!-- End of HSN -->
+
+                  <!-- Compliance Qty -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="complianceQty" class="form-label"
+                        >Compliance Quantity
+                        <span class="text-danger">*</span></label
+                      >
+                      <input
+                        #complianceQty="ngModel"
+                        name="complianceQty"
+                        type="number"
+                        class="form-control {{
+                          complianceQty.invalid &&
+                          (complianceQty.dirty || complianceQty.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        [(ngModel)]="newInvoice.complianceQty"
+                        (ngModelChange)="updateTotalCost()"
+                        onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                        onpaste="return false"
+                        min="1"
+                        required
+                      />
+                      <p
+                        *ngIf="
+                          complianceQty.invalid &&
+                          (complianceQty.dirty || complianceQty.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Compliance quantity is required
+                      </p>
+                    </div>
+                  </div>
+                  <!-- End of Compliance Qty -->
+
+                  <!-- Compliance Price -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="compliancePrice" class="form-label"
+                        >Compliance Price
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #compliancePrice="ngModel"
+                          name="compliancePrice"
+                          type="number"
+                          class="form-control {{
+                            compliancePrice.invalid &&
+                            (compliancePrice.dirty || compliancePrice.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newInvoice.compliancePrice"
+                          (ngModelChange)="updateTotalCost()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          compliancePrice.invalid &&
+                          (compliancePrice.dirty || compliancePrice.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Compliance price is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- SAC Code Field -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="sacCode" class="form-label">
+                        SAC Code <span class="text-danger">*</span>
+                      </label>
+                      <input
+                        #sacCode="ngModel"
+                        name="sacCode"
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="newInvoice.sacCode"
+                        placeholder="Agent - 9987"
+                        onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57) || (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122)) && !(event.charCode === 43 || event.charCode === 45)"
+                        onpaste="return false"
+                        maxlength="10"
+                        required
+                      />
+                      <p
+                        *ngIf="
+                          sacCode.invalid && (sacCode.dirty || sacCode.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        SAC Code is required.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <!-- End of HSN, Compliance Qty, Compliance Price, and SAC Code -->
+
+                <!-- Agent Qty, Agent Cost, Agent GST and Grand Total -->
+                <div class="row">
+                  <!-- Agent Qty -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="agentQty" class="form-label"
+                        >Agent Quantity
+                        <span class="text-danger">*</span></label
+                      >
+                      <input
+                        #agentQty="ngModel"
+                        name="agentQty"
+                        type="number"
+                        class="form-control {{
+                          agentQty.invalid &&
+                          (agentQty.dirty || agentQty.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        [(ngModel)]="newInvoice.agentQty"
+                        (ngModelChange)="updateTotalCost()"
+                        onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                        onpaste="return false"
+                        min="0"
+                        required
+                      />
+                      <p
+                        *ngIf="
+                          agentQty.invalid &&
+                          (agentQty.dirty || agentQty.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Agent quantity is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Agent Cost -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="agentCost" class="form-label"
+                        >Agent Cost <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #agentCost="ngModel"
+                          name="agentCost"
+                          type="number"
+                          class="form-control {{
+                            agentCost.invalid &&
+                            (agentCost.dirty || agentCost.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newInvoice.agentCost"
+                          (ngModelChange)="updateTotalCost()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          agentCost.invalid &&
+                          (agentCost.dirty || agentCost.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Agent cost is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Compliance GST -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceGst" class="form-label"
+                        >Agent GST <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <select
+                          #invoiceGst="ngModel"
+                          name="invoiceGst"
+                          type="number"
+                          class="form-select {{
+                            invoiceGst.invalid &&
+                            (invoiceGst.dirty || invoiceGst.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newInvoice.invoiceGst"
+                          (ngModelChange)="updateTotalCost()"
+                          [disabled]="newInvoice.invoiceType == 'NON GST'"
+                          required
+                        >
+                          <option value="" disabled selected>
+                            Select Agent GST
+                          </option>
+                          <option *ngFor="let gst of agentGsts" [ngValue]="gst">
+                            {{ gst }}
+                          </option>
+                        </select>
+                        <span class="input-group-text">%</span>
+                      </div>
+                      <p
+                        *ngIf="
+                          invoiceGst.invalid &&
+                          (invoiceGst.dirty || invoiceGst.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        GST is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceTotalEstimatedCost" class="form-label"
+                        >Grand Total</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="number"
+                          class="form-control"
+                          disabled
+                          [value]="newInvoice.grandTotal"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- End of Agent Qty, Agent Cost, Compliance GST and Grand Total -->
+
+                <div class="d-flex justify-content-end py-2">
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="actualComplianceDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <!-- End of Actual Compliance Details Panel -->
+
+        <!-- Invoice Details -->
+        <p-stepperPanel header="Invoice Details">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #invoiceDetails="ngForm" ngNativeValidate>
+                <!-- Actual Cost, Invoice Amount, Invoice No and Invoice Type  -->
+                <div class="row">
+                  <!-- Actual Cost -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceTotalEstimatedCost" class="form-label"
+                        >Grand Total</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="number"
+                          class="form-control"
+                          disabled
+                          [value]="newInvoice.grandTotal"
+                        />
+                        <p
+                          *ngIf="
+                            newInvoice.grandTotal >
+                            selectedTicket.finalAmount * 1.1
+                          "
+                          class="form-text text-danger"
+                        >
+                          Amount exceeds the quoted limit! Please edit your
+                          request.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Invoice Amount -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceAmount" class="form-label"
+                        >Invoice Amount
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #invoiceAmount="ngModel"
+                          name="invoiceAmount"
+                          type="number"
+                          class="form-control {{
+                            invoiceAmount.invalid &&
+                            (invoiceAmount.dirty || invoiceAmount.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newInvoice.invoiceAmount"
+                          (ngModelChange)="checkInvoiceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          invoiceAmount.invalid &&
+                          (invoiceAmount.dirty || invoiceAmount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice amount is required
+                      </p>
+                      <p
+                        *ngIf="
+                          newInvoice.grandTotal != newInvoice.invoiceAmount &&
+                          (invoiceAmount.dirty || invoiceAmount.touched) &&
+                          !invoiceAmount.invalid
+                        "
+                        class="form-text text-danger"
+                      >
+                        The invoice amount does not align with the grand total.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Invoice No -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceNumber" class="form-label">
+                        Invoice Number <span class="text-danger">*</span>
+                      </label>
+                      <input
+                        #invoiceNumber="ngModel"
+                        name="invoiceNumber"
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="newInvoice.invoiceNumber"
+                        maxlength="20"
+                        required
+                      />
+                      <p
+                        *ngIf="
+                          invoiceNumber.invalid &&
+                          (invoiceNumber.dirty || invoiceNumber.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice number is required.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Invoice Type -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="invoiceType" class="form-label"
+                        >Invoice Type <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #invoiceType="ngModel"
+                        name="invoiceType"
+                        id="invoiceType"
+                        [(ngModel)]="newInvoice.invoiceType"
+                        (ngModelChange)="updateTotalCost()"
+                        class="form-select {{
+                          invoiceType.invalid &&
+                          (invoiceType.dirty || invoiceType.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                      >
+                        <option value="" disabled selected>
+                          Select Invoice Type
+                        </option>
+                        <option
+                          *ngFor="let entry of invoiceTypes"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          invoiceType.invalid &&
+                          (invoiceType.dirty || invoiceType.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice Type is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <!-- End of Actual Cost, Invoice Amount, Invoice No and Invoice Type  -->
+
+                <!-- DIV / Company Name, Mode of Payment, Invoice Date and Service Date -->
+                <div class="row">
+                  <!-- Company Name -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="companyName" class="form-label"
+                        >Company Name <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #companyName="ngModel"
+                        name="companyName"
+                        id="companyName"
+                        [(ngModel)]="newInvoice.companyName"
+                        class="form-select {{
+                          companyName.invalid &&
+                          (companyName.dirty || companyName.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                      >
+                        <option value="" disabled selected>
+                          Select Company Name
+                        </option>
+                        <option
+                          *ngFor="let entry of companyNames"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          companyName.invalid &&
+                          (companyName.dirty || companyName.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Company Name is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Mode of Payment -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="modeOfPayment" class="form-label"
+                        >Mode of Payment
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #modeOfPayment="ngModel"
+                        name="modeOfPayment"
+                        id="modeOfPayment"
+                        [(ngModel)]="newInvoice.modeOfPayment"
+                        class="form-select {{
+                          modeOfPayment.invalid &&
+                          (modeOfPayment.dirty || modeOfPayment.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                      >
+                        <option value="" disabled selected>
+                          Select Mode of Payment
+                        </option>
+                        <option
+                          *ngFor="let entry of modeOfPayments"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          modeOfPayment.invalid &&
+                          (modeOfPayment.dirty || modeOfPayment.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Mode of Payment is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Invoice Date -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="invoiceDate" class="form-label"
+                        >Invoice Date <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #invoiceDate="ngModel"
+                        appendTo="body"
+                        [(ngModel)]="dates.invoiceDate"
+                        (ngModelChange)="convertDateToString(1)"
+                        name="invoiceDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          invoiceDate.invalid &&
+                          (invoiceDate.dirty || invoiceDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [dateFormat]="'dd-mm-yy'"
+                        showButtonBar
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          invoiceDate.invalid &&
+                          (invoiceDate.dirty || invoiceDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice date is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- From Date -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="fromDate" class="form-label"
+                        >From Date <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #fromDate="ngModel"
+                        appendTo="body"
+                        [(ngModel)]="dates.fromDate"
+                        (ngModelChange)="convertDateToString(2)"
+                        name="fromDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          fromDate.invalid &&
+                          (fromDate.dirty || fromDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [dateFormat]="'dd-mm-yy'"
+                        showButtonBar
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          fromDate.invalid &&
+                          (fromDate.dirty || fromDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        From date is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <!-- Mode of Payment, Invoice Date and Service Date -->
+
+                <!-- Vendor Name, Advance Amount, Invoice Attachment, and Jobcard pic -->
+                <div class="row">
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="toDate" class="form-label"
+                        >To Date <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #toDate="ngModel"
+                        appendTo="body"
+                        [(ngModel)]="dates.toDate"
+                        (ngModelChange)="convertDateToString(3)"
+                        name="toDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          toDate.invalid && (toDate.dirty || toDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [dateFormat]="'dd-mm-yy'"
+                        showButtonBar
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          toDate.invalid && (toDate.dirty || toDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        To date is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="vendorName" class="form-label"
+                        >Vendor Name <span class="text-danger">*</span></label
+                      >
+                      <p-dropdown
+                        #vendorId="ngModel"
+                        name="vendorName"
+                        id="vendorName"
+                        [options]="vendors"
+                        optionLabel="name"
+                        [disabled]="newInvoice.advanceAmount > 0"
+                        optionValue="id"
+                        [virtualScroll]="true"
+                        [virtualScrollItemSize]="30"
+                        [(ngModel)]="newInvoice.vendorId"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newInvoice.vendorId && vendorId.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        placeholder="Select Vendor Name"
+                        required
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newInvoice.vendorId &&
+                          (vendorId.touched || vendorId.dirty)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vendor name is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="quotationAmount" class="form-label"
+                        >Quoted Amount
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #totalEstimatedCost="ngModel"
+                          name="totalEstimatedCost"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="selectedTicket!.finalAmount"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="advanceAmount" class="form-label"
+                        >Advance Amount
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #advanceAmount="ngModel"
+                          name="advanceAmount"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newInvoice!.advanceAmount"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Upload Invoice -->
+                  <div class="col-2">
+                    <div class="row">
+                      <div class="col">
+                        <div class="form-group">
+                          <label for="uploadInvoicePic" class="form-label">
+                            Upload Invoice
+                            <span class="text-danger">*</span></label
+                          >
+                          <div>
+                            <p-button
+                              *ngIf="!newInvoice.invoiceAttachment"
+                              label="Browse"
+                              (onClick)="toggleUploadAttachmentDialog()"
+                              icon="pi pi-file-arrow-up"
+                              severity="info"
+                              [style]="{ width: 'fit-content' }"
+                              iconPos="right"
+                              autofocus="false"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Vendor Name, Advance Amount, Invoice Attachment, and Jobcard pic -->
+
+                <div class="d-flex justify-content-between py-3">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="
+                      invoiceDetails.invalid ||
+                      newInvoice.invoiceAmount != newInvoice.grandTotal ||
+                      newInvoice.invoiceAmount >
+                        selectedTicket.finalAmount * 1.1
+                    "
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <!-- End of Invoice Details -->
+
+        <p-stepperPanel header="Confirmation">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <p>
+                Are you sure you want to submit the invoice details for the
+                vehicle with registration number
+                <strong>{{ selectedTicket.registrationNumber }}</strong
+                >?<br />
+                The invoice includes the following information:
+              </p>
+
+              <ul class="row">
+                <li class="col-md-4">
+                  <strong>Invoice Number :</strong>
+                  {{ newInvoice.invoiceNumber }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Invoice Amount :</strong>
+                  {{
+                    newInvoice.invoiceAmount
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Invoice Date :</strong>
+                  {{ dates.invoiceDate | date : "dd-MM-yyyy" }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Type Of Compliance :</strong>
+                  {{ selectedTicket.typeOfCompliance }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Company Name :</strong>
+                  {{ newInvoice.companyName }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Invoice Type :</strong>
+                  {{ newInvoice.invoiceType }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Mode of Payment :</strong>
+                  {{ newInvoice.modeOfPayment }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Vendor Name :</strong>
+                  {{ newInvoice.vendorName }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Advance Amount :</strong>
+                  {{
+                    (newInvoice.advanceAmount
+                      | currency : "INR" : "symbol-narrow" : "0.2-2") || "NA"
+                  }}
+                </li>
+              </ul>
+
+              <p>
+                Please review all the details carefully and click on
+                <strong>Submit Details</strong> to confirm.
+              </p>
+
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  class="me-1"
+                  [disabled]="showLoader || formActionsDisabled"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="Submit Details"
+                  (onClick)="submitInvoiceDetails()"
+                  [disabled]="showLoader || formActionsDisabled"
+                  icon="pi pi-file-check"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+      </p-stepper>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Upload Invoice Dialog -->
+</p-dialog>
+<!-- End of View Compliance Request Dialog -->
+
+<!-- Select Zone, Region, Branch and Hub Dialog for Creating Vehicle Compliance Request -->
+<form #locationFormRef="ngForm" (submit)="createTicket()" ngNativeValidate>
+  <p-dialog
+    [(visible)]="showCreateRequestDialog"
+    [style]="{ width: '550px' }"
+    header="New Compliance Request"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <!-- Zone and Region Selection -->
+      <div class="row">
+        <div class="col">
+          <div class="field form-group">
+            <label for="zone" class="form-label">Zone</label>
+            <select
+              #zone="ngModel"
+              name="zone"
+              id="zone"
+              [(ngModel)]="newTicket.zone"
+              (ngModelChange)="loadRegions()"
+              class="form-select {{
+                zone.invalid && (zone.dirty || zone.touched) ? 'is-invalid' : ''
+              }}"
+              required
+              autofocus
+            >
+              <option value="" disabled selected>Select Zone</option>
+              <option *ngFor="let zone of zones" [value]="zone">
+                {{ zone.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="zone.invalid && (zone.dirty || zone.touched)"
+              class="form-text text-danger"
+            >
+              Zone is required
+            </p>
+          </div>
+        </div>
+        <!-- End of Zone Select -->
+        <div class="col" *ngIf="this.newTicket.zone">
+          <div class="field form-group">
+            <label for="region" class="form-label">Region</label>
+            <select
+              #region="ngModel"
+              name="region"
+              id="region"
+              [(ngModel)]="newTicket.region"
+              (ngModelChange)="loadBranches()"
+              autocomplete="off"
+              [disabled]="!this.newTicket.zone"
+              class="form-select {{
+                region.invalid && (region.dirty || region.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+            >
+              <option value="" disabled selected>Select Region</option>
+              <option *ngFor="let region of regions" [value]="region">
+                {{ region.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="region.invalid && (region.dirty || region.touched)"
+              class="form-text text-danger"
+            >
+              Region is required
+            </p>
+          </div>
+        </div>
+        <!-- End of Region Select -->
+      </div>
+      <!-- End of Zone and Region Selection -->
+      <!-- Branch and Hub Selection -->
+      <div class="row">
+        <div class="col" *ngIf="this.newTicket.region">
+          <div class="field form-group">
+            <label for="branch" class="form-label">Branch</label>
+            <select
+              #branch="ngModel"
+              name="branch"
+              id="branch"
+              [(ngModel)]="newTicket.branch"
+              (ngModelChange)="loadHubs()"
+              autocomplete="off"
+              [disabled]="!this.newTicket.region"
+              class="form-select {{
+                branch.invalid && (branch.dirty || branch.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+            >
+              <option value="" disabled selected>Select Branch</option>
+
+              <option *ngFor="let branch of branches" [value]="branch">
+                {{ branch.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="branch.invalid && (branch.dirty || branch.touched)"
+              class="form-text text-danger"
+            >
+              Branch is required
+            </p>
+          </div>
+        </div>
+        <div class="col" *ngIf="this.newTicket.branch">
+          <div class="field form-group">
+            <label for="location" class="form-label">Hub</label>
+            <select
+              #location="ngModel"
+              name="location"
+              id="location"
+              [(ngModel)]="newTicket.hub"
+              autocomplete="off"
+              [disabled]="!this.newTicket.region"
+              class="form-select {{
+                location.invalid && (location.dirty || location.touched)
+                  ? 'is-invalid'
+                  : ''
+              }}"
+              required
+            >
+              <option value="" disabled selected>Select Hub</option>
+
+              <option *ngFor="let hub of locations" [value]="hub">
+                {{ hub.toUpperCase() }}
+              </option>
+            </select>
+            <p
+              *ngIf="location.invalid && (location.dirty || location.touched)"
+              class="form-text text-danger"
+            >
+              Hub is required
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- End of Branch and Hub Selection -->
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        pRipple
+        type="button"
+        label="Cancel"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="toggleCreateRequestDialog()"
+      ></button>
+      <button
+        pButton
+        [disabled]="locationFormRef.invalid"
+        pRipple
+        label="Proceed"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        class="p-button-text"
+        type="submit"
+      ></button>
+    </ng-template>
+  </p-dialog>
+</form>
+<!-- End of Select Zone, Region, Branch and Hub Dialog for Creating Vehicle Compliance Request -->
+
+<!-- Filter Compliance Requests Dialog -->
+<p-dialog
+  [(visible)]="showFilterDialog"
+  header="Filter Compliance Requests"
+  modal="true"
+  [style]="{ width: '500px', height: '500px' }"
+>
+  <ng-template pTemplate="content">
+    <div class="container">
+      <p-tree
+        [value]="filters"
+        selectionMode="checkbox"
+        class="w-full md:w-30rem"
+        [(selection)]="selectedZones"
+        (onNodeSelect)="viewNodes($event)"
+      >
+      </p-tree>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      type="button"
+      label="Cancel"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="toggleFilterDialog()"
+    ></button>
+    <button
+      *ngIf="isFilterApplied"
+      pButton
+      pRipple
+      label="Reset"
+      icon="pi pi-undo"
+      class="p-button-text"
+      iconPos="right"
+      type="button"
+      (click)="resetFilters()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="Apply"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      class="p-button-text"
+      type="button"
+      (click)="applyFilter()"
+      [disabled]="!hasSelections()"
+    ></button>
+  </ng-template>
+</p-dialog>
+<!-- End of Filter Compliance Requests Dialog -->
+
+<p-confirmDialog [style]="{ width: '450px' }" />
+<app-loader *ngIf="showLoader"> </app-loader>

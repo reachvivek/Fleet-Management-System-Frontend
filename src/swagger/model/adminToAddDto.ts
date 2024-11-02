@@ -19,4 +19,5 @@ export interface AdminToAddDto {
     empMobNo?: string;
     accessLevel?: string;
     accessScope?: string;
+    reportingTo?: string;
 }

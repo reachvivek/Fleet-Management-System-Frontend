@@ -17,10 +17,17 @@ import { CustomHttpUrlEncodingCodec }                        from '../encoder';
 
 import { Observable }                                        from 'rxjs';
 
+import { ComplianceReport } from '../model/complianceReport';
 import { History } from '../model/history';
+import { OffRoadReasonDto } from '../model/offRoadReasonDto';
 import { SystemAndPart } from '../model/systemAndPart';
-import { Vehicle } from '../model/vehicle';
+import { UpdateVehicleDetailsDto } from '../model/updateVehicleDetailsDto';
+import { VehicleDetailsDto } from '../model/vehicleDetailsDto';
+import { VehicleForDashboard } from '../model/vehicleForDashboard';
+import { VehicleOffRoadReport } from '../model/vehicleOffRoadReport';
 import { Vendor } from '../model/vendor';
+import { VendorDetails } from '../model/vendorDetails';
+import { VendorForSelectDto } from '../model/vendorForSelectDto';
 
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
 import { Configuration }                                     from '../configuration';
@@ -59,6 +66,51 @@ export class BulkUploadService {
         return false;
     }
 
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadAddVehiclePost(body?: VehicleDetailsDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public bulkUploadAddVehiclePost(body?: VehicleDetailsDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public bulkUploadAddVehiclePost(body?: VehicleDetailsDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public bulkUploadAddVehiclePost(body?: VehicleDetailsDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<any>('post',`${this.basePath}/BulkUpload/AddVehicle`,
+            {
+                body: body,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
 
     /**
      * 
@@ -114,6 +166,82 @@ export class BulkUploadService {
         return this.httpClient.request<any>('post',`${this.basePath}/BulkUpload/CSVFile`,
             {
                 body: convertFormParamsToString ? formParams.toString() : formParams,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetAllVendorsGet(observe?: 'body', reportProgress?: boolean): Observable<Array<VendorForSelectDto>>;
+    public bulkUploadGetAllVendorsGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<VendorForSelectDto>>>;
+    public bulkUploadGetAllVendorsGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<VendorForSelectDto>>>;
+    public bulkUploadGetAllVendorsGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<Array<VendorForSelectDto>>('get',`${this.basePath}/BulkUpload/GetAllVendors`,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetOffRoadReasonsGet(observe?: 'body', reportProgress?: boolean): Observable<Array<OffRoadReasonDto>>;
+    public bulkUploadGetOffRoadReasonsGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<OffRoadReasonDto>>>;
+    public bulkUploadGetOffRoadReasonsGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<OffRoadReasonDto>>>;
+    public bulkUploadGetOffRoadReasonsGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<Array<OffRoadReasonDto>>('get',`${this.basePath}/BulkUpload/GetOffRoadReasons`,
+            {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,
@@ -204,9 +332,128 @@ export class BulkUploadService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public bulkUploadGetVehicleMasterGet(observe?: 'body', reportProgress?: boolean): Observable<Array<Vehicle>>;
-    public bulkUploadGetVehicleMasterGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<Vehicle>>>;
-    public bulkUploadGetVehicleMasterGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<Vehicle>>>;
+    public bulkUploadGetVehicleComplianceReportGet(observe?: 'body', reportProgress?: boolean): Observable<Array<ComplianceReport>>;
+    public bulkUploadGetVehicleComplianceReportGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<ComplianceReport>>>;
+    public bulkUploadGetVehicleComplianceReportGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<ComplianceReport>>>;
+    public bulkUploadGetVehicleComplianceReportGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<Array<ComplianceReport>>('get',`${this.basePath}/BulkUpload/GetVehicleComplianceReport`,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param registration_no 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVehicleDetailsGet(registration_no?: string, observe?: 'body', reportProgress?: boolean): Observable<VehicleDetailsDto>;
+    public bulkUploadGetVehicleDetailsGet(registration_no?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<VehicleDetailsDto>>;
+    public bulkUploadGetVehicleDetailsGet(registration_no?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<VehicleDetailsDto>>;
+    public bulkUploadGetVehicleDetailsGet(registration_no?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (registration_no !== undefined && registration_no !== null) {
+            queryParameters = queryParameters.set('registration_no', <any>registration_no);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<VehicleDetailsDto>('get',`${this.basePath}/BulkUpload/GetVehicleDetails`,
+            {
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVehicleManufacturersGet(observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public bulkUploadGetVehicleManufacturersGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public bulkUploadGetVehicleManufacturersGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public bulkUploadGetVehicleManufacturersGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<any>('get',`${this.basePath}/BulkUpload/GetVehicleManufacturers`,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVehicleMasterGet(observe?: 'body', reportProgress?: boolean): Observable<Array<VehicleForDashboard>>;
+    public bulkUploadGetVehicleMasterGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<VehicleForDashboard>>>;
+    public bulkUploadGetVehicleMasterGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<VehicleForDashboard>>>;
     public bulkUploadGetVehicleMasterGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         let headers = this.defaultHeaders;
@@ -226,8 +473,181 @@ export class BulkUploadService {
         const consumes: string[] = [
         ];
 
-        return this.httpClient.request<Array<Vehicle>>('get',`${this.basePath}/BulkUpload/GetVehicleMaster`,
+        return this.httpClient.request<Array<VehicleForDashboard>>('get',`${this.basePath}/BulkUpload/GetVehicleMaster`,
             {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param manufacturer 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVehicleModelsGet(manufacturer?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public bulkUploadGetVehicleModelsGet(manufacturer?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public bulkUploadGetVehicleModelsGet(manufacturer?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public bulkUploadGetVehicleModelsGet(manufacturer?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (manufacturer !== undefined && manufacturer !== null) {
+            queryParameters = queryParameters.set('manufacturer', <any>manufacturer);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<any>('get',`${this.basePath}/BulkUpload/GetVehicleModels`,
+            {
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVehicleOffRoadReportGet(observe?: 'body', reportProgress?: boolean): Observable<Array<VehicleOffRoadReport>>;
+    public bulkUploadGetVehicleOffRoadReportGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<VehicleOffRoadReport>>>;
+    public bulkUploadGetVehicleOffRoadReportGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<VehicleOffRoadReport>>>;
+    public bulkUploadGetVehicleOffRoadReportGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<Array<VehicleOffRoadReport>>('get',`${this.basePath}/BulkUpload/GetVehicleOffRoadReport`,
+            {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param branchName 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVehicleRegistrationNumbersGet(branchName?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<string>>;
+    public bulkUploadGetVehicleRegistrationNumbersGet(branchName?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<string>>>;
+    public bulkUploadGetVehicleRegistrationNumbersGet(branchName?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<string>>>;
+    public bulkUploadGetVehicleRegistrationNumbersGet(branchName?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (branchName !== undefined && branchName !== null) {
+            queryParameters = queryParameters.set('branchName', <any>branchName);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<Array<string>>('get',`${this.basePath}/BulkUpload/GetVehicleRegistrationNumbers`,
+            {
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param ID 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadGetVendorDetailsGet(ID?: string, observe?: 'body', reportProgress?: boolean): Observable<VendorDetails>;
+    public bulkUploadGetVendorDetailsGet(ID?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<VendorDetails>>;
+    public bulkUploadGetVendorDetailsGet(ID?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<VendorDetails>>;
+    public bulkUploadGetVendorDetailsGet(ID?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (ID !== undefined && ID !== null) {
+            queryParameters = queryParameters.set('ID', <any>ID);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<VendorDetails>('get',`${this.basePath}/BulkUpload/GetVendorDetails`,
+            {
+                params: queryParameters,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,
@@ -266,6 +686,96 @@ export class BulkUploadService {
 
         return this.httpClient.request<Array<Vendor>>('get',`${this.basePath}/BulkUpload/GetVendorMaster`,
             {
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public bulkUploadUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public bulkUploadUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public bulkUploadUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<any>('put',`${this.basePath}/BulkUpload/UpdateVehicleDetails`,
+            {
+                body: body,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public bulkUploadUpdateVehiclePut(body?: VehicleDetailsDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public bulkUploadUpdateVehiclePut(body?: VehicleDetailsDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public bulkUploadUpdateVehiclePut(body?: VehicleDetailsDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public bulkUploadUpdateVehiclePut(body?: VehicleDetailsDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<any>('put',`${this.basePath}/BulkUpload/UpdateVehicle`,
+            {
+                body: body,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,

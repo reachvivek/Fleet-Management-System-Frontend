@@ -1,0 +1,909 @@
+<div class="card">
+  <div class="container">
+    <p-toast></p-toast>
+    <div class="row mb-2">
+      <div class="col-9">
+        <nav style="--bs-breadcrumb-divider: '>'" aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a
+                routerLink="/battery-requests"
+                class="display-6 fs-5 text-decoration-none"
+                >Battery Requests</a
+              >
+            </li>
+            <li
+              class="breadcrumb-item active display-6 fs-5"
+              aria-current="page"
+            >
+              {{ editMode ? "Edit" : "Create New" }} Battery Request
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <form #addRequestDetails="ngForm" ngNativeValidate>
+      <p-stepper orientation="horizontal" [linear]="true">
+        <p-stepperPanel header="Vehicle Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addVehicleDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleRegistrationNumber" class="form-label"
+                        >Vehicle Registration Number
+                        <span class="text-danger">*</span>
+                      </label>
+                      <p-dropdown
+                        #registrationNumber="ngModel"
+                        name="registrationNumber"
+                        [options]="registrationNumbers"
+                        [(ngModel)]="newTicket.registrationNumber"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        (ngModelChange)="loadVehicleDetails()"
+                        placeholder="Select Registration Number"
+                        [disabled]="editMode"
+                        required
+                        autofocus
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle registration number is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleAge" class="form-label"
+                        >Vehicle Age</label
+                      >
+                      <input
+                        #vehicleAge="ngModel"
+                        name="vehicleAge"
+                        class="form-control"
+                        id="vehicleAge"
+                        [(ngModel)]="newTicket.vehicleAge"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="manufacturer" class="form-label"
+                        >Manufacturer</label
+                      >
+                      <input
+                        #manufacturer="ngModel"
+                        name="manufacturer"
+                        class="form-control"
+                        id="manufacturer"
+                        [(ngModel)]="newTicket.manufacturer"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="model" class="form-label">Model</label>
+                      <input
+                        #model="ngModel"
+                        name="model"
+                        class="form-control"
+                        id="model"
+                        [(ngModel)]="newTicket.model"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-check mt-4">
+                      <label class="form-label" for="flexCheckDefault">
+                        Vehicle Off Road Status
+                      </label>
+                      <input
+                        #isVehicleOffroad="ngModel"
+                        name="isVehicleOffroad"
+                        id="isVehicleOffroad"
+                        class="form-check-input"
+                        [(ngModel)]="newTicket.isVehicleOffRoad"
+                        (ngModelChange)="goToBottomAfter(50)"
+                        type="checkbox"
+                        value="1"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-4" *ngIf="!newTicket.isVehicleOffRoad">
+                    <div class="field form-group">
+                      <label for="vehicleSubStatus" class="form-label"
+                        >Vehicle Sub Status
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #vehicleSubStatus="ngModel"
+                        name="vehicleSubStatus"
+                        id="vehicleSubStatus"
+                        [(ngModel)]="newTicket.vehicleSubStatus"
+                        [disabled]="newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Vehicle Sub Status
+                        </option>
+                        <option
+                          *ngFor="let entry of onRoadSubStatuses"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle sub status is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col-4" *ngIf="newTicket.isVehicleOffRoad">
+                    <div class="field form-group">
+                      <label for="offRoadReason" class="form-label"
+                        >Off Road Reason
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #offRoadReason="ngModel"
+                        name="offRoadReason"
+                        id="offRoadReason"
+                        [(ngModel)]="newTicket.offRoadReason"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Off Road Reason
+                        </option>
+                        <option
+                          *ngFor="let entry of offRoadReasons"
+                          [value]="entry.reason"
+                        >
+                          {{ entry.reason }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle Off Road reason is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" *ngIf="newTicket.isVehicleOffRoad">
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="offRoadStatusChangeDate" class="form-label"
+                        >Off Road Status Change Date
+                        <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #offRoadStatusChangeDate="ngModel"
+                        [(ngModel)]="dates.offRoadStatusChangeDate"
+                        (ngModelChange)="convertDateToString(2)"
+                        name="offRoadStatusChangeDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        [dateFormat]="dateFormat"
+                        showButtonBar
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle off road status change date is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex py-4 flex-row-reverse">
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="addVehicleDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <p-stepperPanel header="Current Battery Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <div class="row">
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Make" class="form-label">Make</label>
+                    <input
+                      #battery_Make="ngModel"
+                      name="battery_Make"
+                      class="form-control"
+                      id="battery_Make"
+                      [(ngModel)]="newTicket.battery_Make"
+                      disabled="true"
+                    />
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Model" class="form-label">Model</label>
+                    <input
+                      #battery_Model="ngModel"
+                      name="battery_Model"
+                      class="form-control"
+                      id="battery_Model"
+                      [(ngModel)]="newTicket.battery_Model"
+                      disabled="true"
+                    />
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Serial_Number" class="form-label"
+                      >Serial Number</label
+                    >
+                    <input
+                      #batterySerialNumber="ngModel"
+                      name="batterySerialNumber"
+                      class="form-control"
+                      id="battery_Serial_Number"
+                      [(ngModel)]="newTicket.battery_Serial_Number"
+                      disabled="true"
+                    />
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Warranty" class="form-label"
+                      >Warranty (Months)</label
+                    >
+                    <input
+                      #batteryWarranty="ngModel"
+                      name="batteryWarranty"
+                      class="form-control"
+                      id="battery_Warranty"
+                      [(ngModel)]="newTicket.battery_Warranty"
+                      disabled="true"
+                    />
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="batteryCost" class="form-label">Cost</label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        #batteryCost="ngModel"
+                        name="batteryCost"
+                        type="number"
+                        class="form-control"
+                        id="batteryCost"
+                        [(ngModel)]="newTicket.battery_Cost"
+                        disabled
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Vendor_Name" class="form-label"
+                      >Vendor Name</label
+                    >
+                    <input
+                      #batteryVendorName="ngModel"
+                      name="batteryVendorName"
+                      class="form-control"
+                      id="battery_Vendor_Name"
+                      [(ngModel)]="newTicket.battery_Vendor_Name"
+                      disabled="true"
+                    />
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Age" class="form-label"
+                      >Battery Age (Months)</label
+                    >
+                    <input
+                      #batteryAge="ngModel"
+                      name="batteryAge"
+                      class="form-control"
+                      id="battery_Age"
+                      [(ngModel)]="newTicket.battery_Age"
+                      disabled="true"
+                    />
+                    <p
+                      *ngIf="newTicket.battery_Age < newTicket.battery_Warranty"
+                      class="text-danger"
+                    >
+                      The battery is still under warranty.
+                    </p>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="battery_Scrap_Value" class="form-label"
+                      >Battery Scrap Value</label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        #batteryScrapValue="ngModel"
+                        name="batteryScrapValue"
+                        type="number"
+                        class="form-control"
+                        id="batteryScrapValue"
+                        [(ngModel)]="newTicket.battery_Scrap_Value"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="Next"
+                  (onClick)="nextCallback.emit()"
+                  [disabled]="
+                    newTicket.battery_Age < newTicket.battery_Warranty
+                  "
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                />
+              </div>
+            </p-card> </ng-template
+        ></p-stepperPanel>
+        <p-stepperPanel header="New Battery Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <form #addBatteryDetails="ngForm" ngNativeValidate></form>
+            <p-card>
+              <div class="row">
+                <!-- Battery Make -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="batteryMake" class="form-label"
+                      >Battery Make <span class="text-danger">*</span></label
+                    >
+                    <select
+                      #batteryMake="ngModel"
+                      class="form-select"
+                      id="batteryMake"
+                      [(ngModel)]="newTicket.new_Battery_Make"
+                      name="batteryMake"
+                      class="form-select {{
+                        batteryMake.invalid &&
+                        (batteryMake.dirty || batteryMake.touched)
+                          ? 'is-invalid'
+                          : ''
+                      }}"
+                      required
+                    >
+                      <option value="" disabled selected>
+                        Select a Battery Make
+                      </option>
+                      <!-- Default Option -->
+                      <option *ngFor="let make of batteryMakes" [value]="make">
+                        {{ make }}
+                      </option>
+                    </select>
+                    <p
+                      *ngIf="batteryMake.invalid && batteryMake.touched"
+                      class="text-danger"
+                    >
+                      Battery make is required
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Battery Model -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="batteryModel" class="form-label">
+                      Battery Model <span class="text-danger">*</span>
+                    </label>
+                    <select
+                      #batteryModel="ngModel"
+                      class="form-select {{
+                        batteryModel.invalid &&
+                        (batteryModel.dirty || batteryModel.touched)
+                          ? 'is-invalid'
+                          : ''
+                      }}"
+                      id="batteryModel"
+                      [(ngModel)]="newTicket.new_Battery_Model"
+                      name="batteryModel"
+                      required
+                    >
+                      <option value="" disabled selected>
+                        Select a Battery Model
+                      </option>
+                      <option
+                        *ngFor="let model of batteryModels"
+                        [value]="model"
+                      >
+                        {{ model }}
+                      </option>
+                    </select>
+                    <p
+                      *ngIf="batteryModel.invalid && batteryModel.touched"
+                      class="text-danger"
+                    >
+                      Battery model is required
+                    </p>
+                  </div>
+                </div>
+
+                <div class="col-4">
+                  <div class="field form-group">
+                    <label for="vendorName" class="form-label"
+                      >Vendor Name <span class="text-danger">*</span></label
+                    >
+                    <p-dropdown
+                      #vendorId="ngModel"
+                      name="vendorName"
+                      id="vendorName"
+                      [options]="vendors"
+                      optionLabel="name"
+                      optionValue="id"
+                      [virtualScroll]="true"
+                      [virtualScrollItemSize]="30"
+                      [(ngModel)]="newTicket.new_Battery_VendorId"
+                      [resetFilterOnHide]="true"
+                      class="{{
+                        !newTicket.new_Battery_VendorId && vendorId.touched
+                          ? 'ng-dirty ng-invalid'
+                          : ''
+                      }}"
+                      [filter]="true"
+                      [showClear]="true"
+                      placeholder="Select Vendor Name"
+                      required
+                    >
+                    </p-dropdown>
+                    <p
+                      *ngIf="
+                        !newTicket.new_Battery_VendorId &&
+                        (vendorId.touched || vendorId.dirty)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Vendor name is required
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Cost -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="cost" class="form-label">
+                      Battery Cost <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        type="number"
+                        class="form-control {{
+                          cost.invalid && (cost.dirty || cost.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        id="cost"
+                        [(ngModel)]="newTicket.new_Battery_Cost"
+                        (ngModelChange)="updateTotalEstimatedCost()"
+                        name="cost"
+                        required
+                        #cost="ngModel"
+                      />
+                    </div>
+                    <p *ngIf="cost.invalid && cost.touched" class="text-danger">
+                      Battery cost is required
+                    </p>
+                  </div>
+                </div>
+
+                <!-- GST -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="cost" class="form-label">
+                      GST <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        #battery_gst="ngModel"
+                        name="battery_gst"
+                        type="number"
+                        class="form-control {{
+                          battery_gst.invalid &&
+                          (battery_gst.dirty || battery_gst.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        id="battery_gst"
+                        [(ngModel)]="newTicket.new_Battery_GST"
+                        (ngModelChange)="updateTotalEstimatedCost()"
+                        required
+                      />
+                    </div>
+                    <p
+                      *ngIf="battery_gst.invalid && battery_gst.touched"
+                      class="text-danger"
+                    >
+                      Gst is required
+                    </p>
+                  </div>
+                </div>
+
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="totalEstimatedCost" class="form-label"
+                      >Total Estimated Cost (With GST)</label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        type="text"
+                        disabled
+                        class="form-control"
+                        [value]="
+                          newTicket.new_Battery_Estimated_Cost
+                            | number : '1.2-5' : 'en-IN'
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-6">
+                  <div class="form-group">
+                    <label for="uploadQuotation" class="form-label"
+                      >Quotation Pic (acceptable formats: img/pdf)
+                      <span class="text-danger">*</span>
+                    </label>
+                    <button
+                      *ngIf="!newTicket.quotationAttachment"
+                      pButton
+                      pRipple
+                      [rounded]="true"
+                      icon="pi pi-file-arrow-up"
+                      label="Upload Quotation Picture"
+                      type="button"
+                      class="p-button-primary m-0"
+                      (click)="toggleUploadQuotationDialog()"
+                    ></button>
+                  </div>
+                </div>
+              </div>
+
+              <hr />
+
+              <div class="row">
+                <!-- Current Battery Serial Number -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label
+                      for="current_Battery_Serial_Number"
+                      class="form-label"
+                    >
+                      Current Battery Serial Number
+                      <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      #currentBatterySerialNumber="ngModel"
+                      name="currentBatterySerialNumber"
+                      type="text"
+                      class="form-control {{
+                        !doesSerialNumberMatch &&
+                        currentBatterySerialNumber.invalid &&
+                        (currentBatterySerialNumber.dirty ||
+                          currentBatterySerialNumber.touched)
+                          ? 'is-invalid'
+                          : doesSerialNumberMatch
+                          ? 'is-valid'
+                          : ''
+                      }}"
+                      id="current_Battery_Serial_Number"
+                      [(ngModel)]="newTicket.current_Battery_Serial_Number"
+                      (ngModelChange)="
+                        checkSerialNumber(
+                          newTicket.current_Battery_Serial_Number!
+                        )
+                      "
+                      required
+                    />
+                    <p
+                      *ngIf="
+                        currentBatterySerialNumber.invalid &&
+                        currentBatterySerialNumber.touched
+                      "
+                      class="text-danger"
+                    >
+                      Current Battery serial number is required
+                    </p>
+                    <p
+                      *ngIf="
+                        !doesSerialNumberMatch &&
+                        !currentBatterySerialNumber.invalid &&
+                        currentBatterySerialNumber.touched
+                      "
+                      class="text-danger"
+                    >
+                      The serial number provided does not match.
+                    </p>
+                    <p
+                      *ngIf="
+                        doesSerialNumberMatch &&
+                        !currentBatterySerialNumber.invalid &&
+                        currentBatterySerialNumber.touched
+                      "
+                      class="text-success"
+                    >
+                      The serial number has been verified.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="col-4">
+                  <div class="field form-group">
+                    <label for="isAdvanceRequired" class="form-label"
+                      >Is Advance Payment Required?
+                      <span class="text-danger">*</span></label
+                    >
+                    <select
+                      #isAdvanceRequired="ngModel"
+                      name="isAdvanceRequired"
+                      id="isAdvanceRequired"
+                      [(ngModel)]="newTicket.isAdvanceRequired"
+                      (ngModelChange)="checkValidAdvanceAmount()"
+                      class="form-select {{
+                        isAdvanceRequired.invalid &&
+                        (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                          ? 'is-invalid'
+                          : ''
+                      }}"
+                      required
+                      autofocus
+                    >
+                      <option value="" disabled selected>
+                        Select Advance Payment Required
+                      </option>
+                      <option [ngValue]="false">No</option>
+                      <option [ngValue]="true">Yes</option>
+                    </select>
+                    <p
+                      *ngIf="
+                        isAdvanceRequired.invalid &&
+                        (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Select if advance payment is required
+                    </p>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div
+                    *ngIf="this.newTicket!.isAdvanceRequired"
+                    class="form-group"
+                  >
+                    <label for="advanceAmount" class="form-label"
+                      >Advance Amount <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        #advanceAmount="ngModel"
+                        name="advanceAmount"
+                        type="number"
+                        class="form-control {{
+                          !isValidAdvanceAmount &&
+                          (advanceAmount.dirty || advanceAmount.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        [(ngModel)]="newTicket!.advanceAmount"
+                        (ngModelChange)="checkValidAdvanceAmount()"
+                        [disabled]="!newTicket.isAdvanceRequired"
+                        onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                        onpaste="return false"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <p
+                      *ngIf="
+                        advanceAmount.invalid &&
+                        (advanceAmount.dirty || advanceAmount.touched)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Advance amount is required
+                    </p>
+                    <p
+                      *ngIf="
+                        newTicket.isAdvanceRequired &&
+                        !isValidAdvanceAmount &&
+                        (advanceAmount.dirty || advanceAmount.touched)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Advance amount exceeds the permitted limit.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="Next"
+                  (onClick)="nextCallback.emit()"
+                  [disabled]="
+                    addBatteryDetails.invalid ||
+                    !doesSerialNumberMatch ||
+                    !isValidAdvanceAmount
+                  "
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+
+        <p-stepperPanel header="Confirmation">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <p>
+                Are you sure you want to
+                {{ editMode ? "update" : "create" }} this battery request for
+                vehicle with registration number
+                <strong>{{ newTicket.registrationNumber }}</strong> with total
+                estimated cost of
+                <strong
+                  >{{
+                    newTicket.new_Battery_Estimated_Cost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }} </strong
+                >? <br />
+                Please review the details and click on
+                {{ editMode ? "Update" : "Create" }} Battery Request.
+              </p>
+              <div class="row mt-1">
+                <div class="col">
+                  <label for="comment" class="form-label"
+                    >Overall Comment</label
+                  >
+                  <textarea
+                    #overallComment
+                    name="overallComment"
+                    class="form-control"
+                    id="comment"
+                    rows="2"
+                    [(ngModel)]="newTicket!.overallComment"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  class="me-1"
+                  [disabled]="showLoader || formActionsDisabled"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="{{ editMode ? 'Update' : 'Create' }} Battery Request"
+                  (onClick)="submitBatteryRequest()"
+                  [disabled]="showLoader || formActionsDisabled"
+                  icon="pi pi-file-check"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+      </p-stepper>
+    </form>
+  </div>
+</div>

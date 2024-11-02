@@ -133,6 +133,7 @@
   >
     <ng-template pTemplate="content">
       <div class="formgrid grid row">
+        <!-- Name -->
         <div class="col">
           <div class="field form-group">
             <label for="name" class="form-label">Name</label>
@@ -161,6 +162,7 @@
             </p>
           </div>
         </div>
+        <!-- Employee Code -->
         <div class="col">
           <div class="field form-group">
             <label for="empCode" class="form-label">Employee Code</label>
@@ -192,6 +194,7 @@
       </div>
 
       <div class="formgrid grid row">
+        <!-- Mobile Number -->
         <div class="col">
           <div class="field form-group">
             <label for="description" class="form-label row"
@@ -229,6 +232,7 @@
             </p>
           </div>
         </div>
+        <!-- Email ID -->
         <div class="col">
           <div class="field form-group">
             <label for="EmpEmail" class="form-label">Email ID</label>
@@ -262,6 +266,7 @@
       </div>
 
       <div class="row">
+        <!-- Active -->
         <div class="col-6">
           <div class="field form-group">
             <label for="Active" class="form-label">Active</label>
@@ -296,6 +301,7 @@
             </p>
           </div>
         </div>
+        <!-- Role -->
         <div class="col-6">
           <div class="field form-group">
             <label for="Role" class="form-label">Role</label>
@@ -326,6 +332,7 @@
       </div>
 
       <div class="formgrid grid row">
+        <!-- Access Level -->
         <div class="col-6">
           <div class="field form-group">
             <label for="accessLevel" class="form-label">Access Level</label>
@@ -366,6 +373,7 @@
             </p>
           </div>
         </div>
+        <!-- Access Scope -->
         <div
           class="col-6"
           *ngIf="newUser.accessLevel && newUser.accessLevel != 'National'"
@@ -394,6 +402,27 @@
               Access scope is required
             </p>
           </div>
+        </div>
+        <div class="col-6">
+          <label for="reportingTo" class="form-label">Reporting To</label>
+          <select
+            #reportingTo="ngModel"
+            name="reportingTo"
+            id="reportingTo"
+            [(ngModel)]="newUser.reportingTo"
+            (input)="this.isEditMode ? checkChanges() : null"
+            autocomplete="off"
+            [ngClass]="{
+              'form-select': true,
+              'invalid-option':
+                reportingTo.value === undefined || !reportingTo.value
+            }"
+          >
+            <option value="" disabled selected>Select Reporting To</option>
+            <option *ngFor="let email of reportingToEmails" [value]="email">
+              {{ email }}
+            </option>
+          </select>
         </div>
       </div>
     </ng-template>

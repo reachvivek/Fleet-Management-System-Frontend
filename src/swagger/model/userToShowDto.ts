@@ -20,4 +20,5 @@ export interface UserToShowDto {
     roles?: string;
     accessLevel?: string;
     accessScope?: string;
+    reportingTo?: string;
 }

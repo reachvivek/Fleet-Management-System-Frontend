@@ -36,6 +36,16 @@ import { TransactionsComponent } from './transactions/transactions.component';
 import { RemoveParenthesisTextPipe } from '../pipes/remove-parenthesis-text.pipe';
 import { TreeModule } from 'primeng/tree';
 import { CheckboxModule } from 'primeng/checkbox';
+import { ComplianceRequestManagementComponent } from './compliance-request-management/compliance-request-management.component';
+import { CreateComplianceRequestComponent } from './compliance-request-management/create-compliance-request/create-compliance-request.component';
+import { ComplianceComponent } from './reports/compliance/compliance.component';
+import { VehicleOffRoadComponent } from './reports/vehicle-off-road/vehicle-off-road.component';
+import { VehicleDetailsComponent } from './bulk-upload/vehicle/vehicle-details/vehicle-details.component';
+import { BatteryRequestManagementComponent } from './battery-request-management/battery-request-management.component';
+import { CreateBatteryRequestComponent } from './battery-request-management/create-battery-request/create-battery-request.component';
+import { TyreRequestManagementComponent } from './tyre-request-management/tyre-request-management.component';
+import { CreateTyreRequestComponent } from './tyre-request-management/create-tyre-request/create-tyre-request.component';
+import { ScrapRequestManagementComponent } from './scrap-request-management/scrap-request-management.component';
 
 @NgModule({
   declarations: [
@@ -50,6 +60,16 @@ import { CheckboxModule } from 'primeng/checkbox';
     HistoryComponent,
     TransactionsComponent,
     RemoveParenthesisTextPipe,
+    ComplianceRequestManagementComponent,
+    CreateComplianceRequestComponent,
+    ComplianceComponent,
+    VehicleOffRoadComponent,
+    VehicleDetailsComponent,
+    BatteryRequestManagementComponent,
+    CreateBatteryRequestComponent,
+    TyreRequestManagementComponent,
+    CreateTyreRequestComponent,
+    ScrapRequestManagementComponent,
   ],
   imports: [
     ReactiveFormsModule,

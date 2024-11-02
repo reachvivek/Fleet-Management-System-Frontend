@@ -10,6 +10,7 @@
  * Do not edit the class manually.
  */
 
-export interface State { 
-    state_Name?: string;
+export interface VendorForSelectDto { 
+    id?: string;
+    name?: string;
 }

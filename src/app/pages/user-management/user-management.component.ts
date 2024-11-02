@@ -47,6 +47,7 @@ export class UserManagementComponent {
   accessLevels: string[] = ['National', 'Zone', 'Region', 'Branch'];
   accessScopes: string[] = [];
   selectedAccessScope: string[] = [];
+  reportingToEmails: string[] = [];
 
   newUser: AdminToAddDto = {
     empCode: '',
@@ -57,6 +58,7 @@ export class UserManagementComponent {
     active: undefined,
     accessLevel: '',
     accessScope: '',
+    reportingTo: '',
   };
   selectedUser: AdminToEditDto = {};
   constructor(
@@ -67,6 +69,7 @@ export class UserManagementComponent {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadEmails();
   }
 
   async loadUsers() {
@@ -74,6 +77,17 @@ export class UserManagementComponent {
       const res = await firstValueFrom(this.adminService.adminGetUsersGet());
       if (res && res.length) {
         this.users = res;
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+  }
+
+  async loadEmails() {
+    try {
+      const res = await firstValueFrom(this.adminService.adminGetEmailsGet());
+      if (res && res.length) {
+        this.reportingToEmails = res;
       }
     } catch (err: any) {
       console.error(err);
@@ -151,6 +165,7 @@ export class UserManagementComponent {
       empEmail: '',
       empMobNo: '',
       roleIds: [],
+      reportingTo: '',
       active: undefined,
     };
     if (edit) {
@@ -178,6 +193,7 @@ export class UserManagementComponent {
         empMobNo: '',
         roleIds: [],
         active: undefined,
+        reportingTo: '',
       };
     }
     this.showUserDialog = !this.showUserDialog;
@@ -361,6 +377,7 @@ export class UserManagementComponent {
     if (
       this.selectedUser.empName !== this.newUser.empName ||
       this.selectedUser.empEmail !== this.newUser.empEmail ||
+      this.selectedUser.reportingTo !== this.newUser.reportingTo ||
       this.selectedUser.empMobNo !== this.newUser.empMobNo ||
       this.selectedUser.empCode !== this.newUser.empCode ||
       this.selectedUser.active !== this.newUser.active ||

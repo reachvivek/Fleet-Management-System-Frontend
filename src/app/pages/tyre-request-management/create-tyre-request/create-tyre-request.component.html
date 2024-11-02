@@ -1,0 +1,1795 @@
+<div class="card">
+  <div class="container">
+    <p-toast></p-toast>
+    <div class="row mb-2">
+      <div class="col-9">
+        <nav style="--bs-breadcrumb-divider: '>'" aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a
+                routerLink="/tyre-requests"
+                class="display-6 fs-5 text-decoration-none"
+                >Tyre Requests</a
+              >
+            </li>
+            <li
+              class="breadcrumb-item active display-6 fs-5"
+              aria-current="page"
+            >
+              {{ editMode ? "Edit" : "Create New" }} Tyre Request
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <form #addRequestDetails="ngForm" ngNativeValidate>
+      <p-stepper orientation="horizontal" [linear]="false">
+        <p-stepperPanel header="Vehicle Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addVehicleDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleRegistrationNumber" class="form-label"
+                        >Vehicle Registration Number
+                        <span class="text-danger">*</span>
+                      </label>
+                      <p-dropdown
+                        #registrationNumber="ngModel"
+                        name="registrationNumber"
+                        [options]="registrationNumbers"
+                        [(ngModel)]="newTicket.registrationNumber"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        (ngModelChange)="loadVehicleDetails()"
+                        placeholder="Select Registration Number"
+                        [disabled]="editMode"
+                        required
+                        autofocus
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle registration number is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleAge" class="form-label"
+                        >Vehicle Age</label
+                      >
+                      <input
+                        #vehicleAge="ngModel"
+                        name="vehicleAge"
+                        class="form-control"
+                        id="vehicleAge"
+                        [(ngModel)]="newTicket.vehicleAge"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="manufacturer" class="form-label"
+                        >Manufacturer</label
+                      >
+                      <input
+                        #manufacturer="ngModel"
+                        name="manufacturer"
+                        class="form-control"
+                        id="manufacturer"
+                        [(ngModel)]="newTicket.manufacturer"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="model" class="form-label">Model</label>
+                      <input
+                        #model="ngModel"
+                        name="model"
+                        class="form-control"
+                        id="model"
+                        [(ngModel)]="newTicket.model"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-check mt-4">
+                      <label class="form-label" for="flexCheckDefault">
+                        Vehicle Off Road Status
+                      </label>
+                      <input
+                        #isVehicleOffroad="ngModel"
+                        name="isVehicleOffroad"
+                        id="isVehicleOffroad"
+                        class="form-check-input"
+                        [(ngModel)]="newTicket.isVehicleOffRoad"
+                        type="checkbox"
+                        value="1"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-4" *ngIf="!newTicket.isVehicleOffRoad">
+                    <div class="field form-group">
+                      <label for="vehicleSubStatus" class="form-label"
+                        >Vehicle Sub Status
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #vehicleSubStatus="ngModel"
+                        name="vehicleSubStatus"
+                        id="vehicleSubStatus"
+                        [(ngModel)]="newTicket.vehicleSubStatus"
+                        [disabled]="newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Vehicle Sub Status
+                        </option>
+                        <option
+                          *ngFor="let entry of onRoadSubStatuses"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle sub status is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col-4" *ngIf="newTicket.isVehicleOffRoad">
+                    <div class="field form-group">
+                      <label for="offRoadReason" class="form-label"
+                        >Off Road Reason
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #offRoadReason="ngModel"
+                        name="offRoadReason"
+                        id="offRoadReason"
+                        [(ngModel)]="newTicket.offRoadReason"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Off Road Reason
+                        </option>
+                        <option
+                          *ngFor="let entry of offRoadReasons"
+                          [value]="entry.reason"
+                        >
+                          {{ entry.reason }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle Off Road reason is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" *ngIf="newTicket.isVehicleOffRoad">
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="offRoadStatusChangeDate" class="form-label"
+                        >Off Road Status Change Date
+                        <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #offRoadStatusChangeDate="ngModel"
+                        [(ngModel)]="dates.offRoadStatusChangeDate"
+                        (ngModelChange)="convertDateToString(2)"
+                        name="offRoadStatusChangeDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        [dateFormat]="dateFormat"
+                        showButtonBar
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle off road status change date is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="tyreCount" class="form-label">
+                        Number of tyres required
+                        <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        #tyreCount="ngModel"
+                        name="tyreCount"
+                        id="tyreCount"
+                        [(ngModel)]="newTicket.tyreQty"
+                        class="form-select {{
+                          tyreCount.invalid &&
+                          (tyreCount.dirty || tyreCount.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        [ngClass]="{ empty: newTicket.tyreQty === undefined }"
+                        required
+                      >
+                        <option
+                          [value]="undefined"
+                          class="invalid-option"
+                          disabled
+                          selected
+                        >
+                          Select number of tyres
+                        </option>
+                        <option
+                          *ngFor="let count of [1, 2, 3, 4, 5]"
+                          [value]="count"
+                        >
+                          {{ count }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          tyreCount.invalid &&
+                          (tyreCount.dirty || tyreCount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Number of tyres is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex py-4 flex-row-reverse">
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="addVehicleDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+
+        <p-stepperPanel header="Tyre Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <form #addTyreDetails="ngForm" ngNativeValidate>
+              <p-card>
+                <p-stepper orientation="vertical" [linear]="false">
+                  <p-stepperPanel header="Tyre 1 Details">
+                    <ng-template
+                      pTemplate="content"
+                      let-nextCallback="nextCallback"
+                      let-index="index"
+                    >
+                      <p-card>
+                        <div class="row">
+                          <!-- Select Tyre 1 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre1SerialNumber" class="form-label"
+                                >Tyre 1 Serial Number
+                                <span class="text-danger">*</span></label
+                              >
+                              <p-dropdown
+                                #tyre1SerialNumber="ngModel"
+                                name="tyre1SerialNumber"
+                                [options]="getFilteredTyreSerialNumbers()"
+                                optionLabel="enc"
+                                optionValue="value"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre1_serial_number
+                                "
+                                [resetFilterOnHide]="true"
+                                [filter]="true"
+                                [showClear]="true"
+                                (ngModelChange)="
+                                  onTyreSerialNumberChange(1, $event)
+                                "
+                                [placeholder]="
+                                  newTicket.selected_tyre1_serial_number ==
+                                  undefined
+                                    ? 'Select Serial Number'
+                                    : hash(
+                                        newTicket.selected_tyre1_serial_number
+                                      )
+                                "
+                                required
+                              ></p-dropdown>
+                            </div>
+                          </div>
+                          <!-- Verify Tyre 1 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label
+                                for="typed_tyre1_serial_number"
+                                class="form-label"
+                              >
+                                Verify Tyre 1 Serial Number
+                                <span class="text-danger">*</span>
+                              </label>
+                              <input
+                                #typed_tyre1_serial_number="ngModel"
+                                name="typed_tyre1_serial_number"
+                                type="text"
+                                class="form-control {{
+                                  !doesSerialNumberMatch(1) &&
+                                  typed_tyre1_serial_number.invalid &&
+                                  (typed_tyre1_serial_number.dirty ||
+                                    typed_tyre1_serial_number.touched)
+                                    ? 'is-invalid'
+                                    : doesSerialNumberMatch(1) &&
+                                      (typed_tyre1_serial_number.dirty ||
+                                        typed_tyre1_serial_number.touched)
+                                    ? 'is-valid'
+                                    : ''
+                                }}"
+                                id="current_Battery_Serial_Number"
+                                [(ngModel)]="
+                                  newTicket.typed_tyre1_serial_number
+                                "
+                                (ngModelChange)="doesSerialNumberMatch(1)"
+                                [disabled]="
+                                  !newTicket.selected_tyre1_serial_number
+                                "
+                                required
+                              />
+                              <p
+                                *ngIf="
+                                  typed_tyre1_serial_number.invalid &&
+                                  typed_tyre1_serial_number.touched
+                                "
+                                class="text-danger"
+                              >
+                                Tyre 1 serial number is required
+                              </p>
+                              <p
+                                *ngIf="
+                                  !doesSerialNumberMatch(1) &&
+                                  !typed_tyre1_serial_number.invalid &&
+                                  typed_tyre1_serial_number.touched &&
+                                  newTicket.typed_tyre1_serial_number
+                                "
+                                class="text-danger"
+                              >
+                                The serial number provided does not match.
+                              </p>
+                              <p
+                                *ngIf="
+                                  doesSerialNumberMatch(1) &&
+                                  !typed_tyre1_serial_number.invalid &&
+                                  typed_tyre1_serial_number.touched
+                                "
+                                class="text-success"
+                              >
+                                The serial number has been verified.
+                              </p>
+                            </div>
+                          </div>
+                          <!-- Tyre 1 Manufacturer -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre1Manufacturer" class="form-label"
+                                >Tyre Manufacturer</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre1Manufacturer"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre1_Manufacturer
+                                "
+                                name="tyre1Manufacturer"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Make/Model -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre1MakeModel" class="form-label"
+                                >Tyre Model</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre1MakeModel"
+                                [(ngModel)]="newTicket.selected_tyre1_Model"
+                                name="tyre1MakeModel"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Size -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre1Size" class="form-label"
+                                >Tyre Size</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre1Size"
+                                [(ngModel)]="newTicket.selected_tyre1_Size"
+                                name="tyre1Size"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Date of Fitment -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre1FitmentDate" class="form-label"
+                                >Tyre Date of Fitment</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre1FitmentDate"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre1_Fitment_Date
+                                "
+                                name="tyre1FitmentDate"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="uploadQuotation" class="form-label"
+                                >Tyre 1 Image (acceptable formats: img/pdf)
+                                <span class="text-danger">*</span>
+                              </label>
+                              <button
+                                *ngIf="!newTicket.tyre1_attachment"
+                                pButton
+                                pRipple
+                                [rounded]="true"
+                                icon="pi pi-file-arrow-up"
+                                label="Upload Tyre 1 Image"
+                                type="button"
+                                class="p-button-primary m-0"
+                                (click)="toggleUploadQuotationDialog()"
+                              ></button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-end py-4">
+                          <p-button
+                            *ngIf="newTicket.tyreQty! > 1"
+                            label="Next"
+                            (onClick)="nextCallback.emit()"
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                          />
+                        </div>
+                      </p-card>
+                    </ng-template>
+                    <!-- Tyre details inputs can go here -->
+                  </p-stepperPanel>
+
+                  <p-stepperPanel
+                    header="Tyre 2 Details"
+                    *ngIf="newTicket.tyreQty! > 1"
+                  >
+                    <ng-template
+                      pTemplate="content"
+                      let-nextCallback="nextCallback"
+                      let-prevCallback="prevCallback"
+                      let-index="index"
+                    >
+                      <p-card>
+                        <div class="row">
+                          <!-- Select Tyre 2 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre2SerialNumber" class="form-label"
+                                >Tyre 2 Serial Number
+                                <span class="text-danger">*</span></label
+                              >
+                              <p-dropdown
+                                #tyre2SerialNumber="ngModel"
+                                name="tyre2SerialNumber"
+                                [options]="getFilteredTyreSerialNumbers()"
+                                optionLabel="enc"
+                                optionValue="value"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre2_serial_number
+                                "
+                                [resetFilterOnHide]="true"
+                                [filter]="true"
+                                [showClear]="true"
+                                (ngModelChange)="
+                                  onTyreSerialNumberChange(2, $event)
+                                "
+                                [placeholder]="
+                                  newTicket.selected_tyre2_serial_number ==
+                                  undefined
+                                    ? 'Select Serial Number'
+                                    : hash(
+                                        newTicket.selected_tyre2_serial_number
+                                      )
+                                "
+                                required
+                              ></p-dropdown>
+                            </div>
+                          </div>
+                          <!-- Verify Tyre 2 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label
+                                for="typed_tyre2_serial_number"
+                                class="form-label"
+                              >
+                                Verify Tyre 2 Serial Number
+                                <span class="text-danger">*</span>
+                              </label>
+                              <input
+                                #typed_tyre2_serial_number="ngModel"
+                                name="typed_tyre2_serial_number"
+                                type="text"
+                                class="form-control {{
+                                  !doesSerialNumberMatch(2) &&
+                                  typed_tyre2_serial_number.invalid &&
+                                  (typed_tyre2_serial_number.dirty ||
+                                    typed_tyre2_serial_number.touched)
+                                    ? 'is-invalid'
+                                    : doesSerialNumberMatch(2) &&
+                                      (typed_tyre2_serial_number.dirty ||
+                                        typed_tyre2_serial_number.touched)
+                                    ? 'is-valid'
+                                    : ''
+                                }}"
+                                id="current_Battery_Serial_Number"
+                                [(ngModel)]="
+                                  newTicket.typed_tyre2_serial_number
+                                "
+                                (ngModelChange)="doesSerialNumberMatch(2)"
+                                [disabled]="
+                                  !newTicket.selected_tyre2_serial_number
+                                "
+                                required
+                              />
+                              <p
+                                *ngIf="
+                                  typed_tyre2_serial_number.invalid &&
+                                  typed_tyre2_serial_number.touched
+                                "
+                                class="text-danger"
+                              >
+                                Tyre 2 serial number is required
+                              </p>
+                              <p
+                                *ngIf="
+                                  !doesSerialNumberMatch(2) &&
+                                  !typed_tyre2_serial_number.invalid &&
+                                  typed_tyre2_serial_number.touched &&
+                                  newTicket.typed_tyre2_serial_number
+                                "
+                                class="text-danger"
+                              >
+                                The serial number provided does not match.
+                              </p>
+                              <p
+                                *ngIf="
+                                  doesSerialNumberMatch(2) &&
+                                  !typed_tyre2_serial_number.invalid &&
+                                  typed_tyre2_serial_number.touched
+                                "
+                                class="text-success"
+                              >
+                                The serial number has been verified.
+                              </p>
+                            </div>
+                          </div>
+                          <!-- Tyre 2 Manufacturer -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre2Manufacturer" class="form-label"
+                                >Tyre Manufacturer</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre2Manufacturer"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre2_Manufacturer
+                                "
+                                name="tyre2Manufacturer"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Make/Model -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre2MakeModel" class="form-label"
+                                >Tyre Model</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre2MakeModel"
+                                [(ngModel)]="newTicket.selected_tyre2_Model"
+                                name="tyre2MakeModel"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Size -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre2Size" class="form-label"
+                                >Tyre Size</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre2Size"
+                                [(ngModel)]="newTicket.selected_tyre2_Size"
+                                name="tyre2Size"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Date of Fitment -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre2FitmentDate" class="form-label"
+                                >Tyre Date of Fitment</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre2FitmentDate"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre2_Fitment_Date
+                                "
+                                name="tyre1FitmentDate"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="uploadQuotation" class="form-label"
+                                >Tyre 2 Image (acceptable formats: img/pdf)
+                                <span class="text-danger">*</span>
+                              </label>
+                              <button
+                                *ngIf="!newTicket.tyre2_attachment"
+                                pButton
+                                pRipple
+                                [rounded]="true"
+                                icon="pi pi-file-arrow-up"
+                                label="Upload Tyre 2 Image"
+                                type="button"
+                                class="p-button-primary m-0"
+                                (click)="toggleUploadQuotationDialog()"
+                              ></button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between py-4">
+                          <p-button
+                            label="Back"
+                            (onClick)="prevCallback.emit()"
+                            icon="pi pi-arrow-left"
+                            iconPos="left"
+                          />
+                          <p-button
+                            *ngIf="newTicket.tyreQty! > 2"
+                            label="Next"
+                            (onClick)="nextCallback.emit()"
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                          />
+                        </div>
+                      </p-card> </ng-template
+                  ></p-stepperPanel>
+
+                  <p-stepperPanel
+                    header="Tyre 3 Details"
+                    *ngIf="newTicket.tyreQty! > 2"
+                  >
+                    <ng-template
+                      pTemplate="content"
+                      let-nextCallback="nextCallback"
+                      let-prevCallback="prevCallback"
+                      let-index="index"
+                    >
+                      <p-card>
+                        <div class="row">
+                          <!-- Select Tyre 3 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre3SerialNumber" class="form-label"
+                                >Tyre 3 Serial Number
+                                <span class="text-danger">*</span></label
+                              >
+                              <p-dropdown
+                                #tyre3SerialNumber="ngModel"
+                                name="tyre3SerialNumber"
+                                [options]="getFilteredTyreSerialNumbers()"
+                                optionLabel="enc"
+                                optionValue="value"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre3_serial_number
+                                "
+                                [resetFilterOnHide]="true"
+                                [filter]="true"
+                                [showClear]="true"
+                                (ngModelChange)="
+                                  onTyreSerialNumberChange(3, $event)
+                                "
+                                [placeholder]="
+                                  newTicket.selected_tyre3_serial_number ==
+                                  undefined
+                                    ? 'Select Serial Number'
+                                    : hash(
+                                        newTicket.selected_tyre3_serial_number
+                                      )
+                                "
+                                required
+                              ></p-dropdown>
+                            </div>
+                          </div>
+                          <!-- Verify Tyre 3 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label
+                                for="typed_tyre3_serial_number"
+                                class="form-label"
+                              >
+                                Verify Tyre 3 Serial Number
+                                <span class="text-danger">*</span>
+                              </label>
+                              <input
+                                #typed_tyre3_serial_number="ngModel"
+                                name="typed_tyre3_serial_number"
+                                type="text"
+                                class="form-control {{
+                                  !doesSerialNumberMatch(3) &&
+                                  typed_tyre3_serial_number.invalid &&
+                                  (typed_tyre3_serial_number.dirty ||
+                                    typed_tyre3_serial_number.touched)
+                                    ? 'is-invalid'
+                                    : doesSerialNumberMatch(3) &&
+                                      (typed_tyre3_serial_number.dirty ||
+                                        typed_tyre3_serial_number.touched)
+                                    ? 'is-valid'
+                                    : ''
+                                }}"
+                                id="current_Battery_Serial_Number"
+                                [(ngModel)]="
+                                  newTicket.typed_tyre3_serial_number
+                                "
+                                (ngModelChange)="doesSerialNumberMatch(3)"
+                                [disabled]="
+                                  !newTicket.selected_tyre3_serial_number
+                                "
+                                required
+                              />
+                              <p
+                                *ngIf="
+                                  typed_tyre3_serial_number.invalid &&
+                                  typed_tyre3_serial_number.touched
+                                "
+                                class="text-danger"
+                              >
+                                Tyre 3 serial number is required
+                              </p>
+                              <p
+                                *ngIf="
+                                  !doesSerialNumberMatch(3) &&
+                                  !typed_tyre3_serial_number.invalid &&
+                                  typed_tyre3_serial_number.touched &&
+                                  newTicket.typed_tyre3_serial_number
+                                "
+                                class="text-danger"
+                              >
+                                The serial number provided does not match.
+                              </p>
+                              <p
+                                *ngIf="
+                                  doesSerialNumberMatch(3) &&
+                                  !typed_tyre3_serial_number.invalid &&
+                                  typed_tyre3_serial_number.touched
+                                "
+                                class="text-success"
+                              >
+                                The serial number has been verified.
+                              </p>
+                            </div>
+                          </div>
+                          <!-- Tyre 3 Manufacturer -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre3Manufacturer" class="form-label"
+                                >Tyre Manufacturer</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre3Manufacturer"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre3_Manufacturer
+                                "
+                                name="tyre3Manufacturer"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Make/Model -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre3MakeModel" class="form-label"
+                                >Tyre Model</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre3MakeModel"
+                                [(ngModel)]="newTicket.selected_tyre3_Model"
+                                name="tyre3MakeModel"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Size -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre3Size" class="form-label"
+                                >Tyre Size</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre3Size"
+                                [(ngModel)]="newTicket.selected_tyre3_Size"
+                                name="tyre3Size"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Date of Fitment -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre3FitmentDate" class="form-label"
+                                >Tyre Date of Fitment</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre3FitmentDate"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre3_Fitment_Date
+                                "
+                                name="tyre3FitmentDate"
+                                disabled
+                              />
+                            </div>
+                          </div>
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="uploadTyreImage" class="form-label"
+                                >Tyre 3 Image (acceptable formats: img/pdf)
+                                <span class="text-danger">*</span>
+                              </label>
+                              <button
+                                *ngIf="!newTicket.tyre3_attachment"
+                                pButton
+                                pRipple
+                                [rounded]="true"
+                                icon="pi pi-file-arrow-up"
+                                label="Upload Tyre 3 Image"
+                                type="button"
+                                class="p-button-primary m-0"
+                                (click)="toggleUploadQuotationDialog()"
+                              ></button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between py-4">
+                          <p-button
+                            label="Back"
+                            (onClick)="prevCallback.emit()"
+                            icon="pi pi-arrow-left"
+                            iconPos="left"
+                          />
+                          <p-button
+                            *ngIf="newTicket.tyreQty! > 3"
+                            label="Next"
+                            (onClick)="nextCallback.emit()"
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                          />
+                        </div>
+                      </p-card>
+                    </ng-template>
+                  </p-stepperPanel>
+
+                  <p-stepperPanel
+                    header="Tyre 4 Details"
+                    *ngIf="newTicket.tyreQty! > 3"
+                  >
+                    <ng-template
+                      pTemplate="content"
+                      let-nextCallback="nextCallback"
+                      let-prevCallback="prevCallback"
+                      let-index="index"
+                    >
+                      <p-card>
+                        <div class="row">
+                          <!-- Select Tyre 4 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre4SerialNumber" class="form-label"
+                                >Tyre 4 Serial Number
+                                <span class="text-danger">*</span></label
+                              >
+                              <p-dropdown
+                                #tyre4SerialNumber="ngModel"
+                                name="tyre4SerialNumber"
+                                [options]="getFilteredTyreSerialNumbers()"
+                                optionLabel="enc"
+                                optionValue="value"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre4_serial_number
+                                "
+                                [resetFilterOnHide]="true"
+                                [filter]="true"
+                                [showClear]="true"
+                                (ngModelChange)="
+                                  onTyreSerialNumberChange(4, $event)
+                                "
+                                [placeholder]="
+                                  newTicket.selected_tyre4_serial_number ==
+                                  undefined
+                                    ? 'Select Serial Number'
+                                    : hash(
+                                        newTicket.selected_tyre4_serial_number
+                                      )
+                                "
+                                required
+                              ></p-dropdown>
+                            </div>
+                          </div>
+                          <!-- Verify Tyre 4 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label
+                                for="typed_tyre4_serial_number"
+                                class="form-label"
+                              >
+                                Verify Tyre 4 Serial Number
+                                <span class="text-danger">*</span>
+                              </label>
+                              <input
+                                #typed_tyre4_serial_number="ngModel"
+                                name="typed_tyre4_serial_number"
+                                type="text"
+                                class="form-control {{
+                                  !doesSerialNumberMatch(4) &&
+                                  typed_tyre4_serial_number.invalid &&
+                                  (typed_tyre4_serial_number.dirty ||
+                                    typed_tyre4_serial_number.touched)
+                                    ? 'is-invalid'
+                                    : doesSerialNumberMatch(4) &&
+                                      (typed_tyre4_serial_number.dirty ||
+                                        typed_tyre4_serial_number.touched)
+                                    ? 'is-valid'
+                                    : ''
+                                }}"
+                                id="current_Battery_Serial_Number"
+                                [(ngModel)]="
+                                  newTicket.typed_tyre4_serial_number
+                                "
+                                (ngModelChange)="doesSerialNumberMatch(4)"
+                                [disabled]="
+                                  !newTicket.selected_tyre4_serial_number
+                                "
+                                required
+                              />
+                              <p
+                                *ngIf="
+                                  typed_tyre4_serial_number.invalid &&
+                                  typed_tyre4_serial_number.touched
+                                "
+                                class="text-danger"
+                              >
+                                Tyre 4 serial number is required
+                              </p>
+                              <p
+                                *ngIf="
+                                  !doesSerialNumberMatch(4) &&
+                                  !typed_tyre4_serial_number.invalid &&
+                                  typed_tyre4_serial_number.touched &&
+                                  newTicket.typed_tyre4_serial_number
+                                "
+                                class="text-danger"
+                              >
+                                The serial number provided does not match.
+                              </p>
+                              <p
+                                *ngIf="
+                                  doesSerialNumberMatch(4) &&
+                                  !typed_tyre4_serial_number.invalid &&
+                                  typed_tyre4_serial_number.touched
+                                "
+                                class="text-success"
+                              >
+                                The serial number has been verified.
+                              </p>
+                            </div>
+                          </div>
+                          <!-- Tyre 4 Manufacturer -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre4Manufacturer" class="form-label"
+                                >Tyre Manufacturer</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre4Manufacturer"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre4_Manufacturer
+                                "
+                                name="tyre4Manufacturer"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Make/Model -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre4MakeModel" class="form-label"
+                                >Tyre Model</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre4MakeModel"
+                                [(ngModel)]="newTicket.selected_tyre4_Model"
+                                name="tyre4MakeModel"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Size -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre4Size" class="form-label"
+                                >Tyre Size</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre4Size"
+                                [(ngModel)]="newTicket.selected_tyre4_Size"
+                                name="tyre4Size"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Date of Fitment -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre4FitmentDate" class="form-label"
+                                >Tyre Date of Fitment</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre4FitmentDate"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre4_Fitment_Date
+                                "
+                                name="tyre4FitmentDate"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="uploadTyreImage" class="form-label"
+                                >Tyre 4 Image (acceptable formats: img/pdf)
+                                <span class="text-danger">*</span>
+                              </label>
+                              <button
+                                *ngIf="!newTicket.tyre4_attachment"
+                                pButton
+                                pRipple
+                                [rounded]="true"
+                                icon="pi pi-file-arrow-up"
+                                label="Upload Tyre 4 Image"
+                                type="button"
+                                class="p-button-primary m-0"
+                                (click)="toggleUploadQuotationDialog()"
+                              ></button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-between py-4">
+                          <p-button
+                            label="Back"
+                            (onClick)="prevCallback.emit()"
+                            icon="pi pi-arrow-left"
+                            iconPos="left"
+                          />
+                          <p-button
+                            *ngIf="newTicket.tyreQty! > 4"
+                            label="Next"
+                            (onClick)="nextCallback.emit()"
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                          />
+                        </div>
+                      </p-card>
+                    </ng-template>
+                  </p-stepperPanel>
+
+                  <p-stepperPanel
+                    header="Tyre 5 Details"
+                    *ngIf="newTicket.tyreQty! > 4"
+                  >
+                    <ng-template
+                      pTemplate="content"
+                      let-prevCallback="prevCallback"
+                      let-index="index"
+                    >
+                      <p-card>
+                        <div class="row">
+                          <!-- Select Tyre 5 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre5SerialNumber" class="form-label"
+                                >Tyre 5 Serial Number
+                                <span class="text-danger">*</span></label
+                              >
+                              <p-dropdown
+                                #tyre5SerialNumber="ngModel"
+                                name="tyre5SerialNumber"
+                                [options]="getFilteredTyreSerialNumbers()"
+                                optionLabel="enc"
+                                optionValue="value"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre5_serial_number
+                                "
+                                [resetFilterOnHide]="true"
+                                [filter]="true"
+                                [showClear]="true"
+                                (ngModelChange)="
+                                  onTyreSerialNumberChange(5, $event)
+                                "
+                                [placeholder]="
+                                  newTicket.selected_tyre5_serial_number ==
+                                  undefined
+                                    ? 'Select Serial Number'
+                                    : hash(
+                                        newTicket.selected_tyre5_serial_number
+                                      )
+                                "
+                                required
+                              ></p-dropdown>
+                            </div>
+                          </div>
+                          <!-- Verify Tyre 5 Serial Number -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label
+                                for="typed_tyre5_serial_number"
+                                class="form-label"
+                              >
+                                Verify Tyre 5 Serial Number
+                                <span class="text-danger">*</span>
+                              </label>
+                              <input
+                                #typed_tyre5_serial_number="ngModel"
+                                name="typed_tyre5_serial_number"
+                                type="text"
+                                class="form-control {{
+                                  !doesSerialNumberMatch(5) &&
+                                  typed_tyre5_serial_number.invalid &&
+                                  (typed_tyre5_serial_number.dirty ||
+                                    typed_tyre5_serial_number.touched)
+                                    ? 'is-invalid'
+                                    : doesSerialNumberMatch(5) &&
+                                      (typed_tyre5_serial_number.dirty ||
+                                        typed_tyre5_serial_number.touched)
+                                    ? 'is-valid'
+                                    : ''
+                                }}"
+                                id="current_Battery_Serial_Number"
+                                [(ngModel)]="
+                                  newTicket.typed_tyre5_serial_number
+                                "
+                                (ngModelChange)="doesSerialNumberMatch(5)"
+                                [disabled]="
+                                  !newTicket.selected_tyre5_serial_number
+                                "
+                                required
+                              />
+                              <p
+                                *ngIf="
+                                  typed_tyre5_serial_number.invalid &&
+                                  typed_tyre5_serial_number.touched
+                                "
+                                class="text-danger"
+                              >
+                                Tyre 5 serial number is required
+                              </p>
+                              <p
+                                *ngIf="
+                                  !doesSerialNumberMatch(5) &&
+                                  !typed_tyre5_serial_number.invalid &&
+                                  typed_tyre5_serial_number.touched &&
+                                  newTicket.typed_tyre5_serial_number
+                                "
+                                class="text-danger"
+                              >
+                                The serial number provided does not match.
+                              </p>
+                              <p
+                                *ngIf="
+                                  doesSerialNumberMatch(5) &&
+                                  !typed_tyre5_serial_number.invalid &&
+                                  typed_tyre5_serial_number.touched
+                                "
+                                class="text-success"
+                              >
+                                The serial number has been verified.
+                              </p>
+                            </div>
+                          </div>
+                          <!-- Tyre 5 Manufacturer -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre5Manufacturer" class="form-label"
+                                >Tyre Manufacturer</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre5Manufacturer"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre5_Manufacturer
+                                "
+                                name="tyre5Manufacturer"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Make/Model -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre5MakeModel" class="form-label"
+                                >Tyre Model</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre5MakeModel"
+                                [(ngModel)]="newTicket.selected_tyre5_Model"
+                                name="tyre5MakeModel"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Size -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre5Size" class="form-label"
+                                >Tyre Size</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre5Size"
+                                [(ngModel)]="newTicket.selected_tyre5_Size"
+                                name="tyre5Size"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <!-- Tyre Date of Fitment -->
+                          <div class="col-4">
+                            <div class="form-group">
+                              <label for="tyre5FitmentDate" class="form-label"
+                                >Tyre Date of Fitment</label
+                              >
+                              <input
+                                type="text"
+                                class="form-control"
+                                id="tyre5FitmentDate"
+                                [(ngModel)]="
+                                  newTicket.selected_tyre5_Fitment_Date
+                                "
+                                name="tyre5FitmentDate"
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <div class="col-6">
+                            <div class="form-group">
+                              <label for="uploadTyreImage" class="form-label"
+                                >Tyre 5 Image (acceptable formats: img/pdf)
+                                <span class="text-danger">*</span>
+                              </label>
+                              <button
+                                *ngIf="!newTicket.tyre5_attachment"
+                                pButton
+                                pRipple
+                                [rounded]="true"
+                                icon="pi pi-file-arrow-up"
+                                label="Upload Tyre 5 Image"
+                                type="button"
+                                class="p-button-primary m-0"
+                                (click)="toggleUploadQuotationDialog()"
+                              ></button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="d-flex justify-content-start py-4">
+                          <p-button
+                            label="Back"
+                            (onClick)="prevCallback.emit()"
+                            icon="pi pi-arrow-left"
+                            iconPos="left"
+                          />
+                        </div>
+                      </p-card>
+                    </ng-template>
+                  </p-stepperPanel>
+                </p-stepper>
+                <div class="d-flex justify-content-between py-4">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="addTyreDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </p-card>
+            </form> </ng-template
+        ></p-stepperPanel>
+
+        <p-stepperPanel header="Cost Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <form #addCostDetails="ngForm" ngNativeValidate></form>
+            <p-card>
+              <div class="row">
+                <!-- Cost -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="cost" class="form-label">
+                      Tyre Cost (Excluding GST)
+                      <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        type="number"
+                        class="form-control {{
+                          cost.invalid && (cost.dirty || cost.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        id="cost"
+                        [(ngModel)]="newTicket.estimated_Tyre_Cost"
+                        (ngModelChange)="updateTotalEstimatedCost()"
+                        name="cost"
+                        required
+                        #cost="ngModel"
+                      />
+                    </div>
+                    <p *ngIf="cost.invalid && cost.touched" class="text-danger">
+                      Tyre cost is required
+                    </p>
+                  </div>
+                </div>
+
+                <!-- GST -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="tyre_Gst" class="form-label">
+                      GST <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        #tyre_Gst="ngModel"
+                        name="tyre_Gst"
+                        type="number"
+                        class="form-control {{
+                          tyre_Gst.invalid &&
+                          (tyre_Gst.dirty || tyre_Gst.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        id="battery_gst"
+                        [(ngModel)]="newTicket.estimated_Tyre_GST"
+                        (ngModelChange)="updateTotalEstimatedCost()"
+                        required
+                      />
+                    </div>
+                    <p
+                      *ngIf="tyre_Gst.invalid && tyre_Gst.touched"
+                      class="text-danger"
+                    >
+                      Gst is required
+                    </p>
+                  </div>
+                </div>
+
+                <div class="col-4">
+                  <div class="form-group">
+                    <label for="totalEstimatedCost" class="form-label"
+                      >Total Estimated Cost (With GST)</label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        type="text"
+                        disabled
+                        class="form-control"
+                        [value]="
+                          newTicket.estimated_Tyre_Total
+                            | number : '1.2-5' : 'en-IN'
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-4">
+                  <div class="field form-group">
+                    <label for="vendorName" class="form-label"
+                      >Vendor Name <span class="text-danger">*</span></label
+                    >
+                    <p-dropdown
+                      #vendorId="ngModel"
+                      name="vendorName"
+                      id="vendorName"
+                      [options]="vendors"
+                      optionLabel="name"
+                      optionValue="id"
+                      [virtualScroll]="true"
+                      [virtualScrollItemSize]="30"
+                      [(ngModel)]="newTicket.selected_VendorId"
+                      [resetFilterOnHide]="true"
+                      class="{{
+                        !newTicket.selected_VendorId && vendorId.touched
+                          ? 'ng-dirty ng-invalid'
+                          : ''
+                      }}"
+                      [filter]="true"
+                      [showClear]="true"
+                      placeholder="Select Vendor Name"
+                      required
+                    >
+                    </p-dropdown>
+                    <p
+                      *ngIf="
+                        !newTicket.selected_VendorId &&
+                        (vendorId.touched || vendorId.dirty)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Vendor name is required
+                    </p>
+                  </div>
+                </div>
+
+                <div class="col-6">
+                  <div class="form-group">
+                    <label for="uploadQuotation" class="form-label"
+                      >Quotation Pic (acceptable formats: img/pdf)
+                      <span class="text-danger">*</span>
+                    </label>
+                    <button
+                      *ngIf="!newTicket.quotationAttachment"
+                      pButton
+                      pRipple
+                      [rounded]="true"
+                      icon="pi pi-file-arrow-up"
+                      label="Upload Quotation Picture"
+                      type="button"
+                      class="p-button-primary m-0"
+                      (click)="toggleUploadQuotationDialog()"
+                    ></button>
+                  </div>
+                </div>
+              </div>
+
+              <hr />
+
+              <div class="row">
+                <div class="col-4">
+                  <div class="field form-group">
+                    <label for="isAdvanceRequired" class="form-label"
+                      >Is Advance Payment Required?
+                      <span class="text-danger">*</span></label
+                    >
+                    <select
+                      #isAdvanceRequired="ngModel"
+                      name="isAdvanceRequired"
+                      id="isAdvanceRequired"
+                      [(ngModel)]="newTicket.isAdvanceRequired"
+                      (ngModelChange)="checkValidAdvanceAmount()"
+                      class="form-select {{
+                        isAdvanceRequired.invalid &&
+                        (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                          ? 'is-invalid'
+                          : ''
+                      }}"
+                      required
+                      autofocus
+                    >
+                      <option value="" disabled selected>
+                        Select Advance Payment Required
+                      </option>
+                      <option [ngValue]="false">No</option>
+                      <option [ngValue]="true">Yes</option>
+                    </select>
+                    <p
+                      *ngIf="
+                        isAdvanceRequired.invalid &&
+                        (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Select if advance payment is required
+                    </p>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div
+                    *ngIf="this.newTicket!.isAdvanceRequired"
+                    class="form-group"
+                  >
+                    <label for="advanceAmount" class="form-label"
+                      >Advance Amount <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input
+                        #advanceAmount="ngModel"
+                        name="advanceAmount"
+                        type="number"
+                        class="form-control {{
+                          !isValidAdvanceAmount &&
+                          (advanceAmount.dirty || advanceAmount.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        [(ngModel)]="newTicket!.advanceAmount"
+                        (ngModelChange)="checkValidAdvanceAmount()"
+                        [disabled]="!newTicket.isAdvanceRequired"
+                        onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                        onpaste="return false"
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <p
+                      *ngIf="
+                        advanceAmount.invalid &&
+                        (advanceAmount.dirty || advanceAmount.touched)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Advance amount is required
+                    </p>
+                    <p
+                      *ngIf="
+                        newTicket.isAdvanceRequired &&
+                        !isValidAdvanceAmount &&
+                        (advanceAmount.dirty || advanceAmount.touched)
+                      "
+                      class="form-text text-danger"
+                    >
+                      Advance amount exceeds the permitted limit.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="Next"
+                  (onClick)="nextCallback.emit()"
+                  [disabled]="addCostDetails.invalid || !isValidAdvanceAmount"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+
+        <p-stepperPanel header="Confirmation">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <p>
+                Are you sure you want to
+                {{ editMode ? "update" : "create" }} this tyre request for
+                vehicle with registration number
+                <strong>{{ newTicket.registrationNumber }}</strong> with total
+                estimated cost of
+                <strong>
+                  {{
+                    newTicket.estimated_Tyre_Total
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }} </strong
+                >? <br />
+                Please review the details and click on
+                {{ editMode ? "Update" : "Create" }} Battery Request.
+              </p>
+              <div class="row mt-1">
+                <div class="col">
+                  <label for="comment" class="form-label"
+                    >Overall Comment</label
+                  >
+                  <textarea
+                    #overallComment
+                    name="overallComment"
+                    class="form-control"
+                    id="comment"
+                    rows="2"
+                    [(ngModel)]="newTicket!.overallComment"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  class="me-1"
+                  [disabled]="showLoader || formActionsDisabled"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="{{ editMode ? 'Update' : 'Create' }} Tyre Request"
+                  (onClick)="submitTyreRequest()"
+                  [disabled]="showLoader || formActionsDisabled"
+                  icon="pi pi-file-check"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+      </p-stepper>
+    </form>
+  </div>
+</div>

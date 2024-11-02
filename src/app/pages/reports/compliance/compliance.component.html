@@ -1,0 +1,122 @@
+<div class="card">
+  <p class="mb-0">
+    <b>From Date:</b> {{ dates.fromDate | date : "dd MMM, yyyy HH:mm:ss" }}
+  </p>
+  <p><b>To Date:</b> {{ dates.toDate | date : "dd MMM, yyyy HH:mm:ss" }}</p>
+  <p-table
+    #dt
+    [value]="records"
+    [rows]="25"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    styleClass="p-datatable-sm"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="columns"
+    [exportFilename]="generateExportName()"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Compliance Report</h5>
+        <div>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="dt.exportCSV()"
+            rounded="true"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr class="white-space-normal">
+        <th>SR. NO.</th>
+        <th>ZONE</th>
+        <th>REGION</th>
+        <th>FITNESS NOT UPLOADED</th>
+        <th>FITNESS INVALID</th>
+        <th>FITNESS LEGAL</th>
+        <th>FITNESS SCRAP</th>
+        <th>FITNESS VALID</th>
+        <th>FITNESS TOTAL</th>
+        <th>FITNESS COMPLIANT</th>
+        <th>ROAD TAX NOT UPLOADED</th>
+        <th>ROAD TAX INVALID</th>
+        <th>ROAD TAX LEGAL</th>
+        <th>ROAD TAX SCRAP</th>
+        <th>ROAD TAX VALID</th>
+        <th>ROAD TAX TOTAL</th>
+        <th>ROAD TAX COMPLIANT</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-data>
+      <tr class="white-space-normal">
+        <td>{{ data.id }}</td>
+        <td>{{ data.zoneName }}</td>
+        <td>{{ data.regionName }}</td>
+        <td>{{ data.fitnessNotUploaded }}</td>
+        <td>{{ data.fitnessInvalid }}</td>
+        <td>{{ data.fitnessLegal }}</td>
+        <td>{{ data.fitnessScrap }}</td>
+        <td>{{ data.fitnessValid }}</td>
+        <td>{{ data.fitnessTotal }}</td>
+        <td>{{ data.fitnessCompliant.toFixed(2) }}%</td>
+        <!-- Displaying percentage with 2 decimal points -->
+        <td>{{ data.roadTaxNotUploaded }}</td>
+        <td>{{ data.roadTaxInvalid }}</td>
+        <td>{{ data.roadTaxLegal }}</td>
+        <td>{{ data.roadTaxScrap }}</td>
+        <td>{{ data.roadTaxValid }}</td>
+        <td>{{ data.roadTaxTotal }}</td>
+        <td>{{ data.roadTaxCompliant.toFixed(2) }}%</td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="footer">
+      <tr>
+        <td></td>
+        <td>Grand</td>
+        <td>Total</td>
+        <!-- <td></td> -->
+        <!-- <td></td> -->
+        <td>{{ grandTotal.fitnessNotUploaded }}</td>
+        <td>{{ grandTotal.fitnessInvalid }}</td>
+        <td>{{ grandTotal.fitnessLegal }}</td>
+        <td>{{ grandTotal.fitnessScrap }}</td>
+        <td>{{ grandTotal.fitnessValid }}</td>
+        <td>{{ grandTotal.fitnessTotal }}</td>
+        <td>
+          {{
+            ((grandTotal.fitnessValid / grandTotal.fitnessTotal) * 100).toFixed(
+              2
+            )
+          }}%
+        </td>
+        <td>{{ grandTotal.roadTaxNotUploaded }}</td>
+        <td>{{ grandTotal.roadTaxInvalid }}</td>
+        <td>{{ grandTotal.roadTaxLegal }}</td>
+        <td>{{ grandTotal.roadTaxScrap }}</td>
+        <td>{{ grandTotal.roadTaxValid }}</td>
+        <td>{{ grandTotal.roadTaxTotal }}</td>
+        <td>
+          {{
+            ((grandTotal.roadTaxValid / grandTotal.roadTaxTotal) * 100).toFixed(
+              2
+            )
+          }}%
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="17">No Compliance Records Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+<app-loader *ngIf="showLoader"></app-loader>

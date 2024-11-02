@@ -9,7 +9,7 @@
               <a
                 routerLink="/dashboard"
                 class="display-6 fs-5 text-decoration-none"
-                >Dashboard</a
+                >Maintenance Requests</a
               >
             </li>
             <li
@@ -341,16 +341,18 @@
                         >Vendor Name <span class="text-danger">*</span></label
                       >
                       <p-dropdown
-                        #vendorName="ngModel"
+                        #vendorId="ngModel"
                         name="vendorName"
                         id="vendorName"
-                        [options]="vendorNames"
+                        [options]="vendors"
+                        optionLabel="name"
+                        optionValue="id"
                         [virtualScroll]="true"
                         [virtualScrollItemSize]="30"
-                        [(ngModel)]="newTicket.vendorName"
+                        [(ngModel)]="newTicket.vendorId"
                         [resetFilterOnHide]="true"
                         class="{{
-                          !newTicket.vendorName && vendorName.touched
+                          !newTicket.vendorId && vendorId.touched
                             ? 'ng-dirty ng-invalid'
                             : ''
                         }}"
@@ -362,8 +364,8 @@
                       </p-dropdown>
                       <p
                         *ngIf="
-                          !newTicket.vendorName &&
-                          (vendorName.touched || vendorName.dirty)
+                          !newTicket.vendorId &&
+                          (vendorId.touched || vendorId.dirty)
                         "
                         class="form-text text-danger"
                       >
@@ -386,7 +388,6 @@
             </p-card>
           </ng-template>
         </p-stepperPanel>
-
         <p-stepperPanel header="Component Details">
           <ng-template
             pTemplate="content"
@@ -662,7 +663,6 @@
             </p-card>
           </ng-template>
         </p-stepperPanel>
-
         <p-stepperPanel header="Advance Details">
           <ng-template
             pTemplate="content"
@@ -674,23 +674,21 @@
               <form #addAdvanceDetails="ngForm" ngNativeValidate>
                 <div class="row">
                   <div class="col">
-                    <div class="col">
-                      <div class="form-group">
-                        <label for="totalEstimatedCost" class="form-label"
-                          >Total Estimated Cost (With GST)</label
-                        >
-                        <div class="input-group">
-                          <span class="input-group-text">₹</span>
-                          <input
-                            type="text"
-                            disabled
-                            class="form-control"
-                            [value]="
-                              newTicket.totalEstimatedCost
-                                | number : '1.2-5' : 'en-IN'
-                            "
-                          />
-                        </div>
+                    <div class="form-group">
+                      <label for="totalEstimatedCost" class="form-label"
+                        >Total Estimated Cost (With GST)</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="text"
+                          disabled
+                          class="form-control"
+                          [value]="
+                            newTicket.totalEstimatedCost
+                              | number : '1.2-5' : 'en-IN'
+                          "
+                        />
                       </div>
                     </div>
                   </div>
@@ -868,7 +866,6 @@
             </p-card>
           </ng-template>
         </p-stepperPanel>
-
         <p-stepperPanel header="Confirmation">
           <ng-template
             pTemplate="content"

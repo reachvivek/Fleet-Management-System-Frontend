@@ -2,16 +2,22 @@ import { Component } from '@angular/core';
 
 import { firstValueFrom } from 'rxjs';
 import { UserSyncService } from '../../services/user-sync.service';
-import { NewTicket, SharedService } from '../../services/shared.service';
+import {
+  NewMaintenanceTicket,
+  SharedService,
+} from '../../services/shared.service';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService, TreeNode } from 'primeng/api';
 import {
   AdminService,
   ApproveRejectDto,
+  BulkUploadService,
   FiltersDto,
+  InvoiceDetailsDto,
   MaintenanceRequestService,
   TicketDetailsDto,
   TicketsForDashboardDto,
+  VendorForSelectDto,
 } from '../../../swagger';
 
 @Component({
@@ -21,7 +27,9 @@ import {
 })
 export class MaintenanceRequestManagementComponent {
   showLoader: boolean = false;
+  formActionsDisabled: boolean = false;
   tickets: TicketsForDashboardDto[] = [];
+  filteredTickets: TicketsForDashboardDto[] = [];
   zones: any = [];
   regions: any = [];
   locations: any = [];
@@ -29,49 +37,13 @@ export class MaintenanceRequestManagementComponent {
 
   initialSelectedBranches: Set<string> = new Set(); // Store initial selections
   initialSelectedHubs: Set<string> = new Set(); // Store initial selections
-  filteredTickets: TicketsForDashboardDto[] = [];
   filters: TreeNode[] = [];
   selectedZones: TreeNode[] = [];
   isFilterApplied: boolean = false; // Initialize to false
 
   selectedStates = [];
-  newTicket: NewTicket = {
-    id: '',
-    zone: '',
-    region: '',
-    branch: '',
-    hub: '',
-    registrationNumber: '',
-    vehicleAge: '',
-    manufacturer: '',
-    model: '',
-    vehicleSubStatus: '',
-    isVehicleOffRoad: false,
-    dateOfLastService: '',
-    offRoadReason: '',
-    offRoadStatusChangeDate: '',
-    serviceRequestType: '',
-    vendorName: '',
-    totalSpareCost: 0,
-    totalLaborCost: 0,
-    totalEstimatedCost: 0,
-    quotationAttachment: '',
-    componentDetails: [
-      {
-        systemName: '',
-        partName: '',
-        partNames: [],
-        spareCost: 0,
-        spareGst: 0,
-        laborCost: 0,
-        laborGst: 0,
-        comment: '',
-      },
-    ],
-    overallComment: '',
-    isAdvanceRequired: false,
-    advanceAmount: 0,
-  };
+  newTicket!: NewMaintenanceTicket;
+  newInvoice: InvoiceDetailsDto | any = {};
   roleOptions: { name: string; code: number }[] = [];
   roleIds: number[] = JSON.parse(localStorage.getItem('roleIDs')!);
   selectedRoleId: number | undefined = undefined;
@@ -84,13 +56,12 @@ export class MaintenanceRequestManagementComponent {
   showApproveTicketDialog: boolean = false;
   showRejectTicketDialog: boolean = false;
   showFilterDialog: boolean = false;
+  showUploadInvoiceDialog: boolean = false;
 
   optionalDetails: { attachment: string; comment: string } = {
     attachment: '',
     comment: '',
   };
-
-  uploadMode: boolean = false;
 
   approvalSteps = [
     {
@@ -182,7 +153,7 @@ export class MaintenanceRequestManagementComponent {
         this.selectedTicket.isVPApprovalRequired,
     },
     {
-      id: 9,
+      id: 8,
       label: 'Finance User',
       status: () => 'Advance Approved',
       timestamp: () => this.selectedTicket.advanceApprovalTimestamp,
@@ -211,7 +182,7 @@ export class MaintenanceRequestManagementComponent {
       condition: () => this.selectedTicket.hasFinanceUserApproved,
     },
     {
-      id: 8,
+      id: 11,
       label: 'Rejection Details',
       status: () => 'Rejected',
       timestamp: () => this.selectedTicket.rejectionTimestamp,
@@ -219,13 +190,22 @@ export class MaintenanceRequestManagementComponent {
       attachment: () => null,
       condition: () => this.selectedTicket.isRejected,
     },
+    {
+      id: 12,
+      label: 'Closed',
+      status: () => 'Closed',
+      comment: () => 'NA',
+      attachment: () => null,
+      timestamp: () => this.selectedTicket.closedTimestamp,
+      condition: () => this.selectedTicket.isClosed,
+    },
   ];
 
   selectedTicketApprovalStages: any[] = [];
 
   columns = [
     { field: 'region', header: 'Region' },
-    { field: 'location', header: 'Branch' },
+    { field: 'branch', header: 'Branch' },
     { field: 'totalEstimatedCost', header: 'Estimate' },
     { field: 'isVehicleOffRoad', header: 'Vehicle Status' },
     { field: 'registrationNumber', header: 'Registration No' },
@@ -233,7 +213,23 @@ export class MaintenanceRequestManagementComponent {
     { field: 'createdOn', header: 'Created On' },
   ];
 
+  systemNames: any = [];
+  partGsts: number[] = [0, 5, 12, 18, 28];
+  labourGsts: number[] = [0, 18];
+  vendors: VendorForSelectDto[] = [];
+  companyNames: string[] = ['CMS', 'CMS-SIPL(Div)', 'SIPL'];
+  invoiceTypes: string[] = ['GST', 'NON GST'];
+  modeOfPayments: string[] = ['HO', 'Imprest'];
+  dates = {
+    invoiceDate: undefined,
+    serviceDate: undefined,
+  };
+
+  minDate: Date = new Date(new Date().setDate(new Date().getDate() - 7));
+  maxDate: Date = new Date();
+
   constructor(
+    private commonService: BulkUploadService,
     private maintenanceRequestService: MaintenanceRequestService,
     private userSyncService: UserSyncService,
     private adminService: AdminService,
@@ -276,6 +272,11 @@ export class MaintenanceRequestManagementComponent {
         this.selectedTicket.componentDetails = JSON.parse(
           this.selectedTicket.componentDetails!
         );
+        if (this.selectedTicket.isInvoiceUploaded) {
+          this.selectedTicket.actualServiceDetails = JSON.parse(
+            this.selectedTicket.actualServiceDetails!
+          );
+        }
         this.approvalSteps.forEach((step: any) => {
           if (step.condition()) {
             this.selectedTicketApprovalStages.push({
@@ -290,12 +291,23 @@ export class MaintenanceRequestManagementComponent {
         });
         this.selectedTicketApprovalStages.forEach(
           (entry: any, index: number) => {
-            if (entry.label == 'Rejection Details') {
+            if (entry.label == 'Rejection Details' || entry.label == 'Closed') {
               this.selectedTicketApprovalStages[index].label =
                 this.selectedTicket.currentStage;
             }
           }
         );
+        const res2 = await firstValueFrom(
+          this.commonService.bulkUploadGetVendorDetailsGet(
+            this.selectedTicket.vendorId
+          )
+        );
+        if (res2 && res2.name) {
+          this.selectedTicket.vendorName = res2.name;
+          this.selectedTicket.vendorId = res2.id;
+          this.selectedTicket.vendorGst = res2.gsT_NO;
+          this.selectedTicket.vendorPan = res2.pan;
+        }
       }
     } catch (err: any) {
       console.error(err);
@@ -326,7 +338,7 @@ export class MaintenanceRequestManagementComponent {
   }
 
   generateExportName(): string {
-    return `FMS_Report_${new Date().toLocaleString()}`;
+    return `FMS_Maintenance_Request_Report_${new Date().toLocaleString()}`;
   }
 
   async loadZones() {
@@ -335,6 +347,59 @@ export class MaintenanceRequestManagementComponent {
       const res = await firstValueFrom(this.adminService.adminGetZonesGet());
       if (res && res.length) {
         this.zones = res;
+      }
+      this.showLoader = false;
+    } catch (err: any) {
+      console.error(err);
+      this.showLoader = false;
+    }
+  }
+
+  async loadRegions() {
+    this.showLoader = true;
+    this.newTicket.region = '';
+    this.newTicket.hub = '';
+    this.newTicket.branch = '';
+    try {
+      const res = await firstValueFrom(
+        this.adminService.adminGetRegionsGet(undefined, this.newTicket.zone)
+      );
+      if (res && res.length) {
+        this.regions = res;
+      }
+      this.showLoader = false;
+    } catch (err: any) {
+      console.error(err);
+      this.showLoader = false;
+    }
+  }
+
+  async loadBranches() {
+    this.showLoader = true;
+    this.newTicket.branch = '';
+    try {
+      const res = await firstValueFrom(
+        this.adminService.adminGetBranchesGet(undefined, this.newTicket.region)
+      );
+      if (res && res.length) {
+        this.branches = res;
+      }
+      this.showLoader = false;
+    } catch (err: any) {
+      console.error(err);
+      this.showLoader = false;
+    }
+  }
+
+  async loadHubs() {
+    this.showLoader = true;
+    this.newTicket.hub = '';
+    try {
+      const res = await firstValueFrom(
+        this.adminService.adminGetHubsGet(this.newTicket.branch)
+      );
+      if (res && res.length) {
+        this.locations = res;
       }
       this.showLoader = false;
     } catch (err: any) {
@@ -496,31 +561,22 @@ export class MaintenanceRequestManagementComponent {
     // this.toggleFilterDialog();
   }
 
-  async loadRegions() {
+  async loadVendorNames() {
     this.showLoader = true;
-    this.newTicket.region = '';
-    this.newTicket.hub = '';
-    this.newTicket.branch = '';
     try {
       const res = await firstValueFrom(
-        this.adminService.adminGetRegionsGet(undefined, this.newTicket.zone)
+        this.commonService.bulkUploadGetAllVendorsGet()
       );
       if (res && res.length) {
-        this.regions = res;
+        this.vendors = res;
       }
-      this.showLoader = false;
     } catch (err: any) {
       console.error(err);
-      this.showLoader = false;
     }
+    this.showLoader = false;
   }
 
-  toggleApproveTicketDialog(uploadMode: boolean = false) {
-    if (uploadMode == true) {
-      this.uploadMode = true;
-    } else {
-      this.uploadMode = false;
-    }
+  toggleApproveTicketDialog() {
     this.showApproveTicketDialog = !this.showApproveTicketDialog;
   }
 
@@ -528,43 +584,46 @@ export class MaintenanceRequestManagementComponent {
     this.showRejectTicketDialog = !this.showRejectTicketDialog;
   }
 
-  async loadHubs() {
-    this.showLoader = true;
-    this.newTicket.hub = '';
-    try {
-      const res = await firstValueFrom(
-        this.adminService.adminGetHubsGet(this.newTicket.branch)
-      );
-      if (res && res.length) {
-        this.locations = res;
-      }
-      this.showLoader = false;
-    } catch (err: any) {
-      console.error(err);
-      this.showLoader = false;
-    }
-  }
-
-  async loadBranches() {
-    this.showLoader = true;
-    this.newTicket.branch = '';
-    try {
-      const res = await firstValueFrom(
-        this.adminService.adminGetBranchesGet(undefined, this.newTicket.region)
-      );
-      if (res && res.length) {
-        this.branches = res;
-      }
-      this.showLoader = false;
-    } catch (err: any) {
-      console.error(err);
-      this.showLoader = false;
-    }
+  initInvoice() {
+    this.newInvoice = {
+      invoiceTotalSpareCost: 0,
+      invoiceTotalLaborCost: 0,
+      invoiceTotalEstimatedCost: 0,
+      actualServiceDetails: [
+        {
+          systemName: '',
+          partName: '',
+          partHSN: '',
+          partQty: 0,
+          partNames: [],
+          partCost: 0,
+          partGst: 0,
+          sacCode: 0,
+          laborQty: 0,
+          laborCost: 0,
+          laborGst: 0,
+          comment: '',
+        },
+      ],
+      invoiceType: '',
+      modeOfPayment: '',
+      invoiceNumber: '',
+      invoiceDate: '',
+      invoiceAmount: 0,
+      serviceDate: '',
+      companyName: '',
+      invoiceAttachment: '',
+      jobcardAttachment: '',
+    };
   }
 
   async toggleCreateRequestDialog() {
     if (!this.zones.length) await this.loadZones();
     this.showCreateRequestDialog = !this.showCreateRequestDialog;
+    this.createNewTicket();
+  }
+
+  createNewTicket() {
     this.newTicket = {
       id: '',
       zone: '',
@@ -581,7 +640,8 @@ export class MaintenanceRequestManagementComponent {
       offRoadReason: '',
       offRoadStatusChangeDate: '',
       serviceRequestType: '',
-      vendorName: '',
+      vendorId: undefined,
+      vendorName: undefined,
       totalSpareCost: 0,
       totalLaborCost: 0,
       totalEstimatedCost: 0,
@@ -598,6 +658,34 @@ export class MaintenanceRequestManagementComponent {
           comment: '',
         },
       ],
+      invoiceTotalSpareCost: 0,
+      invoiceTotalLaborCost: 0,
+      invoiceTotalEstimatedCost: 0,
+      actualServiceDetails: [
+        {
+          systemName: '',
+          partName: '',
+          partHSN: '',
+          partQty: 0,
+          partNames: [],
+          partCost: 0,
+          partGst: 0,
+          sacCode: 0,
+          laborQty: 0,
+          laborCost: 0,
+          laborGst: 0,
+          comment: '',
+        },
+      ],
+      invoiceType: '',
+      modeOfPayment: '',
+      invoiceNumber: '',
+      invoiceDate: '',
+      invoiceAmount: 0,
+      serviceDate: '',
+      companyName: '',
+      invoiceAttachment: '',
+      jobcardAttachment: '',
       overallComment: '',
       isAdvanceRequired: false,
       advanceAmount: 0,
@@ -605,13 +693,18 @@ export class MaintenanceRequestManagementComponent {
   }
 
   createTicket() {
-    this.sharedService.setNewTicket(this.newTicket);
-    this.router.navigate(['create-request']);
+    this.sharedService.setNewMaintenanceTicket(this.newTicket);
+    this.router.navigate(['create-maintenance-request']);
   }
 
   showApproveRejectButtons(): boolean {
     // Return false for Branch Manager immediately
-    if (this.roleId === 1) return false;
+    if (
+      this.roleId === 1 ||
+      this.selectedTicket.isClosed ||
+      this.selectedTicket.isRejected
+    )
+      return false;
 
     const ticket = this.selectedTicket;
     const isRejected = ticket.isRejected;
@@ -686,7 +779,9 @@ export class MaintenanceRequestManagementComponent {
     if (
       this.roleId == 1 &&
       this.selectedTicket.allApprovalStagesCompleted &&
-      !this.selectedTicket.isInvoiceUploaded
+      (!this.selectedTicket.isInvoiceUploaded ||
+        this.selectedTicket.currentStage == 'Finance Rejected') &&
+      !this.selectedTicket.isClosed
     ) {
       if (
         this.selectedTicket.isAdvanceRequired &&
@@ -702,6 +797,138 @@ export class MaintenanceRequestManagementComponent {
       return false;
     }
   }
+
+  toggleUploadInvoiceDialog() {
+    this.loadVendorNames();
+    this.initInvoice();
+    if (!this.systemNames.length) {
+      this.loadSystemNames();
+    }
+    this.newInvoice.vendorId = this.selectedTicket.vendorId;
+    this.newInvoice.advanceAmount = this.selectedTicket.advanceAmount;
+    this.newInvoice.vendorName = this.selectedTicket.vendorName;
+    this.showUploadInvoiceDialog = !this.showUploadInvoiceDialog;
+  }
+
+  async loadSystemNames() {
+    this.showLoader = true;
+    try {
+      let res = await firstValueFrom(
+        this.maintenanceRequestService.maintenanceRequestGetSystemNamesGet()
+      );
+      if (res && res.length) {
+        res = res.map((entry: any) => entry.replace(/["']/g, ''));
+        this.systemNames = res;
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+    this.showLoader = false;
+  }
+
+  async loadPartNames(index: number) {
+    this.showLoader = true;
+    try {
+      let res = await firstValueFrom(
+        this.maintenanceRequestService.maintenanceRequestGetPartNamesGet(
+          this.newInvoice.actualServiceDetails[index].systemName
+        )
+      );
+      if (res && res.length) {
+        res = res.map((entry: any) => entry.replace(/["']/g, ''));
+        this.newInvoice.actualServiceDetails[index].partNames = res;
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+    this.showLoader = false;
+  }
+
+  addSection() {
+    this.newInvoice.actualServiceDetails.push({
+      systemName: '',
+      partName: '',
+      partHSN: '',
+      partQty: 0,
+      partNames: [],
+      partCost: 0,
+      partGst: 0,
+      sacCode: 0,
+      laborQty: 0,
+      laborCost: 0,
+      laborGst: 0,
+      comment: '',
+    });
+  }
+
+  removeSection(index: number) {
+    if (this.newInvoice.actualServiceDetails.length > 1) {
+      this.newInvoice.actualServiceDetails.splice(index, 1);
+      this.updateTotalLaborCost();
+      this.updateTotalSpareCost();
+    }
+  }
+
+  updateTotalSpareCost() {
+    let totalSpareCost = 0;
+    this.newInvoice.actualServiceDetails.forEach((entry: any) => {
+      if (this.newInvoice.invoiceType == 'NON GST') entry.partGst = 0;
+      totalSpareCost +=
+        entry.partCost * (1 + entry.partGst / 100) * entry.partQty;
+    });
+    this.newInvoice.invoiceTotalSpareCost = totalSpareCost;
+    this.updateTotalEstimatedCost();
+  }
+
+  updateTotalLaborCost() {
+    let totalLaborCost = 0;
+    this.newInvoice.actualServiceDetails.forEach((entry: any) => {
+      if (this.newInvoice.invoiceType == 'NON GST') entry.laborGst = 0;
+      totalLaborCost +=
+        entry.laborCost * (1 + entry.laborGst / 100) * entry.laborQty;
+    });
+    this.newInvoice.invoiceTotalLaborCost = totalLaborCost;
+    this.updateTotalEstimatedCost();
+  }
+
+  updateTotalEstimatedCost() {
+    this.newInvoice.invoiceTotalEstimatedCost = (
+      this.newInvoice.invoiceTotalLaborCost +
+      this.newInvoice.invoiceTotalSpareCost
+    ).toFixed(2);
+  }
+
+  convertDateToString(id: number) {
+    let dateToUpdate;
+    switch (id) {
+      case 1:
+        dateToUpdate = this.dates.invoiceDate;
+        break;
+      case 2:
+        dateToUpdate = this.dates.serviceDate;
+        break;
+      default:
+        throw new Error('Invalid Function Call');
+    }
+
+    const offset = dateToUpdate!.getTimezoneOffset();
+    const updatedDate = new Date(dateToUpdate!.getTime() - offset * 60 * 1000)
+      .toISOString()
+      .split('T')[0];
+
+    switch (id) {
+      case 1:
+        this.newInvoice!.invoiceDate = updatedDate;
+        break;
+      case 2:
+        this.newInvoice!.serviceDate = updatedDate;
+        break;
+      default:
+        throw new Error('Invalid Function Call');
+    }
+  }
+
+  checkInvoiceTotal() {}
 
   async approveTicket() {
     this.showLoader = true;
@@ -719,8 +946,12 @@ export class MaintenanceRequestManagementComponent {
       if (res && res.approved) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Approved',
-          detail: 'Maintenance Request Approved Successfully',
+          summary: `${
+            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+          }`,
+          detail: `Maintenance Request ${
+            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+          } Successfully`,
           life: 3000,
         });
         this.showApproveTicketDialog = false;
@@ -765,6 +996,186 @@ export class MaintenanceRequestManagementComponent {
     this.showLoader = false;
   }
 
+  showTicketCloseButton(): boolean {
+    if (this.roleId === 1 || this.roleId === 2) {
+      if (
+        !this.selectedTicket.hasFinanceUserApproved &&
+        !this.selectedTicket.hasAdvanceApproved &&
+        !this.selectedTicket.isInvoiceUploaded &&
+        !this.selectedTicket.isClosed
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  confirmTicketClose() {
+    this.confirmationService.confirm({
+      header: 'Confirmation',
+      message:
+        'Are you sure you want to close this ticket? Once closed, you will not be able to make any further edits to this ticket.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptIcon: 'pi pi-check me-2',
+      rejectIcon: 'pi pi-times me-2',
+      rejectButtonStyleClass: 'p-button-sm me-1',
+      acceptButtonStyleClass: 'p-button-outlined p-button-sm me-1',
+      accept: () => {
+        this.closeTicket();
+      },
+      reject: () => {
+        this.confirmationService.close();
+      },
+    });
+  }
+
+  async closeTicket() {
+    this.showLoader = true;
+    const approvalDetails: ApproveRejectDto = {
+      ...this.optionalDetails,
+      id: this.selectedTicket.id,
+    };
+    try {
+      const res = await firstValueFrom(
+        this.maintenanceRequestService.maintenanceRequestCloseTicketPut(
+          approvalDetails,
+          this.roleId
+        )
+      );
+      if (res && res.closed) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Closed',
+          detail: 'Maintenance Request Closed Successfully',
+          life: 3000,
+        });
+        this.confirmationService.close();
+        this.showTicketDetailsDialog = false;
+        this.optionalDetails.attachment = this.optionalDetails.comment = '';
+        this.loadTickets();
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+    this.showLoader = false;
+  }
+
+  showTicketReopenButton(): boolean {
+    if (this.roleId === 9) {
+      if (this.selectedTicket.isClosed) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  confirmTicketReopen() {
+    this.confirmationService.confirm({
+      header: 'Confirmation',
+      message:
+        'Are you sure you want to reopen this ticket? Once reopened, the ticket will be restored to its last approval status.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptIcon: 'pi pi-check me-2',
+      rejectIcon: 'pi pi-times me-2',
+      rejectButtonStyleClass: 'p-button-sm me-1',
+      acceptButtonStyleClass: 'p-button-outlined p-button-sm me-1',
+      accept: () => {
+        this.reopenTicket();
+      },
+      reject: () => {
+        this.confirmationService.close();
+      },
+    });
+  }
+
+  async reopenTicket() {
+    this.showLoader = true;
+    const approvalDetails: ApproveRejectDto = {
+      ...this.optionalDetails,
+      id: this.selectedTicket.id,
+    };
+    try {
+      const res = await firstValueFrom(
+        this.maintenanceRequestService.maintenanceRequestReopenTicketPut(
+          approvalDetails,
+          this.roleId
+        )
+      );
+      if (res && res.reopened) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Reopened',
+          detail: 'Maintenance Request Reopened Successfully',
+          life: 3000,
+        });
+        this.confirmationService.close();
+        this.showTicketDetailsDialog = false;
+        this.optionalDetails.attachment = this.optionalDetails.comment = '';
+        this.loadTickets();
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+    this.showLoader = false;
+  }
+
+  async submitInvoiceDetails() {
+    this.showLoader = true;
+    this.newInvoice.id = this.selectedTicket.id;
+    // Handle component details
+    this.newInvoice.actualServiceDetails.forEach((prop: any) => {
+      prop.partNames = [];
+      prop.partName = prop.partName.replace(/["']/g, '');
+      prop.systemName = prop.systemName.replace(/["']/g, '');
+      prop.comment = prop.comment.replace(/["']/g, '');
+    });
+
+    this.newInvoice.actualServiceDetails = JSON.stringify(
+      this.newInvoice.actualServiceDetails
+    );
+
+    try {
+      const res = await firstValueFrom(
+        this.maintenanceRequestService.maintenanceRequestUpdateInvoiceDetailsPut(
+          this.newInvoice
+        )
+      );
+      if (res && res.updated) {
+        this.formActionsDisabled = true;
+        this.showUploadInvoiceDialog = false;
+        this.showTicketDetailsDialog = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Successful',
+          detail: `Invoice Details Updated Successfully`,
+          life: 3000,
+        });
+        this.loadData();
+      }
+    } catch (err: any) {
+      this.showLoader = false;
+      if (err.error.message) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err.error.message,
+          life: 20000,
+        });
+        console.log(err.error.message);
+      }
+      if (err.error.details) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err.error.details,
+          life: 20000,
+        });
+        console.log(err.error.details);
+      }
+      console.log(err);
+    }
+  }
+
   editTicket(id: number) {
     this.confirmationService.confirm({
       header: 'Confirmation',
@@ -785,9 +1196,10 @@ export class MaintenanceRequestManagementComponent {
   }
 
   editServiceRequestDetails(id: number) {
+    this.createNewTicket();
     this.newTicket.id = id;
-    this.sharedService.setNewTicket(this.newTicket);
-    this.router.navigate(['create-request']);
+    this.sharedService.setNewMaintenanceTicket(this.newTicket);
+    this.router.navigate(['create-maintenance-request']);
   }
 
   async toggleFilterDialog() {

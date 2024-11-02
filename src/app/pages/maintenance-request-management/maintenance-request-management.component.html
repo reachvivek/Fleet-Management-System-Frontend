@@ -177,7 +177,10 @@
               *ngIf="
                 roleId == 1 &&
                 !ticket.hasAdvanceApproved &&
-                !ticket.hasFinanceUserApproved
+                !ticket.hasFinanceUserApproved &&
+                !ticket.isClosed &&
+                !ticket.isInvoiceUploaded &&
+                ticket.currentStage != 'Finance Rejected'
               "
               pButton
               pRipple
@@ -267,7 +270,10 @@
   <ng-template pTemplate="content">
     <div class="container">
       <!-- Vehicle Details -->
+      <strong>Vehicle Service Request Details</strong>
+      <hr class="my-1 mb-3" />
       <div class="row">
+        <!-- Left Side Columns -->
         <div class="col-md-6">
           <div class="row mb-2">
             <div class="col-md-6"><strong>Service Id:</strong></div>
@@ -308,16 +314,21 @@
             <div class="col-md-6">{{ selectedTicket.vendorName }}</div>
           </div>
           <div class="row mb-2">
-            <div class="col-md-6"><strong>View Quotation:</strong></div>
             <div class="col-md-6">
-              <a href="#">{{ selectedTicket.quotationAttachment }}</a>
+              <strong>View Quotation:</strong>
+            </div>
+            <div class="col-md-6">
+              <a href="#">Download Attachment</a>
             </div>
           </div>
           <div class="row mb-2">
             <div class="col-md-6"><strong>Overall Comment:</strong></div>
-            <div class="col-md-6">{{ selectedTicket.overallComment }}</div>
+            <div class="col-md-6">
+              {{ selectedTicket.overallComment || "NA" }}
+            </div>
           </div>
         </div>
+        <!-- Right Side Columns -->
         <div class="col-md-6">
           <div class="row mb-2">
             <div class="col-md-6"><strong>Vehicle Reg. No.:</strong></div>
@@ -432,30 +443,245 @@
 
       <hr />
 
+      <!-- Vehicle Actual Service Details Table -->
+      <div *ngIf="selectedTicket.isInvoiceUploaded">
+        <strong>Vehicle Service Completion Details</strong>
+        <hr class="my-1 mb-3" />
+        <div class="row">
+          <!-- Left Side Column -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Actual Cost :</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.invoiceTotalEstimatedCost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+            <!-- <div class="row mb-2">
+              <div class="col-md-6"><strong>Ownership :</strong></div>
+              <div class="col-md-6"></div>
+            </div> -->
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Name :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.vendorName }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Code :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorId }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor PAN :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorPan }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor GST :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorGst || "NA" }}
+              </div>
+            </div>
+            <!-- <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Type :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.vendorName }}
+              </div>
+            </div> -->
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Service Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.serviceDate | date : "MMM d, yyyy h:mm a" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Jobcard Attachment :</strong></div>
+              <div class="col-md-6">
+                <a *ngIf="selectedTicket.jobcardAttachment" href="#"
+                  >View Attachment</a
+                >
+                <p *ngIf="!selectedTicket.jobcardAttachment">NA</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Side Column -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Mode of Payment :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.modeOfPayment }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Number :</strong></div>
+              <div class="col-md-6">{{ selectedTicket.invoiceNumber }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.invoiceDate | date : "MMM d, yyyy h:mm a" }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Type :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.invoiceType }}
+              </div>
+            </div>
+            <!-- <div class="row mb-2">
+              <div class="col-md-6"><strong>GL Code :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.invoiceType }}
+              </div>
+            </div> -->
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Advance Amount :</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.advanceAmount
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Invoice Attachment :</strong></div>
+              <div class="col-md-6">
+                <a href="#">Download Attachment</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <table
+          class="table table-bordered table-striped mt-2 table-sm table-fixed"
+        >
+          <thead class="thead-dark">
+            <tr class="white-space-normal">
+              <th>SR. NO.</th>
+              <th>SYSTEM NAME</th>
+              <th>DEFECT NAME</th>
+              <th>HSN</th>
+              <th>PART QTY</th>
+              <th>PART COST</th>
+              <th>PART GST</th>
+              <th>TOTAL PART COST</th>
+              <th>LABOR QTY</th>
+              <th>LABOR COST</th>
+              <th>LABOR GST</th>
+              <th>TOTAL LABOR COST</th>
+              <th>GRAND TOTAL</th>
+              <th>COMMENT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="
+                let component of this.selectedTicket.actualServiceDetails;
+                let i = index
+              "
+            >
+              <td>{{ i + 1 }}</td>
+              <td>{{ component.systemName }}</td>
+              <td>{{ component.partName }}</td>
+              <td>{{ component.partHSN }}</td>
+              <td>{{ component.partQty }}</td>
+              <td>
+                {{
+                  component.partCost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ component.partGst }}%</td>
+              <td>
+                {{
+                  component.partCost *
+                    (1 + component.partGst / 100) *
+                    component.partQty
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ component.laborQty }}</td>
+              <td>
+                {{
+                  component.laborCost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ component.laborGst }}%</td>
+              <td>
+                {{
+                  component.laborCost *
+                    (1 + component.laborGst / 100) *
+                    component.laborQty
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  component.partCost *
+                    (1 + component.partGst / 100) *
+                    component.partQty +
+                    component.laborCost *
+                      (1 + component.laborGst / 100) *
+                      component.laborQty
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ component.comment || "NA" }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr />
+        <!-- End of Component Details Table -->
+      </div>
+
       <!-- Approve/Reject Buttons -->
-      <div
-        *ngIf="showApproveRejectButtons()"
-        class="d-flex justify-content-between"
-      >
+      <div class="d-flex justify-content-between">
         <p-button
+          *ngIf="showApproveRejectButtons()"
           label="Reject"
           (onClick)="toggleRejectTicketDialog()"
-          icon="pi pi-times"
+          icon="pi pi-ban"
           severity="danger"
           iconPos="right"
         />
         <p-button
-          label="Approve"
+          *ngIf="showTicketCloseButton()"
+          label="Close"
+          class="mx-auto"
+          (onClick)="confirmTicketClose()"
+          icon="pi pi-times"
+          severity="warning"
+          iconPos="right"
+        />
+        <p-button
+          *ngIf="showTicketReopenButton()"
+          label="Reopen"
+          (onClick)="confirmTicketReopen()"
+          icon="pi pi-undo"
+          class="mx-auto"
+          severity="warning"
+          iconPos="right"
+        />
+        <p-button
+          *ngIf="showApproveRejectButtons()"
+          label="{{
+            this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+          }}"
           (onClick)="toggleApproveTicketDialog()"
           icon="pi pi-check-circle"
           severity="success"
           iconPos="right"
         />
       </div>
+
+      <!-- Fill Invoice Details Button -->
       <div *ngIf="showUploadInvoiceButton()" class="d-flex justify-content-end">
         <p-button
-          label="Upload Invoice"
-          (onClick)="toggleApproveTicketDialog(true)"
+          label="Fill Invoice Details"
+          (onClick)="toggleUploadInvoiceDialog()"
           icon="pi pi-file-arrow-up"
           severity="info"
           iconPos="right"
@@ -468,15 +694,18 @@
   <p-dialog
     [(visible)]="showApproveTicketDialog"
     [style]="{ width: '50vw' }"
-    header="{{ this.uploadMode ? 'Upload Invoice' : 'Approve Request' }}"
+    header="{{
+      this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+    }} Request"
     [modal]="true"
     appendTo="body"
     styleClass="p-fluid"
   >
     <ng-template pTemplate="content">
-      <p *ngIf="!this.uploadMode">
-        Are you sure you want to approve the vehicle service request for vehicle
-        with registration number
+      <p>
+        Are you sure you want to
+        {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }} the
+        vehicle service request for vehicle with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
         estimated cost of
         <strong
@@ -486,37 +715,17 @@
           }} </strong
         >?
       </p>
-      <p *ngIf="this.uploadMode">
-        Please confirm your decision to submit the approval for the vehicle
-        service request for the vehicle with registration number
-        <strong>{{ selectedTicket.registrationNumber }}</strong> and total
-        estimated cost
-        <strong>{{
-          selectedTicket.totalEstimatedCost
-            | currency : "INR" : "symbol-narrow" : "0.2-2"
-        }}</strong
-        >.
-        <br />
-        <br />
-        <span class="text-secondary"
-          >You are required to upload the invoice to proceed.</span
-        >
-      </p>
       <br />
       <form #addOptionalDetails="ngForm" ngNativeValidate>
         <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
           <div class="form-group">
-            <label for="uploadAttachment" class="form-label">{{
-              uploadMode
-                ? "Invoice (acceptable formats: img/pdf)"
-                : "Attachment (acceptable formats: img/pdf)"
-            }}</label>
+            <label for="uploadAttachment" class="form-label">
+              Attachment (acceptable formats: img/pdf)</label
+            >
             <div>
               <p-button
                 *ngIf="!optionalDetails.attachment"
-                label="{{
-                  uploadMode ? 'Upload Invoice' : 'Upload Attachment'
-                }}"
+                label="Upload Attachment"
                 (onClick)="toggleUploadAttachmentDialog()"
                 icon="pi pi-file-arrow-up"
                 severity="info"
@@ -527,10 +736,7 @@
             </div>
           </div>
         </div>
-        <div
-          class="row"
-          *ngIf="!uploadMode && !this.selectedTicket.isInvoiceUploaded"
-        >
+        <div class="row">
           <label for="comment" class="form-label">Comment</label>
           <div>
             <textarea
@@ -546,7 +752,9 @@
 
         <div class="d-flex justify-content-center mt-3">
           <p-button
-            label="{{ uploadMode ? 'Submit' : 'Approve' }}"
+            label="{{
+              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+            }}"
             (onClick)="approveTicket()"
             icon="pi pi-check-circle"
             severity="success"
@@ -613,6 +821,1081 @@
     </ng-template>
   </p-dialog>
   <!-- End of Reject Ticket Dialog -->
+
+  <!-- Upload Invoice Dialog -->
+  <p-dialog
+    [(visible)]="showUploadInvoiceDialog"
+    [style]="{ width: '90vw', height: '90vh' }"
+    header="Invoice Details"
+    [maximizable]="true"
+    [modal]="true"
+    appendTo="body"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <p-stepper orientation="vertical" [linear]="true">
+        <!-- Actual Component Details Panel -->
+        <p-stepperPanel header="Component Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card class="dynamic-section">
+              <form
+                id="invoice-details"
+                #actualServiceDetails="ngForm"
+                ngNativeValidate
+              >
+                <!-- <p class="display-5 fs-5">Actual Service Details</p> -->
+                <!-- Start of Dynamic Sections -->
+                <div
+                  *ngFor="
+                    let detail of newInvoice.actualServiceDetails;
+                    let i = index
+                  "
+                  class="dynamic-section"
+                >
+                  <div
+                    class="row"
+                    *ngIf="newInvoice.actualServiceDetails.length > 1"
+                  >
+                    <div class="d-flex justify-content-end">
+                      <button
+                        pButton
+                        pRipple
+                        type="button"
+                        label="Remove Section"
+                        icon="pi pi-trash"
+                        class="p-element p-button p-button-danger p-component ng-star-inserted col-2 mb-3"
+                        (click)="removeSection(i)"
+                      ></button>
+                    </div>
+                  </div>
+                  <!-- System Name, Part Name, Part HSN and Part Qty  -->
+                  <div class="row">
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="systemName{{ i }}" class="form-label"
+                          >System Name <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #systemName="ngModel"
+                          name="systemName{{ i }}"
+                          id="systemName{{ i }}"
+                          [(ngModel)]="detail.systemName"
+                          (ngModelChange)="loadPartNames(i)"
+                          class="form-select {{
+                            systemName.invalid &&
+                            (systemName.dirty || systemName.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                          autofocus
+                        >
+                          <option value="" disabled selected>
+                            Select System Name
+                          </option>
+                          <option
+                            *ngFor="let system of systemNames"
+                            [value]="system"
+                          >
+                            {{ system.toUpperCase() }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            systemName.invalid &&
+                            (systemName.dirty || systemName.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          System name is required
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="partName{{ i }}" class="form-label"
+                          >Part Name <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #partName="ngModel"
+                          name="partName{{ i }}"
+                          id="partName{{ i }}"
+                          [(ngModel)]="detail.partName"
+                          [disabled]="!detail.systemName"
+                          class="form-select {{
+                            partName.invalid &&
+                            (partName.dirty || partName.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                          autofocus
+                        >
+                          <option value="" disabled selected>
+                            Select Part Name
+                          </option>
+                          <option
+                            *ngFor="let part of detail.partNames"
+                            [value]="part"
+                          >
+                            {{ part.toUpperCase() }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            partName.invalid &&
+                            (partName.dirty || partName.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Part name is required
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="partHSN{{ i }}" class="form-label"
+                          >Part HSN <span class="text-danger">*</span></label
+                        >
+                        <input
+                          #partHSN="ngModel"
+                          name="partHSN{{ i }}"
+                          type="text"
+                          class="form-control {{
+                            partHSN.invalid &&
+                            (partHSN.dirty || partHSN.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="detail.partHSN"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && !(event.charCode === 43 || event.charCode === 45)"
+                          onpaste="return false"
+                          maxlength="10"
+                          required
+                        />
+                        <p
+                          *ngIf="
+                            partHSN.invalid &&
+                            (partHSN.dirty || partHSN.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Part HSN is required
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="partQty{{ i }}" class="form-label"
+                          >Part Quantity
+                          <span class="text-danger">*</span></label
+                        >
+                        <input
+                          #partQty="ngModel"
+                          name="partQty{{ i }}"
+                          type="number"
+                          class="form-control {{
+                            partQty.invalid &&
+                            (partQty.dirty || partQty.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="detail.partQty"
+                          (ngModelChange)="updateTotalSpareCost()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="1"
+                          required
+                        />
+                        <p
+                          *ngIf="
+                            partQty.invalid &&
+                            (partQty.dirty || partQty.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Part quantity is required
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Part Cost, GST and Labor Cost GST -->
+                  <div class="row">
+                    <!-- Spare Cost and GST -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="spareCost{{ i }}" class="form-label"
+                          >Part Price <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #spareCost="ngModel"
+                            name="spareCost{{ i }}"
+                            type="number"
+                            class="form-control {{
+                              spareCost.invalid &&
+                              (spareCost.dirty || spareCost.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="detail.partCost"
+                            (ngModelChange)="updateTotalSpareCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                            required
+                          />
+                        </div>
+                        <p
+                          *ngIf="
+                            spareCost.invalid &&
+                            (spareCost.dirty || spareCost.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Part price is required
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="spareGst{{ i }}" class="form-label"
+                          >Part GST <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <select
+                            #spareGst="ngModel"
+                            name="spareGst{{ i }}"
+                            class="form-select {{
+                              spareGst.invalid &&
+                              (spareGst.dirty || spareGst.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="detail.partGst"
+                            (ngModelChange)="updateTotalSpareCost()"
+                            [disabled]="newInvoice.invoiceType == 'NON GST'"
+                            required
+                          >
+                            <option value="" disabled selected>
+                              Select Part GST
+                            </option>
+                            <option
+                              *ngFor="let gst of partGsts"
+                              [ngValue]="gst"
+                            >
+                              {{ gst }}
+                            </option>
+                          </select>
+                          <span class="input-group-text">%</span>
+                        </div>
+                        <p
+                          *ngIf="
+                            spareGst.invalid &&
+                            (spareGst.dirty || spareGst.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Part GST is required
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Labor Cost and GST -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborCost{{ i }}" class="form-label"
+                          >Labor Cost <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #laborCost="ngModel"
+                            name="laborCost{{ i }}"
+                            type="number"
+                            class="form-control {{
+                              laborCost.invalid &&
+                              (laborCost.dirty || laborCost.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="detail.laborCost"
+                            (ngModelChange)="updateTotalLaborCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                            required
+                          />
+                        </div>
+                        <p
+                          *ngIf="
+                            laborCost.invalid &&
+                            (laborCost.dirty || laborCost.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Labor cost is required
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborGst{{ i }}" class="form-label"
+                          >Labor Cost GST
+                          <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <select
+                            #laborGst="ngModel"
+                            name="laborGst{{ i }}"
+                            type="number"
+                            class="form-select {{
+                              laborGst.invalid &&
+                              (laborGst.dirty || laborGst.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="detail.laborGst"
+                            (ngModelChange)="updateTotalLaborCost()"
+                            [disabled]="newInvoice.invoiceType == 'NON GST'"
+                            required
+                          >
+                            <option value="" disabled selected>
+                              Select Labor GST
+                            </option>
+                            <option
+                              *ngFor="let gst of labourGsts"
+                              [ngValue]="gst"
+                            >
+                              {{ gst }}
+                            </option>
+                          </select>
+                          <span class="input-group-text">%</span>
+                        </div>
+                        <p
+                          *ngIf="
+                            laborGst.invalid &&
+                            (laborGst.dirty || laborGst.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Labor cost GST is required
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End of Spare and Labor Cost Row -->
+
+                  <!-- Labor Qty, SAC Code, Comment and Part Total-->
+                  <div class="row">
+                    <!-- Labor Quantity Field -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborQty{{ i }}" class="form-label">
+                          Labor Quantity <span class="text-danger">*</span>
+                        </label>
+                        <input
+                          #laborQty="ngModel"
+                          name="laborQty{{ i }}"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="detail.laborQty"
+                          (ngModelChange)="updateTotalLaborCost()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                        <p
+                          *ngIf="
+                            laborQty.invalid &&
+                            (laborQty.dirty || laborQty.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Labor Quantity is required.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- SAC Code Field -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="sacCode{{ i }}" class="form-label">
+                          SAC Code <span class="text-danger">*</span>
+                        </label>
+                        <input
+                          #sacCode="ngModel"
+                          name="sacCode{{ i }}"
+                          type="text"
+                          class="form-control"
+                          [(ngModel)]="detail.sacCode"
+                          placeholder="Labour - 9987"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57) || (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122)) && !(event.charCode === 43 || event.charCode === 45)"
+                          onpaste="return false"
+                          maxlength="10"
+                          required
+                        />
+                        <p
+                          *ngIf="
+                            sacCode.invalid &&
+                            (sacCode.dirty || sacCode.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          SAC Code is required.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Comment Field -->
+                    <div class="col">
+                      <label for="comment{{ i }}" class="form-label"
+                        >Comment</label
+                      >
+                      <textarea
+                        #comment
+                        name="comment{{ i }}"
+                        class="form-control"
+                        id="comment{{ i }}"
+                        rows="2"
+                        [(ngModel)]="detail.comment"
+                      ></textarea>
+                    </div>
+
+                    <!-- Part Total Field -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="partTotal{{ i }}" class="form-label"
+                          >Total</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            type="number"
+                            class="form-control"
+                            disabled
+                            [value]="newInvoice.invoiceTotalEstimatedCost"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End of Labor Qty, SAC Code, Comment and Part Total -->
+
+                  <!-- Next Button -->
+                  <div class="row my-3">
+                    <div class="d-flex justify-content-end">
+                      <button
+                        pButton
+                        pRipple
+                        type="button"
+                        label="Add Section"
+                        class="p-element p-button p-button-success p-component ng-star-inserted col-2"
+                        (click)="addSection()"
+                        icon="pi pi-plus"
+                        *ngIf="i === newInvoice.actualServiceDetails.length - 1"
+                      ></button>
+                    </div>
+                  </div>
+                  <hr *ngIf="i < newInvoice.actualServiceDetails.length - 1" />
+                </div>
+                <!-- End of Dynamic Section -->
+
+                <div class="d-flex justify-content-end py-2">
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="actualServiceDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <!-- End of Actual Component Details Panel -->
+
+        <!-- Invoice Details -->
+        <p-stepperPanel header="Invoice Details">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #invoiceDetails="ngForm" ngNativeValidate>
+                <!-- Actual Cost, Invoice Amount, Invoice No and Invoice Type  -->
+                <div class="row">
+                  <!-- Actual Cost -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceTotalEstimatedCost" class="form-label"
+                        >Actual Cost</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="number"
+                          class="form-control"
+                          disabled
+                          [value]="newInvoice.invoiceTotalEstimatedCost"
+                        />
+                        <p
+                          *ngIf="
+                            newInvoice.invoiceTotalEstimatedCost >
+                            selectedTicket.totalEstimatedCost * 1.1
+                          "
+                          class="form-text text-danger"
+                        >
+                          Amount exceeds the quoted limit! Please edit your
+                          request.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Invoice Amount -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceAmount" class="form-label"
+                        >Invoice Amount
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #invoiceAmount="ngModel"
+                          name="invoiceAmount"
+                          type="number"
+                          class="form-control {{
+                            invoiceAmount.invalid &&
+                            (invoiceAmount.dirty || invoiceAmount.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newInvoice.invoiceAmount"
+                          (ngModelChange)="checkInvoiceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          invoiceAmount.invalid &&
+                          (invoiceAmount.dirty || invoiceAmount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice amount is required
+                      </p>
+                      <p
+                        *ngIf="
+                          newInvoice.invoiceTotalEstimatedCost !=
+                            newInvoice.invoiceAmount &&
+                          (invoiceAmount.dirty || invoiceAmount.touched) &&
+                          !invoiceAmount.invalid
+                        "
+                        class="form-text text-danger"
+                      >
+                        The invoice amount does not align with the actual cost.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Invoice No -->
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="invoiceNumber" class="form-label">
+                        Invoice Number <span class="text-danger">*</span>
+                      </label>
+                      <input
+                        #invoiceNumber="ngModel"
+                        name="invoiceNumber"
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="newInvoice.invoiceNumber"
+                        maxlength="20"
+                        required
+                      />
+                      <p
+                        *ngIf="
+                          invoiceNumber.invalid &&
+                          (invoiceNumber.dirty || invoiceNumber.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice number is required.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Invoice Type -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="invoiceType" class="form-label"
+                        >Invoice Type <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #invoiceType="ngModel"
+                        name="invoiceType"
+                        id="invoiceType"
+                        [(ngModel)]="newInvoice.invoiceType"
+                        (ngModelChange)="
+                          updateTotalLaborCost(); updateTotalSpareCost()
+                        "
+                        class="form-select {{
+                          invoiceType.invalid &&
+                          (invoiceType.dirty || invoiceType.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Invoice Type
+                        </option>
+                        <option
+                          *ngFor="let entry of invoiceTypes"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          invoiceType.invalid &&
+                          (invoiceType.dirty || invoiceType.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice Type is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <!-- End of Actual Cost, Invoice Amount, Invoice No and Invoice Type  -->
+
+                <!-- DIV / Company Name, Mode of Payment, Invoice Date and Service Date -->
+                <div class="row">
+                  <!-- Company Name -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="companyName" class="form-label"
+                        >Company Name <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #companyName="ngModel"
+                        name="companyName"
+                        id="companyName"
+                        [(ngModel)]="newInvoice.companyName"
+                        class="form-select {{
+                          companyName.invalid &&
+                          (companyName.dirty || companyName.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Company Name
+                        </option>
+                        <option
+                          *ngFor="let entry of companyNames"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          companyName.invalid &&
+                          (companyName.dirty || companyName.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Company Name is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Mode of Payment -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="modeOfPayment" class="form-label"
+                        >Mode of Payment
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #modeOfPayment="ngModel"
+                        name="modeOfPayment"
+                        id="modeOfPayment"
+                        [(ngModel)]="newInvoice.modeOfPayment"
+                        class="form-select {{
+                          modeOfPayment.invalid &&
+                          (modeOfPayment.dirty || modeOfPayment.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Mode of Payment
+                        </option>
+                        <option
+                          *ngFor="let entry of modeOfPayments"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          modeOfPayment.invalid &&
+                          (modeOfPayment.dirty || modeOfPayment.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Mode of Payment is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Invoice Date -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="invoiceDate" class="form-label"
+                        >Invoice Date <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #invoiceDate="ngModel"
+                        appendTo="body"
+                        [(ngModel)]="dates.invoiceDate"
+                        (ngModelChange)="convertDateToString(1)"
+                        name="invoiceDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          invoiceDate.invalid &&
+                          (invoiceDate.dirty || invoiceDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [dateFormat]="'dd-mm-yy'"
+                        showButtonBar
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          invoiceDate.invalid &&
+                          (invoiceDate.dirty || invoiceDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Invoice date is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Service Date -->
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="serviceDate" class="form-label"
+                        >Service Date <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #serviceDate="ngModel"
+                        appendTo="body"
+                        [(ngModel)]="dates.serviceDate"
+                        (ngModelChange)="convertDateToString(2)"
+                        name="serviceDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          serviceDate.invalid &&
+                          (serviceDate.dirty || serviceDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [dateFormat]="'dd-mm-yy'"
+                        showButtonBar
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          serviceDate.invalid &&
+                          (serviceDate.dirty || serviceDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Service date is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <!-- Mode of Payment, Invoice Date and Service Date -->
+
+                <!-- Vendor Name, Advance Amount, Invoice Attachment, and Jobcard pic -->
+                <div class="row">
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="vendorName" class="form-label"
+                        >Vendor Name <span class="text-danger">*</span></label
+                      >
+                      <p-dropdown
+                        #vendorId="ngModel"
+                        name="vendorName"
+                        id="vendorName"
+                        [options]="vendors"
+                        optionLabel="name"
+                        [disabled]="newInvoice.advanceAmount > 0"
+                        optionValue="id"
+                        [virtualScroll]="true"
+                        [virtualScrollItemSize]="30"
+                        [(ngModel)]="newInvoice.vendorId"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newInvoice.vendorId && vendorId.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        placeholder="Select Vendor Name"
+                        required
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newInvoice.vendorId &&
+                          (vendorId.touched || vendorId.dirty)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vendor name is required
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="quotationAmount" class="form-label"
+                        >Quoted Amount
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #totalEstimatedCost="ngModel"
+                          name="totalEstimatedCost"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="selectedTicket!.totalEstimatedCost"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="advanceAmount" class="form-label"
+                        >Advance Amount
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #advanceAmount="ngModel"
+                          name="advanceAmount"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newInvoice!.advanceAmount"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Upload Invoice and Jobcard -->
+                  <div class="col-4">
+                    <div class="row">
+                      <div class="col">
+                        <div class="form-group">
+                          <label for="uploadInvoicePic" class="form-label">
+                            Upload Invoice
+                            <span class="text-danger">*</span></label
+                          >
+                          <div>
+                            <p-button
+                              *ngIf="!newInvoice.invoiceAttachment"
+                              label="Browse"
+                              (onClick)="toggleUploadAttachmentDialog()"
+                              icon="pi pi-file-arrow-up"
+                              severity="info"
+                              [style]="{ width: 'fit-content' }"
+                              iconPos="right"
+                              autofocus="false"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col">
+                        <div class="form-group">
+                          <label for="uploadJobcard" class="form-label">
+                            Upload Jobcard</label
+                          >
+                          <div>
+                            <p-button
+                              *ngIf="!newInvoice.jobcardAttachment"
+                              label="Browse"
+                              (onClick)="toggleUploadAttachmentDialog()"
+                              icon="pi pi-file-arrow-up"
+                              severity="info"
+                              [style]="{ width: 'fit-content' }"
+                              iconPos="right"
+                              autofocus="false"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Vendor Name, Advance Amount, Invoice Attachment, and Jobcard pic -->
+
+                <div class="d-flex justify-content-between py-3">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="
+                      invoiceDetails.invalid ||
+                      newInvoice.invoiceAmount !=
+                        newInvoice.invoiceTotalEstimatedCost ||
+                      newInvoice.invoiceAmount >
+                        selectedTicket.totalEstimatedCost * 1.1
+                    "
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <!-- End of Invoice Details -->
+
+        <p-stepperPanel header="Confirmation">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <p>
+                Are you sure you want to submit the invoice details for the
+                vehicle with registration number
+                <strong>{{ selectedTicket.registrationNumber }}</strong
+                >?<br />
+                The invoice includes the following information:
+              </p>
+
+              <ul class="row">
+                <li class="col-md-4">
+                  <strong>Invoice Number :</strong>
+                  {{ newInvoice.invoiceNumber }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Invoice Amount :</strong>
+                  {{
+                    newInvoice.invoiceAmount
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Invoice Date :</strong>
+                  {{ dates.invoiceDate | date : "dd-MM-yyyy" }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Service Date :</strong>
+                  {{ dates.serviceDate | date : "dd-MM-yyyy" }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Company Name :</strong>
+                  {{ newInvoice.companyName }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Invoice Type :</strong>
+                  {{ newInvoice.invoiceType }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Mode of Payment :</strong>
+                  {{ newInvoice.modeOfPayment }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Vendor Name :</strong>
+                  {{ newInvoice.vendorName }}
+                </li>
+                <li class="col-md-4">
+                  <strong>Advance Amount :</strong>
+                  {{
+                    (newInvoice.advanceAmount
+                      | currency : "INR" : "symbol-narrow" : "0.2-2") || "NA"
+                  }}
+                </li>
+              </ul>
+
+              <p>
+                Please review all the details carefully and click on
+                <strong>Submit Details</strong> to confirm.
+              </p>
+
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  class="me-1"
+                  [disabled]="showLoader || formActionsDisabled"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="Submit Details"
+                  (onClick)="submitInvoiceDetails()"
+                  [disabled]="showLoader || formActionsDisabled"
+                  icon="pi pi-file-check"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+      </p-stepper>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Upload Invoice Dialog -->
 </p-dialog>
 <!-- End of View Maintenance Request Dialog -->
 

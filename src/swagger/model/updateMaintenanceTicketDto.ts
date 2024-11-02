@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-export interface UpdateTicketDto { 
+export interface UpdateMaintenanceTicketDto { 
     id?: number;
     zone?: string;
     region?: string;
@@ -26,7 +26,7 @@ export interface UpdateTicketDto {
     offRoadReason?: string;
     offRoadStatusChangeDate?: string;
     serviceRequestType?: string;
-    vendorName?: string;
+    vendorId?: string;
     totalSpareCost?: number;
     totalLaborCost?: number;
     totalEstimatedCost?: number;
@@ -35,7 +35,6 @@ export interface UpdateTicketDto {
     overallComment?: string;
     isAdvanceRequired?: number;
     advanceAmount?: number;
-    isHFMApprovalRequired?: number;
     isRMApprovalRequired?: number;
     isNFMApprovalRequired?: number;
     isZMApprovalRequired?: number;

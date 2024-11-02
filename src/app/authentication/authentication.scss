@@ -170,3 +170,8 @@ input:focus {
   border-right-style: solid;
   border-color: var(--surface-400);
 }
+
+.form-group {
+  min-width: 18rem;
+  max-width: 18rem;
+}

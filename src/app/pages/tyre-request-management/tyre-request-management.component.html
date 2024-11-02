@@ -1,0 +1,3928 @@
+<div class="card">
+  <p-toast></p-toast>
+  <p-table
+    #dt
+    [value]="filteredTickets"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    styleClass="p-datatable-sm"
+    [globalFilterFields]="[
+      'region',
+      'branch',
+      'hub',
+      'registrationNumber',
+      'currentStage'
+    ]"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="columns"
+    [exportFilename]="generateExportName()"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Tyre Requests</h5>
+        <div>
+          <button
+            *ngIf="roleId == 1"
+            pButton
+            pRipple
+            label="New"
+            icon="pi pi-plus"
+            class="m-1 p-element p-button-success p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleCreateRequestDialog()"
+            rounded="true"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="{{ isFilterApplied ? 'Modify' : 'Filter' }}"
+            icon="{{ isFilterApplied ? 'pi pi-filter-slash' : 'pi pi-filter' }}"
+            class="m-1 p-element p-button-info p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleFilterDialog()"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="dt.exportCSV()"
+            rounded="true"
+          ></button>
+          <span class="p-input-icon-left m-1">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal(searchInput.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th>
+          <div class="d-flex align-items-center">
+            Region
+            <p-columnFilter type="text" field="region" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Branch
+            <p-columnFilter type="text" field="branch" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div pSortableColumn="isVehicleOffRoad">
+            Status
+            <p-sortIcon field="isVehicleOffRoad"></p-sortIcon>
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Reg No
+            <p-columnFilter
+              type="text"
+              field="registrationNumber"
+              display="menu"
+            />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Stage
+            <p-columnFilter type="text" field="currentStage" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Estimate
+            <p-columnFilter type="text" field="finalAmount" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Qty
+            <p-columnFilter type="text" field="finalAmount" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Created
+            <p-columnFilter type="date" field="createdOn" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-calendar
+                  #calendar
+                  dateFormat="dd-mm-yy"
+                  [ngModel]="value"
+                  (onSelect)="filter(calendar.value)"
+                ></p-calendar>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-ticket>
+      <tr>
+        <td>{{ ticket.region }}</td>
+        <td>{{ ticket.branch | removeParenthesisText }}</td>
+        <td style="white-space: nowrap !important">
+          <p-tag [severity]="!ticket.isVehicleOffRoad ? 'success' : 'danger'">
+            {{ ticket.isVehicleOffRoad ? "Off Road" : "On Road" }}</p-tag
+          >
+        </td>
+        <td>{{ ticket.registrationNumber }}</td>
+        <td>{{ ticket.currentStage }}</td>
+        <td>
+          {{
+            ticket.estimatedTyreTotal
+              | currency : "INR" : "symbol-narrow" : "0.2-2"
+          }}
+        </td>
+        <td>{{ ticket.tyreQuantity }}</td>
+        <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
+        <td>
+          <div class="col d-flex justify-content-start">
+            <button
+              pButton
+              pRipple
+              class="p-button-rounded p-button-primary rounded-circle m-0"
+              icon="pi pi-eye"
+              (click)="viewTicket(ticket.id)"
+              pTooltip="View Request"
+              tooltipPosition="bottom"
+            ></button>
+            <button
+              *ngIf="
+                roleId == 1 &&
+                !ticket.hasAdvanceApproved &&
+                !ticket.hasFinanceUserApproved &&
+                !ticket.isClosed &&
+                !ticket.isInvoiceUploaded
+              "
+              pButton
+              pRipple
+              class="p-button-rounded p-button-warning rounded-circle mx-2"
+              icon="pi pi-pencil"
+              (click)="editTicket(ticket.id)"
+              pTooltip="Edit Request"
+              tooltipPosition="bottom"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9">No Vehicle Tyre Requests Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <!-- End of Tyre Requests Section -->
+
+  <!-- View Tyre Request Dialog -->
+  <p-dialog
+    [(visible)]="showTicketDetailsDialog"
+    maximizable="true"
+    [style]="{ width: '80vw', height: '85vh' }"
+    header="Tyre Request Details"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      <div class="container">
+        <!-- Vehicle Details -->
+        <strong>Vehicle Details</strong>
+        <hr class="my-1 mb-2" />
+        <div class="row mb-1">
+          <!-- Left Side Columns -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Service Id:</strong></div>
+              <div class="col-md-6">{{ selectedTicket.id }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <strong>Vehicle off-road status:</strong>
+              </div>
+              <div class="col-md-6">
+                {{ selectedTicket.isVehicleOffRoad ? "Off Road" : "On Road" }}
+              </div>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vehicle Manufacturer:</strong></div>
+              <div class="col-md-6">{{ selectedTicket.manufacturer }}</div>
+            </div>
+
+            <!-- <div class="row mb-2">
+            <div class="col-md-6"><strong>Vehicle Total Km Run:</strong></div>
+            <div class="col-md-6">0</div>
+          </div> -->
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vehicle Age:</strong></div>
+              <div class="col-md-6">{{ selectedTicket.vehicleAge }}</div>
+            </div>
+          </div>
+
+          <!-- Right Side Columns -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vehicle Reg. No.:</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.registrationNumber }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <strong>Off-road status updated:</strong>
+              </div>
+              <div class="col-md-6">
+                {{
+                  (selectedTicket.offRoadStatusChangeDate
+                    | date : "MMM d, yyyy") || "NA"
+                }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vehicle Model:</strong></div>
+              <div class="col-md-6">{{ selectedTicket.model }}</div>
+            </div>
+          </div>
+        </div>
+        <!-- End of Vehicle Details -->
+
+        <!-- Estimated Cost  Details -->
+        <strong>Estimated Cost Details</strong>
+        <hr class="my-1 mb-2" />
+        <div class="row mb-2">
+          <!-- Left Side Columns -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Vendor Name:</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.selectedVendorName }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>GST:</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.estimatedTyreGst
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <strong>View Quotation:</strong>
+              </div>
+              <div class="col-md-6">
+                <a href="#">Download Attachment</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Side Columns -->
+          <div class="col-md-6">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Tyre Cost:</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.estimatedTyreCost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Quantity:</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.tyreQuantity }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Total Estimated Cost:</strong></div>
+              <div class="col-md-6">
+                {{
+                  selectedTicket.estimatedTyreTotal
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End of Estimated Cost Details -->
+
+        <!-- Tyre Replacement Details -->
+        <strong>Tyre Replacement Details</strong>
+        <hr class="my-1 mb-2" />
+        <table
+          class="table table-bordered table-striped mt-2 table-sm table-fixed"
+        >
+          <thead class="thead-dark">
+            <tr class="white-space-normal">
+              <th>SR. NO.</th>
+              <th>SERIAL NUMBER</th>
+              <th>ENTERED SERIAL NUMBER</th>
+              <th>ALERT</th>
+              <th>MANUFACTURER</th>
+              <th>MODEL</th>
+              <th>SIZE</th>
+              <th>DATE OF FITMENT</th>
+              <th>KM RUN</th>
+              <th>TYRE IMAGE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="selectedTicket.tyreQuantity! >= 1">
+              <td>1</td>
+              <td>{{ hash(selectedTicket.selectedTyre1SerialNumber) }}</td>
+              <td>{{ selectedTicket.typedTyre1SerialNumber }}</td>
+              <td>
+                {{
+                  selectedTicket.selectedTyre1SerialNumber ==
+                  selectedTicket.typedTyre1SerialNumber
+                    ? "NA"
+                    : "Serial number does not match"
+                }}
+              </td>
+              <td>{{ selectedTicket.selectedTyre1Manufacturer }}</td>
+              <td>{{ selectedTicket.selectedTyre1Model }}</td>
+              <td>{{ selectedTicket.selectedTyre1Size }}</td>
+              <td>{{ selectedTicket.selectedTyre1FitmentDate }}</td>
+              <td>{{ "NA" }}</td>
+
+              <td>
+                <a [href]="selectedTicket.tyre1Attachment" target="_blank"
+                  >View Image</a
+                >
+              </td>
+            </tr>
+
+            <tr *ngIf="selectedTicket.tyreQuantity! >= 2">
+              <td>2</td>
+              <td>{{ hash(selectedTicket.selectedTyre2SerialNumber) }}</td>
+              <td>{{ selectedTicket.typedTyre2SerialNumber }}</td>
+              <td>
+                {{
+                  selectedTicket.selectedTyre2SerialNumber ==
+                  selectedTicket.typedTyre2SerialNumber
+                    ? "NA"
+                    : "Serial number does not match"
+                }}
+              </td>
+              <td>{{ selectedTicket.selectedTyre2Manufacturer }}</td>
+              <td>{{ selectedTicket.selectedTyre2Model }}</td>
+              <td>{{ selectedTicket.selectedTyre2Size }}</td>
+              <td>{{ selectedTicket.selectedTyre2FitmentDate }}</td>
+              <td>{{ "NA" }}</td>
+
+              <td>
+                <a [href]="selectedTicket.tyre2Attachment" target="_blank"
+                  >View Image</a
+                >
+              </td>
+            </tr>
+
+            <tr *ngIf="selectedTicket.tyreQuantity! >= 3">
+              <td>3</td>
+              <td>{{ hash(selectedTicket.selectedTyre3SerialNumber) }}</td>
+              <td>{{ selectedTicket.typedTyre3SerialNumber }}</td>
+              <td>
+                {{
+                  selectedTicket.selectedTyre3SerialNumber ==
+                  selectedTicket.typedTyre3SerialNumber
+                    ? "NA"
+                    : "Serial number does not match"
+                }}
+              </td>
+              <td>{{ selectedTicket.selectedTyre3Manufacturer }}</td>
+              <td>{{ selectedTicket.selectedTyre3Model }}</td>
+              <td>{{ selectedTicket.selectedTyre3Size }}</td>
+              <td>{{ selectedTicket.selectedTyre3FitmentDate }}</td>
+              <td>{{ "NA" }}</td>
+
+              <td>
+                <a [href]="selectedTicket.tyre3Attachment" target="_blank"
+                  >View Image</a
+                >
+              </td>
+            </tr>
+
+            <tr *ngIf="selectedTicket.tyreQuantity! >= 4">
+              <td>4</td>
+              <td>{{ hash(selectedTicket.selectedTyre4SerialNumber) }}</td>
+              <td>{{ selectedTicket.typedTyre4SerialNumber }}</td>
+              <td>
+                {{
+                  selectedTicket.selectedTyre4SerialNumber ==
+                  selectedTicket.typedTyre4SerialNumber
+                    ? "NA"
+                    : "Serial number does not match"
+                }}
+              </td>
+              <td>{{ selectedTicket.selectedTyre4Manufacturer }}</td>
+              <td>{{ selectedTicket.selectedTyre4Model }}</td>
+              <td>{{ selectedTicket.selectedTyre4Size }}</td>
+              <td>{{ selectedTicket.selectedTyre4FitmentDate }}</td>
+              <td>{{ "NA" }}</td>
+
+              <td>
+                <a [href]="selectedTicket.tyre4Attachment" target="_blank"
+                  >View Image</a
+                >
+              </td>
+            </tr>
+
+            <tr *ngIf="selectedTicket.tyreQuantity! >= 5">
+              <td>5</td>
+              <td>{{ hash(selectedTicket.selectedTyre5SerialNumber) }}</td>
+              <td>{{ selectedTicket.typedTyre5SerialNumber }}</td>
+              <td>
+                {{
+                  selectedTicket.selectedTyre5SerialNumber ==
+                  selectedTicket.typedTyre5SerialNumber
+                    ? "NA"
+                    : "Serial number does not match"
+                }}
+              </td>
+              <td>{{ selectedTicket.selectedTyre5Manufacturer }}</td>
+              <td>{{ selectedTicket.selectedTyre5Model }}</td>
+              <td>{{ selectedTicket.selectedTyre5Size }}</td>
+              <td>{{ selectedTicket.selectedTyre5FitmentDate }}</td>
+              <td>{{ "NA" }}</td>
+
+              <td>
+                <a [href]="selectedTicket.tyre5Attachment" target="_blank"
+                  >View Image</a
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- End of Tyre Replacement Details -->
+
+        <!-- Tyre Request Approval/Rejection Timeline Details -->
+        <strong>Tyre Approval History</strong>
+        <table class="table table-bordered table-striped mt-2">
+          <thead class="thead-dark">
+            <tr>
+              <th>SR. NO.</th>
+              <th>STATUS</th>
+              <th>STATUS CHANGED TIME</th>
+              <th>USER NAME</th>
+              <th>COMMENT</th>
+              <th>ATTACHMENT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let step of selectedTicketApprovalStages">
+              <td>{{ step.id }}</td>
+              <td>{{ step.status }}</td>
+              <td>{{ step.timestamp | date : "dd MMM, yyyy h:mm a" }}</td>
+              <td>{{ step.label }}</td>
+              <td>{{ step.comment || "NA" }}</td>
+              <td>{{ step.attachment || "NA" }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- End of Tyre Request Approval/Rejection Timeline Details -->
+
+        <!-- Actual Tyre Completion Details -->
+        <div *ngIf="selectedTicket.isInvoiceUploaded">
+          <strong>Invoice Details</strong>
+          <hr class="my-1 mb-3" />
+          <div class="row mb-2">
+            <!-- Left Side Columns -->
+            <div class="col-md-6">
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Invoice Amount :</strong></div>
+                <div class="col-md-6">
+                  {{
+                    selectedTicket.invoiceTotal
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Vendor Name :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.actualTyreVendorName }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Vendor Code :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.actualVendorId }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Vendor PAN :</strong></div>
+                <div class="col-md-6">{{ selectedTicket.actualVendorPan }}</div>
+              </div>
+              <!-- <div class="row mb-2">
+              <div class="col-md-6"><strong>Ownership :</strong></div>
+              <div class="col-md-6">NA</div>
+            </div> -->
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Vendor GST :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.actualVendorGst || "NA" }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Vendor Type :</strong></div>
+                <div class="col-md-6">NA</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>SAC Code :</strong></div>
+                <div class="col-md-6">{{ selectedTicket.sacCode }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6">
+                  <strong>Invoice Attachment :</strong>
+                </div>
+                <div class="col-md-6">
+                  <a href="#">Download Attachment</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side Column -->
+            <div class="col-md-6">
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Mode of Payment :</strong></div>
+                <div class="col-md-6">{{ selectedTicket.modeOfPayment }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Invoice Number :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.invoiceNumber }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Invoice Date :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.invoiceDate | date : "dd-MM-yyyy" }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Invoice Type :</strong></div>
+                <div class="col-md-6">{{ selectedTicket.invoiceType }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>GL Code :</strong></div>
+                <div class="col-md-6">NA</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>Advance Amount :</strong></div>
+                <div class="col-md-6">
+                  {{
+                    selectedTicket.advanceAmount
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6"><strong>HSN :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.hsn }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <strong>New Tyre Details</strong>
+          <table
+            class="table table-bordered table-striped mt-2 table-sm table-fixed"
+          >
+            <thead class="thead-dark">
+              <tr class="white-space-normal">
+                <th>SR. NO.</th>
+                <th>MANUFACTURER</th>
+                <th>MODEL</th>
+                <th>TYPE</th>
+                <th>SIZE</th>
+                <th>SERIAL NUMBER</th>
+                <th>DATE OF FITMENT</th>
+                <th>COST</th>
+                <th>GST</th>
+                <th>TOTAL COST</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="selectedTicket.tyreQuantity! >= 1">
+                <td>1</td>
+                <td>{{ selectedTicket.newTyre1Manufacturer }}</td>
+                <td>{{ selectedTicket.newTyre1Model }}</td>
+
+                <td>{{ selectedTicket.newTyre1Type }}</td>
+                <td>{{ selectedTicket.newTyre1Size }}</td>
+                <td>{{ selectedTicket.newTyre1SerialNumber }}</td>
+                <td>
+                  {{ selectedTicket.newTyre1FitmentDate | date : "dd-MM-yyyy" }}
+                </td>
+                <td>
+                  {{
+                    selectedTicket.newTyre1Cost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+                <td>{{ selectedTicket.actualTyreGst }}%</td>
+                <td>
+                  {{
+                    selectedTicket.newTyre1Cost! *
+                      (1 + this.selectedTicket.actualTyreGst! / 100)
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+              </tr>
+
+              <tr *ngIf="selectedTicket.tyreQuantity! >= 2">
+                <td>2</td>
+                <td>{{ selectedTicket.newTyre2Manufacturer }}</td>
+                <td>{{ selectedTicket.newTyre2Model }}</td>
+
+                <td>{{ selectedTicket.newTyre2Type }}</td>
+                <td>{{ selectedTicket.newTyre2Size }}</td>
+                <td>{{ selectedTicket.newTyre2SerialNumber }}</td>
+                <td>
+                  {{ selectedTicket.newTyre2FitmentDate | date : "dd-MM-yyyy" }}
+                </td>
+                <td>
+                  {{
+                    selectedTicket.newTyre2Cost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+                <td>{{ selectedTicket.actualTyreGst }}%</td>
+                <td>
+                  {{
+                    selectedTicket.newTyre2Cost! *
+                      (1 + this.selectedTicket.actualTyreGst! / 100)
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+              </tr>
+
+              <tr *ngIf="selectedTicket.tyreQuantity! >= 3">
+                <td>3</td>
+                <td>{{ selectedTicket.newTyre3Manufacturer }}</td>
+                <td>{{ selectedTicket.newTyre3Model }}</td>
+
+                <td>{{ selectedTicket.newTyre3Type }}</td>
+                <td>{{ selectedTicket.newTyre3Size }}</td>
+                <td>{{ selectedTicket.newTyre3SerialNumber }}</td>
+                <td>
+                  {{ selectedTicket.newTyre3FitmentDate | date : "dd-MM-yyyy" }}
+                </td>
+                <td>
+                  {{
+                    selectedTicket.newTyre3Cost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+                <td>{{ selectedTicket.actualTyreGst }}%</td>
+                <td>
+                  {{
+                    selectedTicket.newTyre3Cost! *
+                      (1 + this.selectedTicket.actualTyreGst! / 100)
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+              </tr>
+
+              <tr *ngIf="selectedTicket.tyreQuantity! >= 4">
+                <td>4</td>
+                <td>{{ selectedTicket.newTyre4Manufacturer }}</td>
+                <td>{{ selectedTicket.newTyre4Model }}</td>
+
+                <td>{{ selectedTicket.newTyre4Type }}</td>
+                <td>{{ selectedTicket.newTyre4Size }}</td>
+                <td>{{ selectedTicket.newTyre4SerialNumber }}</td>
+                <td>
+                  {{ selectedTicket.newTyre4FitmentDate | date : "dd-MM-yyyy" }}
+                </td>
+                <td>
+                  {{
+                    selectedTicket.newTyre4Cost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+                <td>{{ selectedTicket.actualTyreGst }}%</td>
+                <td>
+                  {{
+                    selectedTicket.newTyre4Cost! *
+                      (1 + this.selectedTicket.actualTyreGst! / 100)
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+              </tr>
+
+              <tr *ngIf="selectedTicket.tyreQuantity! >= 5">
+                <td>5</td>
+                <td>{{ selectedTicket.newTyre5Manufacturer }}</td>
+                <td>{{ selectedTicket.newTyre5Model }}</td>
+
+                <td>{{ selectedTicket.newTyre5Type }}</td>
+                <td>{{ selectedTicket.newTyre5Size }}</td>
+                <td>{{ selectedTicket.newTyre5SerialNumber }}</td>
+                <td>
+                  {{ selectedTicket.newTyre5FitmentDate | date : "dd-MM-yyyy" }}
+                </td>
+                <td>
+                  {{
+                    selectedTicket.newTyre5Cost
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+                <td>{{ selectedTicket.actualTyreGst }}%</td>
+                <td>
+                  {{
+                    selectedTicket.newTyre5Cost! *
+                      (1 + this.selectedTicket.actualTyreGst! / 100)
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="table-secondary">
+              <tr>
+                <td colspan="7"><strong> Grand Total</strong></td>
+                <td>
+                  <strong>
+                    {{
+                      selectedTicket.newTyre1Cost ||
+                        0 + selectedTicket.newTyre2Cost ||
+                        0 + selectedTicket.newTyre3Cost ||
+                        0 + selectedTicket.newTyre4Cost ||
+                        0 + selectedTicket.newTyre5Cost ||
+                        0 | currency : "INR" : "symbol-narrow" : "0.2-2"
+                    }}</strong
+                  >
+                </td>
+                <td>
+                  <strong>{{ selectedTicket.actualTyreGst }}%</strong>
+                </td>
+                <td>
+                  <strong>
+                    {{
+                      (selectedTicket.newTyre1Cost || 0) *
+                        (1 + this.selectedTicket.actualTyreGst! / 100) +
+                        (selectedTicket.newTyre2Cost || 0) *
+                          (1 + this.selectedTicket.actualTyreGst! / 100) +
+                        (selectedTicket.newTyre3Cost || 0) *
+                          (1 + this.selectedTicket.actualTyreGst! / 100) +
+                        (selectedTicket.newTyre4Cost || 0) *
+                          (1 + this.selectedTicket.actualTyreGst! / 100) +
+                        (selectedTicket.newTyre5Cost || 0) *
+                          (1 + this.selectedTicket.actualTyreGst! / 100)
+                        | currency : "INR" : "symbol-narrow" : "0.2-2"
+                    }}</strong
+                  >
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          <!-- End of Tyre Replacement Details -->
+          <!-- End of Component Details Table -->
+        </div>
+
+        <!-- Approve/Reject Buttons -->
+        <div class="d-flex justify-content-between">
+          <p-button
+            *ngIf="showApproveRejectButtons()"
+            label="Reject"
+            (onClick)="toggleRejectTicketDialog()"
+            icon="pi pi-ban"
+            severity="danger"
+            iconPos="right"
+          />
+          <p-button
+            *ngIf="showTicketCloseButton()"
+            label="Close"
+            (onClick)="confirmTicketClose()"
+            icon="pi pi-times"
+            class="mx-auto"
+            severity="warning"
+            iconPos="right"
+          />
+          <p-button
+            *ngIf="showTicketReopenButton()"
+            label="Reopen"
+            (onClick)="confirmTicketReopen()"
+            icon="pi pi-undo"
+            class="mx-auto"
+            severity="warning"
+            iconPos="right"
+          />
+          <p-button
+            *ngIf="showApproveRejectButtons()"
+            label="{{
+              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+            }}"
+            (onClick)="toggleApproveTicketDialog()"
+            icon="pi pi-check-circle"
+            severity="success"
+            iconPos="right"
+          />
+        </div>
+
+        <!-- Fill Invoice Details Button -->
+        <div
+          *ngIf="showUploadInvoiceButton()"
+          class="d-flex justify-content-end"
+        >
+          <p-button
+            label="Fill Invoice Details"
+            (onClick)="toggleUploadInvoiceDialog()"
+            icon="pi pi-file-arrow-up"
+            severity="info"
+            iconPos="right"
+          />
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Approve Ticket Dialog -->
+    <p-dialog
+      [(visible)]="showApproveTicketDialog"
+      [style]="{ width: '50vw' }"
+      header="{{
+        this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+      }} Request"
+      [modal]="true"
+      appendTo="body"
+      styleClass="p-fluid"
+    >
+      <ng-template pTemplate="content">
+        <p>
+          Are you sure you want to
+          {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }}
+          the tyre request for vehicle with registration number
+          <strong>{{ selectedTicket.registrationNumber }}</strong> with total
+          estimated cost of
+          <strong
+            >{{
+              selectedTicket.new_Battery_Total
+                | currency : "INR" : "symbol-narrow" : "0.2-2"
+            }} </strong
+          >?
+        </p>
+        <br />
+        <form #addOptionalDetails="ngForm" ngNativeValidate>
+          <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
+            <div class="form-group">
+              <label for="uploadAttachment" class="form-label">
+                Attachment (acceptable formats: img/pdf)</label
+              >
+              <div>
+                <p-button
+                  *ngIf="!optionalDetails.attachment"
+                  label="Upload Attachment"
+                  (onClick)="toggleUploadAttachmentDialog()"
+                  icon="pi pi-file-arrow-up"
+                  severity="info"
+                  [style]="{ width: 'fit-content' }"
+                  iconPos="right"
+                  autofocus="false"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <label for="comment" class="form-label">Comment</label>
+            <div>
+              <textarea
+                #comment="ngModel"
+                name="comment"
+                class="form-control"
+                id="comment"
+                rows="2"
+                [(ngModel)]="optionalDetails.comment"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-center mt-3">
+            <p-button
+              label="{{
+                this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+              }}"
+              (onClick)="approveTicket()"
+              icon="pi pi-check-circle"
+              severity="success"
+              iconPos="right"
+            ></p-button>
+          </div>
+        </form>
+      </ng-template>
+    </p-dialog>
+    <!-- End of Approve Ticket Dialog -->
+
+    <!-- Reject Ticket Dialog -->
+    <p-dialog
+      [(visible)]="showRejectTicketDialog"
+      [style]="{ width: '50vw' }"
+      header="Reject Request"
+      [modal]="true"
+      appendTo="body"
+      styleClass="p-fluid"
+    >
+      <ng-template pTemplate="content">
+        <p>
+          Are you sure you want to reject the vehicle tyre request for vehicle
+          with registration number
+          <strong>{{ selectedTicket.registrationNumber }}</strong> with total
+          estimated cost of
+          <strong
+            >{{
+              selectedTicket.estimatedTyreTotal
+                | currency : "INR" : "symbol-narrow" : "0.2-2"
+            }} </strong
+          >?
+        </p>
+        <br />
+        <form #addOptionalDetails="ngForm" ngNativeValidate>
+          <div class="row">
+            <label for="comment" class="form-label"
+              >Comment <span class="text-danger">*</span></label
+            >
+            <div>
+              <textarea
+                #comment="ngModel"
+                name="comment"
+                class="form-control"
+                id="comment"
+                rows="2"
+                [(ngModel)]="optionalDetails.comment"
+                required
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-center mt-3">
+            <p-button
+              label="Reject"
+              (onClick)="rejectTicket()"
+              [disabled]="!optionalDetails.comment"
+              icon="pi pi-times"
+              severity="danger"
+              iconPos="right"
+            ></p-button>
+          </div>
+        </form>
+      </ng-template>
+    </p-dialog>
+    <!-- End of Reject Ticket Dialog -->
+
+    <!-- Upload Invoice Dialog -->
+    <p-dialog
+      [(visible)]="showUploadInvoiceDialog"
+      [style]="{ width: '90vw', height: '90vh' }"
+      header="Invoice Details"
+      [maximizable]="true"
+      [modal]="true"
+      appendTo="body"
+      styleClass="p-fluid"
+    >
+      <ng-template pTemplate="content">
+        <p-stepper orientation="vertical" [linear]="true">
+          <!-- Actual Component Details Panel -->
+          <p-stepperPanel header="New Tyre Details">
+            <ng-template
+              pTemplate="content"
+              let-nextCallback="nextCallback"
+              let-index="index"
+            >
+              <p-card>
+                <form #allTyreDetails="ngForm" ngValidate>
+                  <p-stepper orientation="vertical" [linear]="false">
+                    <p-stepperPanel
+                      header="Tyre 1 Details"
+                      *ngIf="newInvoice.tyreQuantity! >= 1"
+                      ><ng-template
+                        pTemplate="content"
+                        let-nextCallback="nextCallback"
+                        let-index="index"
+                        ><p-card>
+                          <div class="row">
+                            <!-- Tyre Manufacturer -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable1"
+                            >
+                              <div class="form-group">
+                                <label for="tyreManufacturer" class="form-label"
+                                  >Tyre Make
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreManufacturer="ngModel"
+                                  class="form-select {{
+                                    tyreManufacturer.invalid &&
+                                    (tyreManufacturer.dirty ||
+                                      tyreManufacturer.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer"
+                                  [(ngModel)]="newInvoice.newTyre1Manufacturer"
+                                  (ngModelChange)="loadTyreModels(1)"
+                                  name="tyreManufacturer"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Make
+                                  </option>
+                                  <option
+                                    *ngFor="
+                                      let manufacturer of tyreManufacturers
+                                    "
+                                    [value]="manufacturer"
+                                  >
+                                    {{ manufacturer }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer.invalid &&
+                                    tyreManufacturer.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable1"
+                            >
+                              <div class="form-group">
+                                <label for="tyreManufacturer" class="form-label"
+                                  >Tyre Manufacturer
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreManufacturer="ngModel"
+                                  class="form-control {{
+                                    tyreManufacturer.invalid &&
+                                    (tyreManufacturer.dirty ||
+                                      tyreManufacturer.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer"
+                                  [(ngModel)]="newInvoice.newTyre1Manufacturer"
+                                  name="tyreManufacturer"
+                                  type="text"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer.invalid &&
+                                    (tyreManufacturer.dirty ||
+                                      tyreManufacturer.touched)
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Model -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable1"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel" class="form-label">
+                                  Tyre Model
+                                  <span class="text-danger">*</span>
+                                </label>
+                                <select
+                                  #tyreModel="ngModel"
+                                  class="form-select {{
+                                    tyreModel.invalid &&
+                                    (tyreModel.dirty || tyreModel.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel"
+                                  [(ngModel)]="newInvoice.newTyre1Model"
+                                  name="tyreModel"
+                                  [disabled]="!newInvoice.newTyre1Manufacturer"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Model
+                                  </option>
+                                  <option
+                                    *ngFor="let model of newInvoice.tyre1Models"
+                                    [value]="model"
+                                  >
+                                    {{ model }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreModel.invalid && tyreModel.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable1"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel" class="form-label">
+                                  Tyre Model
+                                  <span class="text-danger">*</span>
+                                </label>
+                                <input
+                                  #tyreModel="ngModel"
+                                  class="form-control {{
+                                    tyreModel.invalid &&
+                                    (tyreModel.dirty || tyreModel.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel"
+                                  [(ngModel)]="newInvoice.newTyre1Model"
+                                  name="tyreModel"
+                                  required
+                                />
+                                <p
+                                  *ngIf="tyreModel.invalid && tyreModel.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Type -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreType" class="form-label">
+                                  Tyre Type <span class="text-danger">*</span>
+                                </label>
+                                <select
+                                  #tyreType="ngModel"
+                                  class="form-select {{
+                                    tyreType.invalid &&
+                                    (tyreType.dirty || tyreType.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreType"
+                                  [(ngModel)]="newInvoice.newTyre1Type"
+                                  name="tyreType"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Type
+                                  </option>
+                                  <option
+                                    *ngFor="let type of tyreTypes"
+                                    [value]="type"
+                                  >
+                                    {{ type }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreType.invalid && tyreType.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre type is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Size -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreSize" class="form-label">
+                                  Tyre Size <span class="text-danger">*</span>
+                                </label>
+                                <select
+                                  #tyreSize="ngModel"
+                                  class="form-select {{
+                                    tyreSize.invalid &&
+                                    (tyreSize.dirty || tyreSize.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreSize"
+                                  [(ngModel)]="newInvoice.newTyre1Size"
+                                  name="tyreSize"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Size
+                                  </option>
+                                  <option
+                                    *ngFor="let size of tyreSizes"
+                                    [value]="size"
+                                  >
+                                    {{ size }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreSize.invalid && tyreSize.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre size is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div class="col-12">
+                              <div class="form-check">
+                                <label
+                                  class="form-label"
+                                  for="flexCheckDefault"
+                                >
+                                  Can't find tyre make/model?
+                                </label>
+                                <input
+                                  #isTyreMakeModelAvailable="ngModel"
+                                  name="isTyreMakeModelAvailable"
+                                  id="isTyreMakeModelAvailable"
+                                  class="form-check-input"
+                                  [(ngModel)]="isTyreMakeModelNotAvailable1"
+                                  type="checkbox"
+                                  value="0"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Cost -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="cost" class="form-label">
+                                  Cost <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input
+                                    type="number"
+                                    class="form-control {{
+                                      cost.invalid &&
+                                      (cost.dirty || cost.touched)
+                                        ? 'is-invalid'
+                                        : ''
+                                    }}"
+                                    id="cost"
+                                    [(ngModel)]="newInvoice.newTyre1Cost"
+                                    (ngModelChange)="updateTotalCost()"
+                                    name="cost"
+                                    required
+                                    #cost="ngModel"
+                                  />
+                                </div>
+                                <p
+                                  *ngIf="cost.invalid && cost.touched"
+                                  class="text-danger"
+                                >
+                                  Cost is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Fitment Date -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="fitmentDate" class="form-label">
+                                  Fitment Date
+                                  <span class="text-danger">*</span>
+                                </label>
+                                <input
+                                  #fitmentDate="ngModel"
+                                  name="fitmentDate"
+                                  id="fitmentDate"
+                                  type="date"
+                                  class="form-control {{
+                                    fitmentDate.invalid &&
+                                    (fitmentDate.dirty || fitmentDate.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  [(ngModel)]="newInvoice.newTyre1FitmentDate"
+                                  [max]="maxDate | date : 'yyyy-MM-dd'"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    fitmentDate.invalid && fitmentDate.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Fitment date is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Serial Number -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="serialNumber" class="form-label">
+                                  Serial Number
+                                  <span class="text-danger">*</span>
+                                </label>
+                                <input
+                                  #serialNumber="ngModel"
+                                  type="text"
+                                  class="form-control {{
+                                    serialNumber.invalid &&
+                                    (serialNumber.dirty || serialNumber.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="serialNumber"
+                                  [(ngModel)]="newInvoice.newTyre1SerialNumber"
+                                  name="serialNumber"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    serialNumber.invalid && serialNumber.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Serial number is required
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="d-flex justify-content-end py-3">
+                            <p-button
+                              label="Next"
+                              *ngIf="newInvoice.tyreQuantity! > 1"
+                              (onClick)="nextCallback.emit()"
+                              icon="pi pi-arrow-right"
+                              iconPos="right"
+                            />
+                          </div> </p-card
+                      ></ng-template>
+                    </p-stepperPanel>
+
+                    <!-- Tyre 2 Panel -->
+                    <p-stepperPanel
+                      header="Tyre 2 Details"
+                      *ngIf="newInvoice.tyreQuantity! >= 2"
+                    >
+                      <ng-template
+                        pTemplate="content"
+                        let-nextCallback="nextCallback"
+                        let-prevCallback="prevCallback"
+                        let-index="index"
+                      >
+                        <p-card>
+                          <div class="row">
+                            <!-- Tyre Manufacturer -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable2"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer2"
+                                  class="form-label"
+                                  >Tyre Make
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreManufacturer2="ngModel"
+                                  class="form-select {{
+                                    tyreManufacturer2.invalid &&
+                                    (tyreManufacturer2.dirty ||
+                                      tyreManufacturer2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer2"
+                                  [(ngModel)]="newInvoice.newTyre2Manufacturer"
+                                  (ngModelChange)="loadTyreModels(2)"
+                                  name="tyreManufacturer2"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Make
+                                  </option>
+                                  <option
+                                    *ngFor="
+                                      let manufacturer of tyreManufacturers
+                                    "
+                                    [value]="manufacturer"
+                                  >
+                                    {{ manufacturer }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer2.invalid &&
+                                    tyreManufacturer2.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable2"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer2"
+                                  class="form-label"
+                                  >Tyre Manufacturer
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreManufacturer2="ngModel"
+                                  class="form-control {{
+                                    tyreManufacturer2.invalid &&
+                                    (tyreManufacturer2.dirty ||
+                                      tyreManufacturer2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer2"
+                                  [(ngModel)]="newInvoice.newTyre2Manufacturer"
+                                  name="tyreManufacturer2"
+                                  type="text"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer2.invalid &&
+                                    (tyreManufacturer2.dirty ||
+                                      tyreManufacturer2.touched)
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Model -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable2"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel2" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreModel2="ngModel"
+                                  class="form-select {{
+                                    tyreModel2.invalid &&
+                                    (tyreModel2.dirty || tyreModel2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel2"
+                                  [(ngModel)]="newInvoice.newTyre2Model"
+                                  name="tyreModel2"
+                                  [disabled]="!newInvoice.newTyre2Manufacturer"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Model
+                                  </option>
+                                  <option
+                                    *ngFor="let model of newInvoice.tyre2Models"
+                                    [value]="model"
+                                  >
+                                    {{ model }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreModel2.invalid && tyreModel2.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable2"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel2" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreModel2="ngModel"
+                                  class="form-control {{
+                                    tyreModel2.invalid &&
+                                    (tyreModel2.dirty || tyreModel2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel2"
+                                  [(ngModel)]="newInvoice.newTyre2Model"
+                                  name="tyreModel2"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreModel2.invalid && tyreModel2.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Type -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreType2" class="form-label"
+                                  >Tyre Type
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreType2="ngModel"
+                                  class="form-select {{
+                                    tyreType2.invalid &&
+                                    (tyreType2.dirty || tyreType2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreType2"
+                                  [(ngModel)]="newInvoice.newTyre2Type"
+                                  name="tyreType2"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Type
+                                  </option>
+                                  <option
+                                    *ngFor="let type of tyreTypes"
+                                    [value]="type"
+                                  >
+                                    {{ type }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreType2.invalid && tyreType2.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre type is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Size -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreSize2" class="form-label"
+                                  >Tyre Size
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreSize2="ngModel"
+                                  class="form-select {{
+                                    tyreSize2.invalid &&
+                                    (tyreSize2.dirty || tyreSize2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreSize2"
+                                  [(ngModel)]="newInvoice.newTyre2Size"
+                                  name="tyreSize2"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Size
+                                  </option>
+                                  <option
+                                    *ngFor="let size of tyreSizes"
+                                    [value]="size"
+                                  >
+                                    {{ size }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreSize2.invalid && tyreSize2.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre size is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div class="col-12">
+                              <div class="form-check">
+                                <label
+                                  class="form-label"
+                                  for="isTyreMakeModelAvailable2"
+                                  >Can't find tyre make/model?</label
+                                >
+                                <input
+                                  #isTyreMakeModelAvailable2="ngModel"
+                                  name="isTyreMakeModelAvailable2"
+                                  id="isTyreMakeModelAvailable2"
+                                  class="form-check-input"
+                                  [(ngModel)]="isTyreMakeModelNotAvailable2"
+                                  type="checkbox"
+                                  value="0"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Cost -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="cost2" class="form-label"
+                                  >Cost
+                                  <span class="text-danger">*</span></label
+                                >
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input
+                                    type="number"
+                                    class="form-control {{
+                                      cost2.invalid &&
+                                      (cost2.dirty || cost2.touched)
+                                        ? 'is-invalid'
+                                        : ''
+                                    }}"
+                                    id="cost2"
+                                    [(ngModel)]="newInvoice.newTyre2Cost"
+                                    (ngModelChange)="updateTotalCost()"
+                                    name="cost2"
+                                    required
+                                    #cost2="ngModel"
+                                  />
+                                </div>
+                                <p
+                                  *ngIf="cost2.invalid && cost2.touched"
+                                  class="text-danger"
+                                >
+                                  Cost is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Fitment Date -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="fitmentDate2" class="form-label"
+                                  >Fitment Date
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  type="date"
+                                  class="form-control {{
+                                    fitmentDate2.invalid &&
+                                    (fitmentDate2.dirty || fitmentDate2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="fitmentDate2"
+                                  [(ngModel)]="newInvoice.newTyre2FitmentDate"
+                                  [max]="maxDate | date : 'yyyy-MM-dd'"
+                                  name="fitmentDate2"
+                                  required
+                                  #fitmentDate2="ngModel"
+                                />
+                                <p
+                                  *ngIf="
+                                    fitmentDate2.invalid && fitmentDate2.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Fitment date is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Serial Number -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="serialNumber2" class="form-label"
+                                  >Serial Number
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #serialNumber2="ngModel"
+                                  type="text"
+                                  class="form-control {{
+                                    serialNumber2.invalid &&
+                                    (serialNumber2.dirty ||
+                                      serialNumber2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="serialNumber2"
+                                  [(ngModel)]="newInvoice.newTyre2SerialNumber"
+                                  name="serialNumber2"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    serialNumber2.invalid &&
+                                    serialNumber2.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Serial number is required
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="d-flex justify-content-between py-3">
+                            <p-button
+                              label="Back"
+                              (onClick)="prevCallback.emit()"
+                              icon="pi pi-arrow-left"
+                              iconPos="left"
+                            />
+                            <p-button
+                              *ngIf="newInvoice.tyreQuantity! > 2"
+                              label="Next"
+                              (onClick)="nextCallback.emit()"
+                              icon="pi pi-arrow-right"
+                              iconPos="right"
+                            />
+                          </div>
+                        </p-card>
+                      </ng-template>
+                    </p-stepperPanel>
+
+                    <!-- Tyre 3 Panel -->
+                    <p-stepperPanel
+                      header="Tyre 3 Details"
+                      *ngIf="newInvoice.tyreQuantity! >= 3"
+                    >
+                      <ng-template
+                        pTemplate="content"
+                        let-nextCallback="nextCallback"
+                        let-prevCallback="prevCallback"
+                        let-index="index"
+                      >
+                        <p-card>
+                          <div class="row">
+                            <!-- Tyre Manufacturer -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable3"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer3"
+                                  class="form-label"
+                                  >Tyre Make
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreManufacturer3="ngModel"
+                                  class="form-select {{
+                                    tyreManufacturer3.invalid &&
+                                    (tyreManufacturer3.dirty ||
+                                      tyreManufacturer3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer3"
+                                  [(ngModel)]="newInvoice.newTyre3Manufacturer"
+                                  (ngModelChange)="loadTyreModels(3)"
+                                  name="tyreManufacturer3"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Make
+                                  </option>
+                                  <option
+                                    *ngFor="
+                                      let manufacturer of tyreManufacturers
+                                    "
+                                    [value]="manufacturer"
+                                  >
+                                    {{ manufacturer }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer3.invalid &&
+                                    tyreManufacturer3.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable3"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer3"
+                                  class="form-label"
+                                  >Tyre Manufacturer
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreManufacturer3="ngModel"
+                                  class="form-control {{
+                                    tyreManufacturer3.invalid &&
+                                    (tyreManufacturer3.dirty ||
+                                      tyreManufacturer3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer3"
+                                  [(ngModel)]="newInvoice.newTyre3Manufacturer"
+                                  name="tyreManufacturer3"
+                                  type="text"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer3.invalid &&
+                                    (tyreManufacturer3.dirty ||
+                                      tyreManufacturer3.touched)
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Model -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable3"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel3" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreModel3="ngModel"
+                                  class="form-select {{
+                                    tyreModel3.invalid &&
+                                    (tyreModel3.dirty || tyreModel3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel3"
+                                  [(ngModel)]="newInvoice.newTyre3Model"
+                                  name="tyreModel3"
+                                  [disabled]="!newInvoice.newTyre3Manufacturer"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Model
+                                  </option>
+                                  <option
+                                    *ngFor="let model of newInvoice.tyre3Models"
+                                    [value]="model"
+                                  >
+                                    {{ model }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreModel3.invalid && tyreModel3.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable3"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel3" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreModel3="ngModel"
+                                  class="form-control {{
+                                    tyreModel3.invalid &&
+                                    (tyreModel3.dirty || tyreModel3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel3"
+                                  [(ngModel)]="newInvoice.newTyre3Model"
+                                  name="tyreModel3"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreModel3.invalid && tyreModel3.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Type -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreType3" class="form-label"
+                                  >Tyre Type
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreType3="ngModel"
+                                  class="form-select {{
+                                    tyreType3.invalid &&
+                                    (tyreType3.dirty || tyreType3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreType3"
+                                  [(ngModel)]="newInvoice.newTyre3Type"
+                                  name="tyreType3"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Type
+                                  </option>
+                                  <option
+                                    *ngFor="let type of tyreTypes"
+                                    [value]="type"
+                                  >
+                                    {{ type }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreType3.invalid && tyreType3.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre type is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Size -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreSize3" class="form-label"
+                                  >Tyre Size
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreSize3="ngModel"
+                                  class="form-select {{
+                                    tyreSize3.invalid &&
+                                    (tyreSize3.dirty || tyreSize3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreSize3"
+                                  [(ngModel)]="newInvoice.newTyre3Size"
+                                  name="tyreSize3"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Size
+                                  </option>
+                                  <option
+                                    *ngFor="let size of tyreSizes"
+                                    [value]="size"
+                                  >
+                                    {{ size }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreSize3.invalid && tyreSize3.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre size is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div class="col-12">
+                              <div class="form-check">
+                                <label
+                                  class="form-label"
+                                  for="isTyreMakeModelAvailable3"
+                                  >Can't find tyre make/model?</label
+                                >
+                                <input
+                                  #isTyreMakeModelAvailable3="ngModel"
+                                  name="isTyreMakeModelAvailable3"
+                                  id="isTyreMakeModelAvailable3"
+                                  class="form-check-input"
+                                  [(ngModel)]="isTyreMakeModelNotAvailable3"
+                                  type="checkbox"
+                                  value="0"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Cost -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="cost3" class="form-label"
+                                  >Cost
+                                  <span class="text-danger">*</span></label
+                                >
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input
+                                    type="number"
+                                    class="form-control {{
+                                      cost3.invalid &&
+                                      (cost3.dirty || cost3.touched)
+                                        ? 'is-invalid'
+                                        : ''
+                                    }}"
+                                    id="cost3"
+                                    [(ngModel)]="newInvoice.newTyre3Cost"
+                                    (ngModelChange)="updateTotalCost()"
+                                    name="cost3"
+                                    required
+                                    #cost3="ngModel"
+                                  />
+                                </div>
+                                <p
+                                  *ngIf="cost3.invalid && cost3.touched"
+                                  class="text-danger"
+                                >
+                                  Cost is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Fitment Date -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="fitmentDate3" class="form-label"
+                                  >Fitment Date
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #fitmentDate3="ngModel"
+                                  type="date"
+                                  name="fitmentDate3"
+                                  class="form-control {{
+                                    fitmentDate3.invalid &&
+                                    (fitmentDate3.dirty || fitmentDate3.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="fitmentDate3"
+                                  [(ngModel)]="newInvoice.newTyre3FitmentDate"
+                                  [max]="maxDate | date : 'yyyy-MM-dd'"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    fitmentDate3.invalid && fitmentDate3.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Fitment date is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Serial Number -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="serialNumber2" class="form-label"
+                                  >Serial Number
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #serialNumber2="ngModel"
+                                  type="text"
+                                  class="form-control {{
+                                    serialNumber2.invalid &&
+                                    (serialNumber2.dirty ||
+                                      serialNumber2.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="serialNumber2"
+                                  [(ngModel)]="newInvoice.newTyre3SerialNumber"
+                                  name="serialNumber2"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    serialNumber2.invalid &&
+                                    serialNumber2.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Serial number is required
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="d-flex justify-content-between py-3">
+                            <p-button
+                              label="Back"
+                              (onClick)="prevCallback.emit()"
+                              icon="pi pi-arrow-left"
+                              iconPos="left"
+                            />
+                            <p-button
+                              *ngIf="newInvoice.tyreQuantity! > 3"
+                              label="Next"
+                              (onClick)="nextCallback.emit()"
+                              icon="pi pi-arrow-right"
+                              iconPos="right"
+                            /></div></p-card></ng-template
+                    ></p-stepperPanel>
+
+                    <p-stepperPanel
+                      header="Tyre 4 Details"
+                      *ngIf="newInvoice.tyreQuantity! >= 4"
+                    >
+                      <ng-template
+                        pTemplate="content"
+                        let-nextCallback="nextCallback"
+                        let-prevCallback="prevCallback"
+                      >
+                        <p-card>
+                          <div class="row">
+                            <!-- Tyre Manufacturer -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable4"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer4"
+                                  class="form-label"
+                                  >Tyre Make
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreManufacturer4="ngModel"
+                                  class="form-select {{
+                                    tyreManufacturer4.invalid &&
+                                    (tyreManufacturer4.dirty ||
+                                      tyreManufacturer4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer4"
+                                  [(ngModel)]="newInvoice.newTyre4Manufacturer"
+                                  (ngModelChange)="loadTyreModels(4)"
+                                  name="tyreManufacturer4"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Make
+                                  </option>
+                                  <option
+                                    *ngFor="
+                                      let manufacturer of tyreManufacturers
+                                    "
+                                    [value]="manufacturer"
+                                  >
+                                    {{ manufacturer }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer4.invalid &&
+                                    tyreManufacturer4.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable4"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer4"
+                                  class="form-label"
+                                  >Tyre Manufacturer
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreManufacturer4="ngModel"
+                                  class="form-control {{
+                                    tyreManufacturer4.invalid &&
+                                    (tyreManufacturer4.dirty ||
+                                      tyreManufacturer4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer4"
+                                  [(ngModel)]="newInvoice.newTyre4Manufacturer"
+                                  name="tyreManufacturer4"
+                                  type="text"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer4.invalid &&
+                                    (tyreManufacturer4.dirty ||
+                                      tyreManufacturer4.touched)
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Model -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable4"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel4" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreModel4="ngModel"
+                                  class="form-select {{
+                                    tyreModel4.invalid &&
+                                    (tyreModel4.dirty || tyreModel4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel4"
+                                  [(ngModel)]="newInvoice.newTyre4Model"
+                                  name="tyreModel4"
+                                  [disabled]="!newInvoice.newTyre4Manufacturer"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Model
+                                  </option>
+                                  <option
+                                    *ngFor="let model of newInvoice.tyre4Models"
+                                    [value]="model"
+                                  >
+                                    {{ model }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreModel4.invalid && tyreModel4.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable4"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel4" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreModel4="ngModel"
+                                  class="form-control {{
+                                    tyreModel4.invalid &&
+                                    (tyreModel4.dirty || tyreModel4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel4"
+                                  [(ngModel)]="newInvoice.newTyre4Model"
+                                  name="tyreModel4"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreModel4.invalid && tyreModel4.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Type -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreType4" class="form-label"
+                                  >Tyre Type
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreType4="ngModel"
+                                  class="form-select {{
+                                    tyreType4.invalid &&
+                                    (tyreType4.dirty || tyreType4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreType4"
+                                  [(ngModel)]="newInvoice.newTyre4Type"
+                                  name="tyreType4"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Type
+                                  </option>
+                                  <option
+                                    *ngFor="let type of tyreTypes"
+                                    [value]="type"
+                                  >
+                                    {{ type }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreType4.invalid && tyreType4.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre type is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Size -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreSize4" class="form-label"
+                                  >Tyre Size
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreSize4="ngModel"
+                                  class="form-select {{
+                                    tyreSize4.invalid &&
+                                    (tyreSize4.dirty || tyreSize4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreSize4"
+                                  [(ngModel)]="newInvoice.newTyre4Size"
+                                  name="tyreSize4"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Size
+                                  </option>
+                                  <option
+                                    *ngFor="let size of tyreSizes"
+                                    [value]="size"
+                                  >
+                                    {{ size }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreSize4.invalid && tyreSize4.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre size is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div class="col-12">
+                              <div class="form-check">
+                                <label
+                                  class="form-label"
+                                  for="isTyreMakeModelAvailable4"
+                                  >Can't find tyre make/model?</label
+                                >
+                                <input
+                                  #isTyreMakeModelAvailable4="ngModel"
+                                  name="isTyreMakeModelAvailable4"
+                                  id="isTyreMakeModelAvailable4"
+                                  class="form-check-input"
+                                  [(ngModel)]="isTyreMakeModelNotAvailable4"
+                                  type="checkbox"
+                                  value="0"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Cost -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="cost4" class="form-label"
+                                  >Cost
+                                  <span class="text-danger">*</span></label
+                                >
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input
+                                    type="number"
+                                    class="form-control {{
+                                      cost4.invalid &&
+                                      (cost4.dirty || cost4.touched)
+                                        ? 'is-invalid'
+                                        : ''
+                                    }}"
+                                    id="cost4"
+                                    [(ngModel)]="newInvoice.newTyre4Cost"
+                                    (ngModelChange)="updateTotalCost()"
+                                    name="cost4"
+                                    required
+                                    #cost4="ngModel"
+                                  />
+                                </div>
+                                <p
+                                  *ngIf="cost4.invalid && cost4.touched"
+                                  class="text-danger"
+                                >
+                                  Cost is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Fitment Date -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="fitmentDate4" class="form-label"
+                                  >Fitment Date
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #fitmentDate4="ngModel"
+                                  name="fitmentDate4"
+                                  type="date"
+                                  class="form-control {{
+                                    fitmentDate4.invalid &&
+                                    (fitmentDate4.dirty || fitmentDate4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="fitmentDate4"
+                                  [(ngModel)]="newInvoice.newTyre4FitmentDate"
+                                  [max]="maxDate | date : 'yyyy-MM-dd'"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    fitmentDate4.invalid && fitmentDate4.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Fitment date is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Serial Number -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="serialNumber4" class="form-label"
+                                  >Serial Number
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #serialNumber4="ngModel"
+                                  type="text"
+                                  class="form-control {{
+                                    serialNumber4.invalid &&
+                                    (serialNumber4.dirty ||
+                                      serialNumber4.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="serialNumber4"
+                                  [(ngModel)]="newInvoice.newTyre4SerialNumber"
+                                  name="serialNumber4"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    serialNumber4.invalid &&
+                                    serialNumber4.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Serial number is required
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="d-flex justify-content-between py-3">
+                            <p-button
+                              label="Back"
+                              (onClick)="prevCallback.emit()"
+                              icon="pi pi-arrow-left"
+                              iconPos="left"
+                            />
+                            <p-button
+                              *ngIf="newInvoice.tyreQuantity! > 4"
+                              label="Next"
+                              (onClick)="nextCallback.emit()"
+                              icon="pi pi-arrow-right"
+                              iconPos="right"
+                            />
+                          </div>
+                        </p-card>
+                      </ng-template>
+                    </p-stepperPanel>
+
+                    <p-stepperPanel
+                      header="Tyre 5 Details"
+                      *ngIf="newInvoice.tyreQuantity! >= 5"
+                    >
+                      <ng-template
+                        pTemplate="content"
+                        let-prevCallback="prevCallback"
+                      >
+                        <p-card>
+                          <div class="row">
+                            <!-- Tyre Manufacturer -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable5"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer5"
+                                  class="form-label"
+                                  >Tyre Make
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreManufacturer5="ngModel"
+                                  class="form-select {{
+                                    tyreManufacturer5.invalid &&
+                                    (tyreManufacturer5.dirty ||
+                                      tyreManufacturer5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer5"
+                                  [(ngModel)]="newInvoice.newTyre5Manufacturer"
+                                  (ngModelChange)="loadTyreModels(5)"
+                                  name="tyreManufacturer5"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Make
+                                  </option>
+                                  <option
+                                    *ngFor="
+                                      let manufacturer of tyreManufacturers
+                                    "
+                                    [value]="manufacturer"
+                                  >
+                                    {{ manufacturer }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer5.invalid &&
+                                    tyreManufacturer5.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable5"
+                            >
+                              <div class="form-group">
+                                <label
+                                  for="tyreManufacturer5"
+                                  class="form-label"
+                                  >Tyre Manufacturer
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreManufacturer5="ngModel"
+                                  class="form-control {{
+                                    tyreManufacturer5.invalid &&
+                                    (tyreManufacturer5.dirty ||
+                                      tyreManufacturer5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreManufacturer5"
+                                  [(ngModel)]="newInvoice.newTyre5Manufacturer"
+                                  name="tyreManufacturer5"
+                                  type="text"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreManufacturer5.invalid &&
+                                    (tyreManufacturer5.dirty ||
+                                      tyreManufacturer5.touched)
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre manufacturer is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Model -->
+                            <div
+                              class="col-3"
+                              *ngIf="!isTyreMakeModelNotAvailable5"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel5" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreModel5="ngModel"
+                                  class="form-select {{
+                                    tyreModel5.invalid &&
+                                    (tyreModel5.dirty || tyreModel5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel5"
+                                  [(ngModel)]="newInvoice.newTyre5Model"
+                                  name="tyreModel5"
+                                  [disabled]="!newInvoice.newTyre5Manufacturer"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Model
+                                  </option>
+                                  <option
+                                    *ngFor="let model of newInvoice.tyre5Models"
+                                    [value]="model"
+                                  >
+                                    {{ model }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="
+                                    tyreModel5.invalid && tyreModel5.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              class="col-3"
+                              *ngIf="isTyreMakeModelNotAvailable5"
+                            >
+                              <div class="form-group">
+                                <label for="tyreModel5" class="form-label"
+                                  >Tyre Model
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #tyreModel5="ngModel"
+                                  class="form-control {{
+                                    tyreModel5.invalid &&
+                                    (tyreModel5.dirty || tyreModel5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreModel5"
+                                  [(ngModel)]="newInvoice.newTyre5Model"
+                                  name="tyreModel5"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    tyreModel5.invalid && tyreModel5.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Tyre model is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Type -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreType5" class="form-label"
+                                  >Tyre Type
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreType5="ngModel"
+                                  class="form-select {{
+                                    tyreType5.invalid &&
+                                    (tyreType5.dirty || tyreType5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreType5"
+                                  [(ngModel)]="newInvoice.newTyre5Type"
+                                  name="tyreType5"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Type
+                                  </option>
+                                  <option
+                                    *ngFor="let type of tyreTypes"
+                                    [value]="type"
+                                  >
+                                    {{ type }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreType5.invalid && tyreType5.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre type is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Tyre Size -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="tyreSize5" class="form-label"
+                                  >Tyre Size
+                                  <span class="text-danger">*</span></label
+                                >
+                                <select
+                                  #tyreSize5="ngModel"
+                                  class="form-select {{
+                                    tyreSize5.invalid &&
+                                    (tyreSize5.dirty || tyreSize5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="tyreSize5"
+                                  [(ngModel)]="newInvoice.newTyre5Size"
+                                  name="tyreSize5"
+                                  required
+                                >
+                                  <option value="" disabled selected>
+                                    Select a Tyre Size
+                                  </option>
+                                  <option
+                                    *ngFor="let size of tyreSizes"
+                                    [value]="size"
+                                  >
+                                    {{ size }}
+                                  </option>
+                                </select>
+                                <p
+                                  *ngIf="tyreSize5.invalid && tyreSize5.touched"
+                                  class="text-danger"
+                                >
+                                  Tyre size is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <div class="col-12">
+                              <div class="form-check">
+                                <label
+                                  class="form-label"
+                                  for="isTyreMakeModelAvailable5"
+                                  >Can't find tyre make/model?</label
+                                >
+                                <input
+                                  #isTyreMakeModelAvailable5="ngModel"
+                                  name="isTyreMakeModelAvailable5"
+                                  id="isTyreMakeModelAvailable5"
+                                  class="form-check-input"
+                                  [(ngModel)]="isTyreMakeModelNotAvailable5"
+                                  type="checkbox"
+                                  value="0"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Cost -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="cost5" class="form-label"
+                                  >Cost
+                                  <span class="text-danger">*</span></label
+                                >
+                                <div class="input-group">
+                                  <span class="input-group-text">₹</span>
+                                  <input
+                                    type="number"
+                                    class="form-control {{
+                                      cost5.invalid &&
+                                      (cost5.dirty || cost5.touched)
+                                        ? 'is-invalid'
+                                        : ''
+                                    }}"
+                                    id="cost5"
+                                    [(ngModel)]="newInvoice.newTyre5Cost"
+                                    (ngModelChange)="updateTotalCost()"
+                                    name="cost5"
+                                    required
+                                    #cost5="ngModel"
+                                  />
+                                </div>
+                                <p
+                                  *ngIf="cost5.invalid && cost5.touched"
+                                  class="text-danger"
+                                >
+                                  Cost is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Fitment Date -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="fitmentDate5" class="form-label"
+                                  >Fitment Date
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #fitmentDate5="ngModel"
+                                  name="fitmentDate5"
+                                  id="fitmentDate5"
+                                  type="date"
+                                  class="form-control {{
+                                    fitmentDate5.invalid &&
+                                    (fitmentDate5.dirty || fitmentDate5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  [(ngModel)]="newInvoice.newTyre5FitmentDate"
+                                  [max]="maxDate | date : 'yyyy-MM-dd'"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    fitmentDate5.invalid && fitmentDate5.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Fitment date is required
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- Serial Number -->
+                            <div class="col-3">
+                              <div class="form-group">
+                                <label for="serialNumber5" class="form-label"
+                                  >Serial Number
+                                  <span class="text-danger">*</span></label
+                                >
+                                <input
+                                  #serialNumber5="ngModel"
+                                  type="text"
+                                  class="form-control {{
+                                    serialNumber5.invalid &&
+                                    (serialNumber5.dirty ||
+                                      serialNumber5.touched)
+                                      ? 'is-invalid'
+                                      : ''
+                                  }}"
+                                  id="serialNumber5"
+                                  [(ngModel)]="newInvoice.newTyre5SerialNumber"
+                                  name="serialNumber5"
+                                  required
+                                />
+                                <p
+                                  *ngIf="
+                                    serialNumber5.invalid &&
+                                    serialNumber5.touched
+                                  "
+                                  class="text-danger"
+                                >
+                                  Serial number is required
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="d-flex justify-content-start py-3">
+                            <p-button
+                              label="Back"
+                              (onClick)="prevCallback.emit()"
+                              icon="pi pi-arrow-left"
+                              iconPos="left"
+                            />
+                          </div>
+                        </p-card>
+                      </ng-template>
+                    </p-stepperPanel>
+                  </p-stepper>
+                  <div class="d-flex justify-content-end py-3">
+                    <p-button
+                      label="Next"
+                      (onClick)="nextCallback.emit()"
+                      [disabled]="allTyreDetails.invalid"
+                      icon="pi pi-arrow-right"
+                      iconPos="right"
+                    />
+                  </div>
+                </form>
+              </p-card>
+            </ng-template>
+          </p-stepperPanel>
+          <!-- End of Actual Battery Details Panel -->
+
+          <!-- Invoice Details -->
+          <p-stepperPanel header="Invoice Details">
+            <ng-template
+              pTemplate="content"
+              let-prevCallback="prevCallback"
+              let-nextCallback="nextCallback"
+              let-index="index"
+            >
+              <p-card>
+                <form #invoiceDetails="ngForm" ngNativeValidate>
+                  <div class="row">
+                    <!-- Invoice Type -->
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="invoiceType" class="form-label"
+                          >Invoice Type
+                          <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #invoiceType="ngModel"
+                          name="invoiceType"
+                          id="invoiceType"
+                          [(ngModel)]="newInvoice.invoiceType"
+                          (ngModelChange)="updateTotalCost()"
+                          class="form-select {{
+                            invoiceType.invalid &&
+                            (invoiceType.dirty || invoiceType.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                        >
+                          <option value="" disabled selected>
+                            Select Type
+                          </option>
+                          <option
+                            *ngFor="let entry of invoiceTypes"
+                            [value]="entry"
+                          >
+                            {{ entry }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            invoiceType.invalid &&
+                            (invoiceType.dirty || invoiceType.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Invoice Type is required
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="tyreCount" class="form-label">
+                          Tyre Quantity
+                          <span class="text-danger">*</span>
+                        </label>
+                        <select
+                          #tyreCount="ngModel"
+                          name="tyreCount"
+                          id="tyreCount"
+                          [(ngModel)]="newInvoice.tyreQuantity"
+                          class="form-select {{
+                            tyreCount.invalid &&
+                            (tyreCount.dirty || tyreCount.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [ngClass]="{
+                            empty: newInvoice.tyreQuantity === undefined
+                          }"
+                          disabled
+                        >
+                          <option
+                            [value]="undefined"
+                            class="invalid-option"
+                            disabled
+                            selected
+                          >
+                            Select Tyre Quantity
+                          </option>
+                          <option
+                            *ngFor="let count of [1, 2, 3, 4, 5]"
+                            [value]="count"
+                          >
+                            {{ count }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="actualTyreGst" class="form-label"
+                          >Tyre GST <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <select
+                            #actualTyreGst="ngModel"
+                            name="actualTyreGst"
+                            type="number"
+                            class="form-select {{
+                              actualTyreGst.invalid &&
+                              (actualTyreGst.dirty || actualTyreGst.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="newInvoice.actualTyreGst"
+                            (ngModelChange)="updateTotalCost()"
+                            [disabled]="newInvoice.invoiceType == 'NON GST'"
+                            required
+                          >
+                            <option
+                              [ngValue]="undefined"
+                              value=""
+                              disabled
+                              selected
+                            >
+                              Select GST
+                            </option>
+                            <option [ngValue]="0">0</option>
+                            <option [ngValue]="28">28</option>
+                          </select>
+                          <span class="input-group-text">%</span>
+                        </div>
+                        <p
+                          *ngIf="
+                            actualTyreGst.invalid &&
+                            (actualTyreGst.dirty || actualTyreGst.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          GST is required
+                        </p>
+                      </div>
+                    </div>
+                    <!-- Labour Qty -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="labor_qty" class="form-label"
+                          >Labour Quantity
+                          <span class="text-danger">*</span></label
+                        >
+                        <input
+                          #laborqty="ngModel"
+                          name="laborqty"
+                          type="number"
+                          class="form-control {{
+                            laborqty.invalid &&
+                            (laborqty.dirty || laborqty.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newInvoice.laborQuantity"
+                          (ngModelChange)="updateTotalCost()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                        <p
+                          *ngIf="
+                            laborqty.invalid &&
+                            (laborqty.dirty || laborqty.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Labour quantity is required
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Labour Cost -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborCost" class="form-label"
+                          >Labour Cost <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #laborCost="ngModel"
+                            name="laborCost"
+                            type="number"
+                            class="form-control {{
+                              laborCost.invalid &&
+                              (laborCost.dirty || laborCost.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="newInvoice.laborCost"
+                            (ngModelChange)="updateTotalCost()"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                            required
+                          />
+                        </div>
+                        <p
+                          *ngIf="
+                            laborCost.invalid &&
+                            (laborCost.dirty || laborCost.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Labour cost is required
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Actual Cost, Invoice Amount, Invoice No and Invoice Type  -->
+                  <div class="row">
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="laborGst" class="form-label"
+                          >Labour GST <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <select
+                            #laborGst="ngModel"
+                            name="laborGst"
+                            type="number"
+                            class="form-select {{
+                              laborGst.invalid &&
+                              (laborGst.dirty || laborGst.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="newInvoice.laborGst"
+                            (ngModelChange)="updateTotalCost()"
+                            [disabled]="newInvoice.invoiceType == 'NON GST'"
+                            required
+                          >
+                            <option
+                              [ngValue]="undefined"
+                              value=""
+                              disabled
+                              selected
+                            >
+                              Select GST
+                            </option>
+                            <option [ngValue]="0">0</option>
+                            <option [ngValue]="18">18</option>
+                          </select>
+                          <span class="input-group-text">%</span>
+                        </div>
+                        <p
+                          *ngIf="
+                            laborGst.invalid &&
+                            (laborGst.dirty || laborGst.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          GST is required
+                        </p>
+                      </div>
+                    </div>
+                    <!-- Actual Cost -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label
+                          for="invoiceTotalEstimatedCost"
+                          class="form-label"
+                          >Grand Total</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            type="number"
+                            class="form-control"
+                            disabled
+                            [value]="newInvoice.grandTotal"
+                          />
+                          <p
+                            *ngIf="
+                              newInvoice.grandTotal! >
+                              selectedTicket.new_Battery_Total! * 1.1
+                            "
+                            class="form-text text-danger"
+                          >
+                            Amount exceeds the quoted limit! Please edit your
+                            request.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Invoice Amount -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="invoiceAmount" class="form-label"
+                          >Invoice Amount
+                          <span class="text-danger">*</span></label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #invoiceAmount="ngModel"
+                            name="invoiceAmount"
+                            type="number"
+                            class="form-control {{
+                              invoiceAmount.invalid &&
+                              (invoiceAmount.dirty || invoiceAmount.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            [(ngModel)]="newInvoice.invoiceTotal"
+                            onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                            onpaste="return false"
+                            min="0"
+                            required
+                          />
+                        </div>
+                        <p
+                          *ngIf="
+                            invoiceAmount.invalid &&
+                            (invoiceAmount.dirty || invoiceAmount.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Invoice amount is required
+                        </p>
+                        <p
+                          *ngIf="
+                            newInvoice.grandTotal != newInvoice.invoiceTotal &&
+                            (invoiceAmount.dirty || invoiceAmount.touched) &&
+                            !invoiceAmount.invalid
+                          "
+                          class="form-text text-danger"
+                        >
+                          The invoice amount does not align with the grand
+                          total.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Invoice No -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="invoiceNumber" class="form-label">
+                          Invoice Number <span class="text-danger">*</span>
+                        </label>
+                        <input
+                          #invoiceNumber="ngModel"
+                          name="invoiceNumber"
+                          type="text"
+                          class="form-control"
+                          [(ngModel)]="newInvoice.invoiceNumber"
+                          maxlength="20"
+                          required
+                        />
+                        <p
+                          *ngIf="
+                            invoiceNumber.invalid &&
+                            (invoiceNumber.dirty || invoiceNumber.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Invoice number is required.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Company Name -->
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="companyName" class="form-label"
+                          >Company Name
+                          <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #companyName="ngModel"
+                          name="companyName"
+                          id="companyName"
+                          [(ngModel)]="newInvoice.companyName"
+                          class="form-select {{
+                            companyName.invalid &&
+                            (companyName.dirty || companyName.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                        >
+                          <option value="" disabled selected>
+                            Select Company
+                          </option>
+                          <option
+                            *ngFor="let entry of companyNames"
+                            [value]="entry"
+                          >
+                            {{ entry }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            companyName.invalid &&
+                            (companyName.dirty || companyName.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Company Name is required
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End of Actual Cost, Invoice Amount, Invoice No and Invoice Type  -->
+
+                  <!-- Serial Number, DIV / Company Name, Mode of Payment, Invoice Date and Service Date -->
+                  <div class="row">
+                    <!-- Mode of Payment -->
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="modeOfPayment" class="form-label"
+                          >Mode of Payment
+                          <span class="text-danger">*</span></label
+                        >
+                        <select
+                          #modeOfPayment="ngModel"
+                          name="modeOfPayment"
+                          id="modeOfPayment"
+                          [(ngModel)]="newInvoice.modeOfPayment"
+                          class="form-select {{
+                            modeOfPayment.invalid &&
+                            (modeOfPayment.dirty || modeOfPayment.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          required
+                        >
+                          <option value="" disabled selected>
+                            Select Mode
+                          </option>
+                          <option
+                            *ngFor="let entry of modeOfPayments"
+                            [value]="entry"
+                          >
+                            {{ entry }}
+                          </option>
+                        </select>
+                        <p
+                          *ngIf="
+                            modeOfPayment.invalid &&
+                            (modeOfPayment.dirty || modeOfPayment.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Mode of Payment is required
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Invoice Date -->
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="invoiceDate" class="form-label"
+                          >Invoice Date
+                          <span class="text-danger">*</span></label
+                        >
+                        <p-calendar
+                          #invoiceDate="ngModel"
+                          appendTo="body"
+                          [(ngModel)]="dates.invoiceDate"
+                          (ngModelChange)="convertDateToString(1)"
+                          name="invoiceDate"
+                          [iconDisplay]="'input'"
+                          [showIcon]="true"
+                          class="d-flex flex-column {{
+                            invoiceDate.invalid &&
+                            (invoiceDate.dirty || invoiceDate.touched)
+                              ? 'ng-invalid ng-dirty'
+                              : ''
+                          }}"
+                          inputId="icondisplay"
+                          [dateFormat]="'dd-mm-yy'"
+                          showButtonBar
+                          [minDate]="minDate"
+                          [maxDate]="maxDate"
+                          required
+                        ></p-calendar>
+                        <p
+                          *ngIf="
+                            invoiceDate.invalid &&
+                            (invoiceDate.dirty || invoiceDate.touched)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Invoice date is required
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="col">
+                      <div class="field form-group">
+                        <label for="vendorName" class="form-label"
+                          >Vendor Name <span class="text-danger">*</span></label
+                        >
+                        <p-dropdown
+                          #vendorId="ngModel"
+                          name="vendorName"
+                          id="vendorName"
+                          [options]="vendors"
+                          optionLabel="name"
+                          [disabled]="newInvoice.advanceAmount! > 0"
+                          optionValue="id"
+                          [virtualScroll]="true"
+                          [virtualScrollItemSize]="30"
+                          [(ngModel)]="newInvoice.actualTyreVendorId"
+                          [resetFilterOnHide]="true"
+                          class="{{
+                            !newInvoice.actualTyreVendorId && vendorId.touched
+                              ? 'ng-dirty ng-invalid'
+                              : ''
+                          }}"
+                          [filter]="true"
+                          [showClear]="true"
+                          placeholder="Select Vendor Name"
+                          required
+                        >
+                        </p-dropdown>
+                        <p
+                          *ngIf="
+                            !newInvoice.actualTyreVendorId &&
+                            (vendorId.touched || vendorId.dirty)
+                          "
+                          class="form-text text-danger"
+                        >
+                          Vendor name is required
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="quotationAmount" class="form-label"
+                          >Quoted Amount
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #totalEstimatedCost="ngModel"
+                            name="totalEstimatedCost"
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="selectedTicket!.estimatedTyreTotal"
+                            disabled
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="advanceAmount" class="form-label"
+                          >Advance Amount
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            #advanceAmount="ngModel"
+                            name="advanceAmount"
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="newInvoice!.advanceAmount"
+                            disabled
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Mode of Payment, Invoice Date and Service Date -->
+
+                  <!-- Vendor Name, Advance Amount, Invoice Attachment, and Jobcard pic -->
+                  <div class="row">
+                    <!-- Upload Invoice -->
+                    <div class="col">
+                      <div class="row">
+                        <div class="col">
+                          <div class="form-group">
+                            <label for="uploadInvoicePic" class="form-label">
+                              Upload Invoice (acceptable formats: img/pdf)
+                              <span class="text-danger">*</span></label
+                            >
+                            <div>
+                              <p-button
+                                *ngIf="!newInvoice.invoiceAttachment"
+                                label="Upload Invoice"
+                                (onClick)="toggleUploadAttachmentDialog()"
+                                icon="pi pi-file-arrow-up"
+                                severity="info"
+                                [style]="{ width: 'fit-content' }"
+                                iconPos="right"
+                                autofocus="false"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Vendor Name, Advance Amount, Invoice Attachment, and Jobcard pic -->
+
+                  <div class="d-flex justify-content-between py-3">
+                    <p-button
+                      label="Back"
+                      (onClick)="prevCallback.emit()"
+                      icon="pi pi-arrow-left"
+                      iconPos="left"
+                    />
+                    <p-button
+                      label="Next"
+                      (onClick)="nextCallback.emit()"
+                      [disabled]="
+                        invoiceDetails.invalid ||
+                        newInvoice.invoiceTotal! != newInvoice.grandTotal ||
+                        newInvoice.invoiceTotal! >
+                          selectedTicket.estimatedTyreTotal! * 1.1
+                      "
+                      icon="pi pi-arrow-right"
+                      iconPos="right"
+                    />
+                  </div>
+                </form>
+              </p-card>
+            </ng-template>
+          </p-stepperPanel>
+          <!-- End of Invoice Details -->
+
+          <p-stepperPanel header="Confirmation">
+            <ng-template
+              pTemplate="content"
+              let-prevCallback="prevCallback"
+              let-index="index"
+            >
+              <p-card>
+                <p>
+                  Are you sure you want to submit the invoice details for the
+                  vehicle with registration number
+                  <strong>{{ selectedTicket.registrationNumber }}</strong
+                  >?<br />
+                  The invoice includes the following information:
+                </p>
+
+                <ul class="row">
+                  <li class="col-md-4">
+                    <strong>Invoice Number :</strong>
+                    {{ newInvoice.invoiceNumber }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Invoice Amount :</strong>
+                    {{
+                      newInvoice.invoiceTotal
+                        | currency : "INR" : "symbol-narrow" : "0.2-2"
+                    }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Invoice Date :</strong>
+                    {{ dates.invoiceDate | date : "dd-MM-yyyy" }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Company Name :</strong>
+                    {{ newInvoice.companyName }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Invoice Type :</strong>
+                    {{ newInvoice.invoiceType }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Mode of Payment :</strong>
+                    {{ newInvoice.modeOfPayment }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Tyre GST :</strong>
+                    {{ newInvoice.actualTyreGst }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Labour GST :</strong>
+                    {{ newInvoice.laborGst }}
+                  </li>
+                  <li class="col-md-4">
+                    <strong>Advance Amount :</strong>
+                    {{
+                      (newInvoice.advanceAmount
+                        | currency : "INR" : "symbol-narrow" : "0.2-2") || "NA"
+                    }}
+                  </li>
+                </ul>
+
+                <p>
+                  Please review all the details carefully and click on
+                  <strong>Submit Details</strong> to confirm.
+                </p>
+
+                <div class="d-flex justify-content-between py-4">
+                  <p-button
+                    label="Back"
+                    class="me-1"
+                    [disabled]="showLoader || formActionsDisabled"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Submit Details"
+                    (onClick)="submitInvoiceDetails()"
+                    [disabled]="showLoader || formActionsDisabled"
+                    icon="pi pi-file-check"
+                    iconPos="right"
+                  />
+                </div>
+              </p-card>
+            </ng-template>
+          </p-stepperPanel>
+        </p-stepper>
+      </ng-template>
+    </p-dialog>
+    <!-- End of Upload Invoice Dialog -->
+  </p-dialog>
+  <!-- End of View Battery Request Dialog -->
+
+  <!-- Select Zone, Region, Branch and Hub Dialog for Creating Vehicle Tyre Request -->
+  <form #locationFormRef="ngForm" (submit)="createTicket()" ngNativeValidate>
+    <p-dialog
+      [(visible)]="showCreateRequestDialog"
+      [style]="{ width: '550px' }"
+      header="New Tyre Request"
+      [modal]="true"
+      styleClass="p-fluid"
+    >
+      <ng-template pTemplate="content">
+        <!-- Zone and Region Selection -->
+        <div class="row">
+          <div class="col">
+            <div class="field form-group">
+              <label for="zone" class="form-label">Zone</label>
+              <select
+                #zone="ngModel"
+                name="zone"
+                id="zone"
+                [(ngModel)]="newTicket.zone"
+                (ngModelChange)="loadRegions()"
+                class="form-select {{
+                  zone.invalid && (zone.dirty || zone.touched)
+                    ? 'is-invalid'
+                    : ''
+                }}"
+                required
+                autofocus
+              >
+                <option value="" disabled selected>Select Zone</option>
+                <option *ngFor="let zone of zones" [value]="zone">
+                  {{ zone.toUpperCase() }}
+                </option>
+              </select>
+              <p
+                *ngIf="zone.invalid && (zone.dirty || zone.touched)"
+                class="form-text text-danger"
+              >
+                Zone is required
+              </p>
+            </div>
+          </div>
+          <!-- End of Zone Select -->
+          <div class="col" *ngIf="this.newTicket.zone">
+            <div class="field form-group">
+              <label for="region" class="form-label">Region</label>
+              <select
+                #region="ngModel"
+                name="region"
+                id="region"
+                [(ngModel)]="newTicket.region"
+                (ngModelChange)="loadBranches()"
+                autocomplete="off"
+                [disabled]="!this.newTicket.zone"
+                class="form-select {{
+                  region.invalid && (region.dirty || region.touched)
+                    ? 'is-invalid'
+                    : ''
+                }}"
+                required
+              >
+                <option value="" disabled selected>Select Region</option>
+                <option *ngFor="let region of regions" [value]="region">
+                  {{ region.toUpperCase() }}
+                </option>
+              </select>
+              <p
+                *ngIf="region.invalid && (region.dirty || region.touched)"
+                class="form-text text-danger"
+              >
+                Region is required
+              </p>
+            </div>
+          </div>
+          <!-- End of Region Select -->
+        </div>
+        <!-- End of Zone and Region Selection -->
+        <!-- Branch and Hub Selection -->
+        <div class="row">
+          <div class="col" *ngIf="this.newTicket.region">
+            <div class="field form-group">
+              <label for="branch" class="form-label">Branch</label>
+              <select
+                #branch="ngModel"
+                name="branch"
+                id="branch"
+                [(ngModel)]="newTicket.branch"
+                (ngModelChange)="loadHubs()"
+                autocomplete="off"
+                [disabled]="!this.newTicket.region"
+                class="form-select {{
+                  branch.invalid && (branch.dirty || branch.touched)
+                    ? 'is-invalid'
+                    : ''
+                }}"
+                required
+              >
+                <option value="" disabled selected>Select Branch</option>
+
+                <option *ngFor="let branch of branches" [value]="branch">
+                  {{ branch.toUpperCase() }}
+                </option>
+              </select>
+              <p
+                *ngIf="branch.invalid && (branch.dirty || branch.touched)"
+                class="form-text text-danger"
+              >
+                Branch is required
+              </p>
+            </div>
+          </div>
+          <div class="col" *ngIf="this.newTicket.branch">
+            <div class="field form-group">
+              <label for="location" class="form-label">Hub</label>
+              <select
+                #location="ngModel"
+                name="location"
+                id="location"
+                [(ngModel)]="newTicket.hub"
+                autocomplete="off"
+                [disabled]="!this.newTicket.region"
+                class="form-select {{
+                  location.invalid && (location.dirty || location.touched)
+                    ? 'is-invalid'
+                    : ''
+                }}"
+                required
+              >
+                <option value="" disabled selected>Select Hub</option>
+
+                <option *ngFor="let hub of locations" [value]="hub">
+                  {{ hub.toUpperCase() }}
+                </option>
+              </select>
+              <p
+                *ngIf="location.invalid && (location.dirty || location.touched)"
+                class="form-text text-danger"
+              >
+                Hub is required
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- End of Branch and Hub Selection -->
+      </ng-template>
+
+      <ng-template pTemplate="footer">
+        <button
+          pButton
+          pRipple
+          type="button"
+          label="Cancel"
+          icon="pi pi-times"
+          class="p-button-text"
+          (click)="toggleCreateRequestDialog()"
+        ></button>
+        <button
+          pButton
+          [disabled]="locationFormRef.invalid"
+          pRipple
+          label="Proceed"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          class="p-button-text"
+          type="submit"
+        ></button>
+      </ng-template>
+    </p-dialog>
+  </form>
+  <!-- End of Select Zone, Region, Branch and Hub Dialog for Creating Vehicle Tyre Request -->
+</div>
+
+<!-- Filter Tyre Requests Dialog -->
+<p-dialog
+  [(visible)]="showFilterDialog"
+  header="Filter Tyre Requests"
+  modal="true"
+  [style]="{ width: '500px', height: '500px' }"
+>
+  <ng-template pTemplate="content">
+    <div class="container">
+      <p-tree
+        [value]="filters"
+        selectionMode="checkbox"
+        class="w-full md:w-30rem"
+        [(selection)]="selectedZones"
+        (onNodeSelect)="viewNodes($event)"
+      >
+      </p-tree>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      type="button"
+      label="Cancel"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="toggleFilterDialog()"
+    ></button>
+    <button
+      *ngIf="isFilterApplied"
+      pButton
+      pRipple
+      label="Reset"
+      icon="pi pi-undo"
+      class="p-button-text"
+      iconPos="right"
+      type="button"
+      (click)="resetFilters()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="Apply"
+      icon="pi pi-arrow-right"
+      iconPos="right"
+      class="p-button-text"
+      type="button"
+      (click)="applyFilter()"
+      [disabled]="!hasSelections()"
+    ></button>
+  </ng-template>
+</p-dialog>
+<!-- End of Filter Tyre Requests Dialog -->
+
+<p-confirmDialog [style]="{ width: '450px' }" />
+<app-loader *ngIf="showLoader"></app-loader>

@@ -336,11 +336,7 @@ input[type="number"]:focus,
   visibility: hidden !important;
 }
 
-select option:disabled {
-  color: gray !important;
-}
-
-select.form-select.invalid-option {
+.invalid-option {
   color: gray !important;
 }
 
@@ -351,8 +347,26 @@ select {
 option[disabled] {
   display: none;
 }
+
 option {
   color: black;
+}
+
+select option:disabled {
+  color: gray !important;
+}
+
+.form-select {
+  color: black; /* Default text color */
+}
+
+/* Style for the select when it has an invalid (placeholder) option */
+.form-select:invalid {
+  color: gray !important; /* Color for the placeholder */
+}
+
+.form-select.empty {
+  color: gray !important; /* Color for the placeholder */
 }
 
 .p-datatable-table {
@@ -404,4 +418,18 @@ th {
 
 .nowrap .p-datatable-tbody > tr > td {
   white-space: nowrap !important;
+}
+
+.table-fixed {
+  font-size: small;
+  // table-layout: fixed;
+  width: 100%;
+}
+
+.white-space-normal th,
+td {
+  // text-align: center !important;
+  // vertical-align: text-bottom !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
 }

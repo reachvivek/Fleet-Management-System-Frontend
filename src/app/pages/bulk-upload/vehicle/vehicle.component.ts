@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { BulkUploadService, Vehicle } from '../../../../swagger';
+import { BulkUploadService, VehicleForDashboard } from '../../../../swagger';
 import { Papa } from 'ngx-papaparse';
 import { MessageService } from 'primeng/api';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/prod/environment';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-vehicle',
@@ -13,11 +14,13 @@ import { environment } from '../../../../environments/prod/environment';
 })
 export class VehicleComponent {
   showLoader: boolean = false;
-  vehicles: Vehicle[] = [];
+  vehicles: VehicleForDashboard[] = [];
   showUploadDialog: boolean = false;
   uploadedFiles: File[] = [];
   expectedColumnsVehicleMaster: string[] = [
+    'Vehicle_Wheeler',
     'Registration_No',
+    'Vehicle_Scrap',
     'Active',
     'Owner_Name',
     'Asset_Type',
@@ -26,27 +29,148 @@ export class VehicleComponent {
     'Manufacturer',
     'Model_Name',
     'Engine_Number',
+    'Hypothecation_Branch',
+    'Asset_No',
+    'Make_Year',
+    'Hypothecation_Bank_Name',
+    'Vehicle_Image',
+    'RC_Document',
     'Date_Of_Last_Service',
     'Cubic_Capacity',
     'Fuel_Capacity',
+    'Os_Norms',
+    'Adblue_Capacity',
     'Ground_Clearance',
     'Fuel_Type',
+    'Seating_Capacity',
+    'Inaccessible_From_Outside_The_Van',
+    'CCTV_Count',
+    'Fa_Code_For_CCTV1',
+    'Fa_Code_For_CCTV2',
+    'Fa_Code_For_CCTV3',
+    'Fa_Code_For_CCTV4',
+    'Wire_Mesh',
+    'Fire_Exting_Uisher',
+    'Fire_Exting_Uisher_Capacity',
+    'Mha_Compliant',
+    'Gps_Device_Make',
+    'Cassette_Provision',
+    'Rear_Entry_To_Vault',
+    'CCTV_Vendor',
+    'Panic_Switch',
+    'Auto_Dialer',
+    'Puncture_Kit',
+    'Electronic',
+    'Emergency_Light',
+    'Speed_Governer',
+    'Fa_Code_For_GPS',
+    'Immobilizer',
+    'Branding',
+    'Jack_And_Lever',
+    'Safety_Triangle',
+    'Business',
+    'DVC',
+    'Tool_kit',
+    'First_Aid',
     'Off_Road',
     'Offroad_Date',
     'Current_Km_Run',
     'Offroad_Reason',
+    'Card_Number',
+    'Linked_Mobile',
+    'Petrocard_Holder_Mobile_Number',
+    'Custodian_Designation',
+    'Fastag_Serial_Number',
+    'Company_Name',
+    'Holder_Name',
+    'Petrocard_Holder_Employee_Id',
+    'Fastag_Company_Name',
+    'Search_Battery',
+    'Add_Battery',
+    'Make',
+    'Serial_Number',
+    'Warranty_In_Months',
+    'Battery_Cost',
+    'Speed_Factor',
+    'MODEL',
+    'Invoice_Date',
+    'Date_Of_Fitting',
+    'Vendor_Name',
+    'Vehicle_Type',
+    'Tyre1_Manufacturer',
+    'Tyre1_Serial_Number',
+    'Tyre1_Size',
+    'Tyre1_Life_In_KMs',
+    'Tyre1_Cost',
+    'Tyre1_Make',
+    'Tyre1_Type',
+    'Tyre1_Date_Of_Fitment',
+    'Tyre1_Life_In_Months',
+    'Tyre1_Vendor_Name',
+    'Tyre2_Manufacturer',
+    'Tyre2_Serial_Number',
+    'Tyre2_Size',
+    'Tyre2_Life_In_KMs',
+    'Tyre2_Cost',
+    'Tyre2_Make',
+    'Tyre2_Type',
+    'Tyre2_Date_Of_Fitment',
+    'Tyre2_Life_In_Months',
+    'Tyre2_Vendor_Name',
+    'Tyre3_Manufacturer',
+    'Tyre3_Serial_Number',
+    'Tyre3_Size',
+    'Tyre3_Life_In_KMs',
+    'Tyre3_Cost',
+    'Tyre3_Make',
+    'Tyre3_Type',
+    'Tyre3_Date_Of_Fitment',
+    'Tyre3_Life_In_Months',
+    'Tyre3_Vendor_Name',
+    'Tyre4_Manufacturer',
+    'Tyre4_Serial_Number',
+    'Tyre4_Size',
+    'Tyre4_Life_In_KMs',
+    'Tyre4_Cost',
+    'Tyre4_Make',
+    'Tyre4_Type',
+    'Tyre4_Date_Of_Fitment',
+    'Tyre4_Life_In_Months',
+    'ASTyre4_Vendor_Name',
+    'Tyre5_Manufacturer',
+    'Tyre5_Serial_Number',
+    'Tyre5_Size',
+    'Tyre5_Life_In_KMs',
+    'Tyre5_Cost',
+    'Tyre5_Make',
+    'Tyre5_Type',
+    'Tyre5_Date_Of_Fitment',
+    'Tyre5_Life_In_Months',
+    'Tyre5_Vendor_Name',
     'Hub_Name',
     'Branch_Name',
     'Zone_Name',
     'Region_Name',
-    'Safety_Triangle',
-    'Make_Year',
-    'Jack_And_Lever',
-    'Mha_Compliant',
-    'BS_Norms',
-    'Toolkit',
-    'DCV',
-    'First_Aid',
+    'vehicleFrontImage',
+    'Vehicle_Rear_Image',
+    'Vehicle_Right_Image',
+    'Vehicle_Left_Image',
+    'Dashboard_Image',
+    'Vault_Image',
+    'Front_Right_Tyre_Image',
+    'Front_Left_Tyre_Image',
+    'Rear_Left_Tyre_Image',
+    'Rear_Right_Tyre_Image',
+    'Battery_With_Serial_Number_Image',
+    'RC_Front_Side_Image',
+    'RC_Back_Side_Image',
+    'Fitness_Image',
+    'Insurance_Image',
+    'RoadTax_Image',
+    'Goods_Permit_Image',
+    'National_Permit_Image',
+    'PUC_Image',
+    'Chassis_Number_Plate_Image',
   ];
   totalRecords: number | undefined = undefined;
   isValidCSV: boolean = true;
@@ -55,13 +179,21 @@ export class VehicleComponent {
     private bulkUploadService: BulkUploadService,
     private papa: Papa,
     private messageService: MessageService,
-    private http: HttpClient
+    private http: HttpClient,
+    public router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadVehicles();
     //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
     //Add 'implements OnInit' to the class.
+  }
+
+  editVehicle(Registration_No: string) {
+    this.router.navigate([
+      'bulk-upload/vehicle/vehicle-details',
+      Registration_No,
+    ]);
   }
 
   async loadVehicles() {
@@ -146,7 +278,7 @@ export class VehicleComponent {
     const rowMatch = error.match(/row (\d+)/);
     const messageMatch = error.match(/(Invalid .*?)/);
 
-    const row = rowMatch ? parseInt(rowMatch[1], 10) : null;
+    const row = rowMatch ? parseInt(rowMatch[1], 10) + 1 : null;
     const message = messageMatch
       ? messageMatch[0]
       : 'An error occurred while processing the CSV file.';

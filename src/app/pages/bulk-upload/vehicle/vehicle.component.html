@@ -18,14 +18,10 @@
       styleClass="p-datatable-sm nowrap"
       [globalFilterFields]="[
         'registration_No',
-        'asset_Type',
         'manufacturer',
-        'model_Name',
-        'registration_Date',
-        'owner_Name',
-        'vehicleSubStatus',
-        'off_Road',
-        'offroad_Reason',
+        'model',
+        'asset_Type',
+        'active',
         'zone_Name',
         'branch_Name',
         'region_Name',
@@ -41,6 +37,15 @@
         <div class="d-flex align-items-center justify-content-between">
           <h5 class="m-0">Vehicle Master</h5>
           <div>
+            <button
+              pButton
+              pRipple
+              label="Add"
+              icon="pi pi-plus"
+              class="m-1 p-element p-button-success p-button p-component ng-star-inserted rounded-pill"
+              (click)="router.navigateByUrl('bulk-upload/vehicle/add-vehicle')"
+              rounded="true"
+            ></button>
             <button
               pButton
               pRipple
@@ -65,100 +70,69 @@
       </ng-template>
       <ng-template pTemplate="header">
         <tr>
+          <th></th>
           <th pSortableColumn="registration_No">
             Registration No <p-sortIcon field="registration_No"></p-sortIcon>
           </th>
-          <th pSortableColumn="asset_Type">
-            Asset Type <p-sortIcon field="asset_Type"></p-sortIcon>
-          </th>
+          <!-- <th pSortableColumn="chassis_Number">
+            Chassis No <p-sortIcon field="chassis_Number"></p-sortIcon>
+          </th> -->
           <th pSortableColumn="manufacturer">
             Manufacturer <p-sortIcon field="manufacturer"></p-sortIcon>
           </th>
-          <th pSortableColumn="model_Name">
-            Model Name <p-sortIcon field="model_Name"></p-sortIcon>
+          <th pSortableColumn="model">
+            Model <p-sortIcon field="model"></p-sortIcon>
           </th>
-          <th pSortableColumn="registration_Date">
-            Registration Date
-            <p-sortIcon field="registration_Date"></p-sortIcon>
+          <th pSortableColumn="current_Km_Run">
+            Current KMs <p-sortIcon field="current_Km_Run"></p-sortIcon>
           </th>
-          <th pSortableColumn="owner_Name">
-            Owner Name <p-sortIcon field="owner_Name"></p-sortIcon>
+          <th pSortableColumn="is_Vehicle_Offroad">
+            Status <p-sortIcon field="is_Vehicle_Offroad"></p-sortIcon>
           </th>
-          <th pSortableColumn="off_Road">
-            Off Road <p-sortIcon field="off_Road"></p-sortIcon>
+          <th pSortableColumn="asset_type">
+            Asset Type
+            <p-sortIcon field="asset_type"></p-sortIcon>
           </th>
-          <th pSortableColumn="vehicleSubStatus">
-            Sub Status <p-sortIcon field="vehicleSubStatus"></p-sortIcon>
-          </th>
-          <th pSortableColumn="offroad_Date">
-            Off Road From<p-sortIcon field="offroad_Date"></p-sortIcon>
-          </th>
-          <th pSortableColumn="offroad_ToDate">
-            Off Road To<p-sortIcon field="offroad_ToDate"></p-sortIcon>
-          </th>
-          <th pSortableColumn="onRoute_FromDate">
-            On Route From<p-sortIcon field="onRoute_FromDate"></p-sortIcon>
-          </th>
-          <th pSortableColumn="onRoute_ToDate">
-            On Route To<p-sortIcon field="onRoute_ToDate"></p-sortIcon>
-          </th>
-          <th pSortableColumn="standBy_FromDate">
-            Stand By From<p-sortIcon field="standBy_FromDate"></p-sortIcon>
-          </th>
-          <th pSortableColumn="standBy_ToDate">
-            Stand By To<p-sortIcon field="standBy_ToDate"></p-sortIcon>
-          </th>
-
-          <th pSortableColumn="offroad_Reason">
-            Offroad Reason <p-sortIcon field="offroad_Reason"></p-sortIcon>
-          </th>
-          <th pSortableColumn="zone_Name">
-            Zone <p-sortIcon field="zone_Name"></p-sortIcon>
-          </th>
-          <th pSortableColumn="region_Name">
-            Region <p-sortIcon field="region_Name"></p-sortIcon>
-          </th>
-          <th pSortableColumn="hub_Name">
-            Hub <p-sortIcon field="hub_Name"></p-sortIcon>
-          </th>
-          <th pSortableColumn="branch_Name">
-            Branch <p-sortIcon field="branch_Name"></p-sortIcon>
+          <th pSortableColumn="active">
+            Is Active <p-sortIcon field="active"></p-sortIcon>
           </th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-vehicle>
         <tr>
+          <td>
+            <div
+              class="d-flex flex-row justify-content-between align-items-center"
+            >
+              <button
+                pButton
+                pRipple
+                class="p-button-rounded p-button-warning rounded-circle"
+                icon="pi pi-pencil"
+                (click)="editVehicle(vehicle.registration_No)"
+                pTooltip="Edit Vehicle Details"
+                tooltipPosition="bottom"
+              ></button>
+            </div>
+          </td>
           <td>{{ vehicle.registration_No }}</td>
-          <td>{{ vehicle.asset_Type }}</td>
+          <!-- <td>{{ vehicle.chassis_Number }}</td> -->
           <td>{{ vehicle.manufacturer }}</td>
-          <td>{{ vehicle.model_Name }}</td>
-          <td>{{ vehicle.registration_Date }}</td>
-          <td>{{ vehicle.owner_Name }}</td>
+          <td>{{ vehicle.model }}</td>
+          <td>{{ (vehicle.current_Km_Run | number) || "NA" }}</td>
           <td>
             <p-tag
-              [severity]="vehicle.off_Road === 'TRUE' ? 'danger' : 'success'"
+              [severity]="
+                vehicle.is_Vehicle_Offroad === 'TRUE' ? 'danger' : 'success'
+              "
             >
-              {{ vehicle.off_Road === "TRUE" ? "Off Road" : "On Road" }}
+              {{
+                vehicle.is_Vehicle_Offroad === "TRUE" ? "Off Road" : "On Road"
+              }}
             </p-tag>
           </td>
-          <td>{{ vehicle.vehicleSubStatus || "NA" }}</td>
-          <td>
-            {{
-              vehicle.offroad_Date == "NA"
-                ? "NA"
-                : (vehicle.offroad_Date | date)
-            }}
-          </td>
-          <td>{{ (vehicle.offroad_ToDate | date) || "NA" }}</td>
-          <td>{{ (vehicle.onRoute_FromDate | date) || "NA" }}</td>
-          <td>{{ (vehicle.onRoute_ToDate | date) || "NA" }}</td>
-          <td>{{ (vehicle.standBy_FromDate | date) || "NA" }}</td>
-          <td>{{ (vehicle.standBy_ToDate | date) || "NA" }}</td>
-          <td>{{ vehicle.offroad_Reason }}</td>
-          <td>{{ vehicle.zone_Name }}</td>
-          <td>{{ vehicle.region_Name }}</td>
-          <td>{{ vehicle.hub_Name }}</td>
-          <td>{{ vehicle.branch_Name }}</td>
+          <td>{{ vehicle.asset_type }}</td>
+          <td>{{ vehicle.active }}</td>
         </tr>
       </ng-template>
     </p-table>

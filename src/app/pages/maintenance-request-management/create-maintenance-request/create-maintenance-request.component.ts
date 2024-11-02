@@ -1,16 +1,21 @@
 import { Component } from '@angular/core';
-import { NewTicket, SharedService } from '../../../services/shared.service';
+import {
+  NewMaintenanceTicket,
+  SharedService,
+} from '../../../services/shared.service';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/prod/environment';
 import { MessageService } from 'primeng/api';
 import {
-  CreateTicketDto,
+  BulkUploadService,
+  CreateMaintenanceTicketDto,
   MaintenanceRequestService,
-  UpdateTicketDto,
+  UpdateMaintenanceTicketDto,
   UpdateVehicleDetailsDto,
   VehicleDetailsDto,
+  VendorForSelectDto,
 } from '../../../../swagger';
 
 @Component({
@@ -21,12 +26,12 @@ import {
 export class CreateMaintenanceRequestComponent {
   formActionsDisabled = false;
   showLoader: boolean = false;
-  newTicket!: NewTicket;
+  newTicket!: NewMaintenanceTicket;
   registrationNumbers: any = [];
   offRoadReasons: any = [];
   onRoadSubStatuses: ['Stand By', 'On Route'] = ['Stand By', 'On Route'];
   serviceRequestTypes: any = [];
-  vendorNames: any = [];
+  vendors: VendorForSelectDto[] = [];
 
   totalComponents: number = 1;
 
@@ -45,27 +50,26 @@ export class CreateMaintenanceRequestComponent {
 
   minDate: Date | undefined;
   maxDate: Date | undefined = new Date();
+  editMode: boolean = false;
+  isValidAdvanceAmount = true;
 
   uploadedFiles: File[] = [];
 
   showUploadQuotationDialog: boolean = false;
-
-  editMode: boolean = false;
-
-  isValidAdvanceAmount = true;
 
   vehicleDetails: VehicleDetailsDto = {};
 
   constructor(
     private sharedService: SharedService,
     private router: Router,
+    private commonService: BulkUploadService,
     private maintenanceRequestService: MaintenanceRequestService,
     private http: HttpClient,
     private messageService: MessageService
   ) {}
 
   ngOnInit() {
-    this.sharedService.newTicket$.subscribe((newTicket) => {
+    this.sharedService.newMaintenanceTicket$.subscribe((newTicket) => {
       this.newTicket = newTicket;
     });
     if (this.isAnyFieldEmpty(this.newTicket)) {
@@ -86,7 +90,7 @@ export class CreateMaintenanceRequestComponent {
     }
   }
 
-  isAnyFieldEmpty(ticket: NewTicket): boolean {
+  isAnyFieldEmpty(ticket: NewMaintenanceTicket): boolean {
     return !ticket.zone || !ticket.region || !ticket.branch || !ticket.hub;
   }
 
@@ -137,7 +141,7 @@ export class CreateMaintenanceRequestComponent {
           this.newTicket.offRoadReason = res.offRoadReason!;
         }
         this.newTicket.serviceRequestType = res.serviceRequestType!;
-        this.newTicket.vendorName = res.vendorName!;
+        this.newTicket.vendorId = res.vendorId!;
         this.newTicket.totalLaborCost = res.totalLaborCost!;
         this.newTicket.totalSpareCost = res.totalSpareCost!;
         this.newTicket.totalEstimatedCost = res.totalEstimatedCost!;
@@ -161,8 +165,8 @@ export class CreateMaintenanceRequestComponent {
     this.showLoader = true;
     try {
       const res = await firstValueFrom(
-        this.maintenanceRequestService.maintenanceRequestGetVehicleRegistrationNumbersGet(
-          this.newTicket.hub
+        this.commonService.bulkUploadGetVehicleRegistrationNumbersGet(
+          this.newTicket.branch
         )
       );
       if (res && res.length) {
@@ -191,15 +195,15 @@ export class CreateMaintenanceRequestComponent {
       this.showLoader = true;
       try {
         const res = await firstValueFrom(
-          this.maintenanceRequestService.maintenanceRequestGetVehicleDetailsGet(
+          this.commonService.bulkUploadGetVehicleDetailsGet(
             this.newTicket.registrationNumber
           )
         );
         if (res && res.registration_No) {
           this.vehicleDetails = { ...res };
           this.newTicket.manufacturer = res.manufacturer!;
-          this.newTicket.model = res.model_Name!;
-          this.newTicket.isVehicleOffRoad = res.off_Road == 'TRUE';
+          this.newTicket.model = res.model!;
+          this.newTicket.isVehicleOffRoad = res.is_Vehicle_Offroad == 'TRUE';
           this.newTicket.offRoadReason = res.offroad_Reason!;
           this.newTicket.vehicleAge = this.vehicleAgeSince(
             res.registration_Date!
@@ -207,8 +211,8 @@ export class CreateMaintenanceRequestComponent {
           this.dates.dateOfLastService = this.parseDate(
             res.date_Of_Last_Service!
           );
-          if (res.vehicleSubStatus) {
-            this.newTicket.vehicleSubStatus = res.vehicleSubStatus;
+          if (res.vehicle_Sub_Status) {
+            this.newTicket.vehicleSubStatus = res.vehicle_Sub_Status;
           }
           if (
             this.dates.dateOfLastService &&
@@ -219,9 +223,9 @@ export class CreateMaintenanceRequestComponent {
           } else {
             this.newTicket.dateOfLastService = 'NA';
           }
-          if (res.offroad_Date != 'NA') {
+          if (res.offroad_From_Date != 'NA') {
             this.dates.offRoadStatusChangeDate = this.parseDate(
-              res.offroad_Date!
+              res.offroad_From_Date!
             );
             this.newTicket.offRoadStatusChangeDate =
               this.dates.offRoadStatusChangeDate!.toString();
@@ -243,13 +247,42 @@ export class CreateMaintenanceRequestComponent {
     }
   }
 
-  vehicleAgeSince(registration_Date: string) {
-    const [day, month, year] = registration_Date.split('-');
-    const givenDate = new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day)
-    );
+  vehicleAgeSince(registration_Date: string): string {
+    let givenDate: Date;
+
+    // Split the date string
+    const dateParts = registration_Date.split('-');
+
+    // Check the format of the date
+    if (dateParts.length === 3) {
+      // Check if the first part is a valid year (yyyy-mm-dd) or a valid day (dd-mm-yyyy)
+      const isYearFirst =
+        parseInt(dateParts[0]) > 1900 &&
+        parseInt(dateParts[0]) <= new Date().getFullYear();
+
+      if (isYearFirst) {
+        // yyyy-mm-dd format
+        const [year, month, day] = dateParts;
+        givenDate = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day)
+        );
+      } else {
+        // dd-mm-yyyy format
+        const [day, month, year] = dateParts;
+        givenDate = new Date(
+          parseInt(year),
+          parseInt(month) - 1,
+          parseInt(day)
+        );
+      }
+    } else {
+      throw new Error(
+        'Invalid date format. Please use "yyyy-mm-dd" or "dd-mm-yyyy".'
+      );
+    }
+
     const currentDate = new Date();
 
     let yearsDifference = currentDate.getFullYear() - givenDate.getFullYear();
@@ -271,16 +304,19 @@ export class CreateMaintenanceRequestComponent {
     }
 
     const parts = [];
-    if (yearsDifference > 0)
+    if (yearsDifference > 0) {
       parts.push(
         `${yearsDifference} ${yearsDifference > 1 ? 'Years' : 'Year'}`
       );
-    if (monthsDifference > 0)
+    }
+    if (monthsDifference > 0) {
       parts.push(
         `${monthsDifference} ${monthsDifference > 1 ? 'Months' : 'Month'}`
       );
-    if (daysDifference > 0)
+    }
+    if (daysDifference > 0) {
       parts.push(`${daysDifference} ${daysDifference > 1 ? 'Days' : 'Day'}`);
+    }
 
     return parts.join(', ');
   }
@@ -309,7 +345,7 @@ export class CreateMaintenanceRequestComponent {
       this.showLoader = true;
       try {
         const res = await firstValueFrom(
-          this.maintenanceRequestService.maintenanceRequestGetOffRoadReasonsGet()
+          this.commonService.bulkUploadGetOffRoadReasonsGet()
         );
         if (res && res.length) {
           this.offRoadReasons = res;
@@ -370,10 +406,10 @@ export class CreateMaintenanceRequestComponent {
     this.showLoader = true;
     try {
       const res = await firstValueFrom(
-        this.maintenanceRequestService.maintenanceRequestGetVendorNamesGet()
+        this.commonService.bulkUploadGetAllVendorsGet()
       );
       if (res && res.length) {
-        this.vendorNames = res;
+        this.vendors = res;
       }
     } catch (err: any) {
       console.error(err);
@@ -540,10 +576,10 @@ export class CreateMaintenanceRequestComponent {
     let ticket: any;
 
     if (this.editMode) {
-      ticket = {} as UpdateTicketDto;
+      ticket = {} as UpdateMaintenanceTicketDto;
       ticket.id = this.newTicket.id;
     } else {
-      ticket = {} as CreateTicketDto;
+      ticket = {} as CreateMaintenanceTicketDto;
     }
 
     // Populate ticket object
@@ -561,7 +597,7 @@ export class CreateMaintenanceRequestComponent {
     ticket.offRoadReason = this.newTicket.offRoadReason;
     ticket.offRoadStatusChangeDate = this.newTicket.offRoadStatusChangeDate;
     ticket.serviceRequestType = this.newTicket.serviceRequestType;
-    ticket.vendorName = this.newTicket.vendorName;
+    ticket.vendorId = this.newTicket.vendorId;
     ticket.totalSpareCost = this.newTicket.totalSpareCost;
     ticket.totalLaborCost = this.newTicket.totalLaborCost;
     ticket.totalEstimatedCost = this.newTicket.totalEstimatedCost;
@@ -616,8 +652,8 @@ export class CreateMaintenanceRequestComponent {
     }
 
     // Handle vehicle details
-    const previousOffRoadStatus = this.vehicleDetails.off_Road;
-    const previousVehicleSubStatus = this.vehicleDetails.vehicleSubStatus;
+    const previousOffRoadStatus = this.vehicleDetails.is_Vehicle_Offroad;
+    const previousVehicleSubStatus = this.vehicleDetails.vehicle_Sub_Status;
 
     // Initialize vehicle object
     let vehicle: UpdateVehicleDetailsDto = {
@@ -628,62 +664,62 @@ export class CreateMaintenanceRequestComponent {
     if (this.newTicket.isVehicleOffRoad) {
       if (previousOffRoadStatus === 'FALSE') {
         if (previousVehicleSubStatus === 'On Route') {
-          this.vehicleDetails.onRoute_ToDate = new Date().toISOString();
+          this.vehicleDetails.onRoute_To_Date = new Date().toISOString();
         } else if (previousVehicleSubStatus === 'Stand By') {
-          this.vehicleDetails.standBy_ToDate = new Date().toISOString();
+          this.vehicleDetails.standBy_To_Date = new Date().toISOString();
         }
 
-        this.vehicleDetails.off_Road = 'TRUE';
-        this.vehicleDetails.offroad_Date = new Date().toISOString();
+        this.vehicleDetails.is_Vehicle_Offroad = 'TRUE';
+        this.vehicleDetails.offroad_From_Date = new Date().toISOString();
         this.vehicleDetails.offroad_Reason = this.newTicket.offRoadReason || '';
       }
     } else {
       if (previousOffRoadStatus === 'TRUE') {
-        this.vehicleDetails.offroad_ToDate = new Date().toISOString();
+        this.vehicleDetails.offroad_To_Date = new Date().toISOString();
       }
 
-      this.vehicleDetails.off_Road = 'FALSE';
-      this.vehicleDetails.vehicleSubStatus = this.newTicket.vehicleSubStatus;
+      this.vehicleDetails.is_Vehicle_Offroad = 'FALSE';
+      this.vehicleDetails.vehicle_Sub_Status = this.newTicket.vehicleSubStatus;
 
       if (this.newTicket.vehicleSubStatus === 'On Route') {
         if (previousVehicleSubStatus === 'Stand By') {
-          this.vehicleDetails.standBy_ToDate = new Date().toISOString();
+          this.vehicleDetails.standBy_To_Date = new Date().toISOString();
         }
-        this.vehicleDetails.onRoute_FromDate = new Date().toISOString();
-        this.vehicleDetails.onRoute_ToDate = '';
+        this.vehicleDetails.onRoute_From_Date = new Date().toISOString();
+        this.vehicleDetails.onRoute_To_Date = '';
       } else if (this.newTicket.vehicleSubStatus === 'Stand By') {
         if (previousVehicleSubStatus === 'On Route') {
-          this.vehicleDetails.onRoute_ToDate = new Date().toISOString();
+          this.vehicleDetails.onRoute_To_Date = new Date().toISOString();
         }
-        this.vehicleDetails.standBy_FromDate = new Date().toISOString();
-        this.vehicleDetails.standBy_ToDate = '';
+        this.vehicleDetails.standBy_From_Date = new Date().toISOString();
+        this.vehicleDetails.standBy_To_Date = '';
       }
     }
 
     if (this.newTicket.serviceRequestType === 'Accident Repair') {
       if (previousOffRoadStatus !== 'TRUE') {
         if (previousVehicleSubStatus === 'On Route') {
-          this.vehicleDetails.onRoute_ToDate = new Date().toISOString();
+          this.vehicleDetails.onRoute_To_Date = new Date().toISOString();
         } else if (previousVehicleSubStatus === 'Stand By') {
-          this.vehicleDetails.standBy_ToDate = new Date().toISOString();
+          this.vehicleDetails.standBy_To_Date = new Date().toISOString();
         }
       }
-      this.vehicleDetails.off_Road = 'TRUE';
-      this.vehicleDetails.offroad_Date = new Date().toISOString();
+      this.vehicleDetails.is_Vehicle_Offroad = 'TRUE';
+      this.vehicleDetails.offroad_From_Date = new Date().toISOString();
       this.vehicleDetails.offroad_Reason = 'Accident';
     }
 
     // Finalize the vehicle details object
     vehicle = {
       ...vehicle,
-      vehicleSubStatus: this.vehicleDetails.vehicleSubStatus,
-      standBy_FromDate: this.vehicleDetails.standBy_FromDate,
-      standBy_ToDate: this.vehicleDetails.standBy_ToDate,
-      onRoute_FromDate: this.vehicleDetails.onRoute_FromDate,
-      onRoute_ToDate: this.vehicleDetails.onRoute_ToDate,
-      off_Road: this.vehicleDetails.off_Road,
-      offroad_Date: this.vehicleDetails.offroad_Date,
-      offroad_ToDate: this.vehicleDetails.offroad_ToDate,
+      vehicleSubStatus: this.vehicleDetails.vehicle_Sub_Status,
+      standBy_FromDate: this.vehicleDetails.standBy_From_Date,
+      standBy_ToDate: this.vehicleDetails.standBy_To_Date,
+      onRoute_FromDate: this.vehicleDetails.onRoute_From_Date,
+      onRoute_ToDate: this.vehicleDetails.onRoute_To_Date,
+      off_Road: this.vehicleDetails.is_Vehicle_Offroad,
+      offroad_Date: this.vehicleDetails.offroad_From_Date,
+      offroad_ToDate: this.vehicleDetails.offroad_To_Date,
       offroad_Reason: this.vehicleDetails.offroad_Reason,
     };
 
@@ -710,9 +746,7 @@ export class CreateMaintenanceRequestComponent {
       // console.log('Update Response:', res1);
 
       const res2 = await firstValueFrom(
-        this.maintenanceRequestService.maintenanceRequestUpdateVehicleDetailsPut(
-          vehicle
-        )
+        this.commonService.bulkUploadUpdateVehicleDetailsPut(vehicle)
       );
       // console.log('Vehicle Update Response:', res2);
 

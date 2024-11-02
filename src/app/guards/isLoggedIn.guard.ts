@@ -27,7 +27,7 @@ export const isLoggedIn: CanActivateFn = (route, state) => {
 
       if (daysSincePasswordChange > 45) {
         // console.log(daysSincePasswordChange, passwordLastChanged, today);
-        localStorage.setItem('employeeToken', token);
+        sessionStorage.setItem('forgotPasswordToken', token);
         localStorage.removeItem('token');
         router.navigate(['auth/set-password']);
         return false;

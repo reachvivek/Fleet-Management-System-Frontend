@@ -23,7 +23,9 @@ export interface TicketsForDashboardDto {
     totalEstimatedCost?: number;
     isAdvanceRequired?: number;
     hasAdvanceApproved?: number;
+    isInvoiceUploaded?: number;
     hasFinanceUserApproved?: number;
+    isClosed?: number;
     status?: string;
     createdOn?: Date;
     currentStage?: string;

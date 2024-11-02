@@ -12,7 +12,18 @@
   background: #11101d;
   z-index: 100;
   transition: all 0.5s ease;
+  // overflow-y: auto !important;
+  // overflow-x: hidden;
 }
+.sidebar::-webkit-scrollbar {
+  display: none; /* Hides scrollbar on WebKit browsers (e.g., Chrome, Safari) */
+}
+
+/* For Firefox */
+.sidebar {
+  scrollbar-width: none; /* Hides scrollbar on Firefox */
+}
+
 .sidebar.close {
   width: 79px;
 }

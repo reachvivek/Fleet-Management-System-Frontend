@@ -18,14 +18,12 @@ import { CustomHttpUrlEncodingCodec }                        from '../encoder';
 import { Observable }                                        from 'rxjs';
 
 import { ApproveRejectDto } from '../model/approveRejectDto';
-import { CreateTicketDto } from '../model/createTicketDto';
-import { OffRoadReasonDto } from '../model/offRoadReasonDto';
+import { CreateMaintenanceTicketDto } from '../model/createMaintenanceTicketDto';
+import { InvoiceDetailsDto } from '../model/invoiceDetailsDto';
 import { ServiceRequestTypeDto } from '../model/serviceRequestTypeDto';
 import { TicketDetailsDto } from '../model/ticketDetailsDto';
 import { TicketsForDashboardDto } from '../model/ticketsForDashboardDto';
-import { UpdateTicketDto } from '../model/updateTicketDto';
-import { UpdateVehicleDetailsDto } from '../model/updateVehicleDetailsDto';
-import { VehicleDetailsDto } from '../model/vehicleDetailsDto';
+import { UpdateMaintenanceTicketDto } from '../model/updateMaintenanceTicketDto';
 
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
 import { Configuration }                                     from '../configuration';
@@ -122,13 +120,66 @@ export class MaintenanceRequestService {
      * 
      * 
      * @param body 
+     * @param roleId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateTicketDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateTicketDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateTicketDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateTicketDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public maintenanceRequestCloseTicketPut(body?: ApproveRejectDto, roleId?: number, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public maintenanceRequestCloseTicketPut(body?: ApproveRejectDto, roleId?: number, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public maintenanceRequestCloseTicketPut(body?: ApproveRejectDto, roleId?: number, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public maintenanceRequestCloseTicketPut(body?: ApproveRejectDto, roleId?: number, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (roleId !== undefined && roleId !== null) {
+            queryParameters = queryParameters.set('roleId', <any>roleId);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<any>('put',`${this.basePath}/MaintenanceRequest/CloseTicket`,
+            {
+                body: body,
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateMaintenanceTicketDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateMaintenanceTicketDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateMaintenanceTicketDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public maintenanceRequestCreateMaintenanceRequestPost(body?: CreateMaintenanceTicketDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
 
         let headers = this.defaultHeaders;
@@ -203,44 +254,6 @@ export class MaintenanceRequestService {
         return this.httpClient.request<Array<TicketsForDashboardDto>>('post',`${this.basePath}/MaintenanceRequest/GetAllMaintenanceRequests`,
             {
                 body: body,
-                withCredentials: this.configuration.withCredentials,
-                headers: headers,
-                observe: observe,
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * 
-     * 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     */
-    public maintenanceRequestGetOffRoadReasonsGet(observe?: 'body', reportProgress?: boolean): Observable<Array<OffRoadReasonDto>>;
-    public maintenanceRequestGetOffRoadReasonsGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<OffRoadReasonDto>>>;
-    public maintenanceRequestGetOffRoadReasonsGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<OffRoadReasonDto>>>;
-    public maintenanceRequestGetOffRoadReasonsGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
-
-        let headers = this.defaultHeaders;
-
-        // to determine the Accept header
-        let httpHeaderAccepts: string[] = [
-            'text/plain',
-            'application/json',
-            'text/json'
-        ];
-        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
-        if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set('Accept', httpHeaderAcceptSelected);
-        }
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-        ];
-
-        return this.httpClient.request<Array<OffRoadReasonDto>>('get',`${this.basePath}/MaintenanceRequest/GetOffRoadReasons`,
-            {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,
@@ -420,136 +433,6 @@ export class MaintenanceRequestService {
     /**
      * 
      * 
-     * @param registration_no 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     */
-    public maintenanceRequestGetVehicleDetailsGet(registration_no?: string, observe?: 'body', reportProgress?: boolean): Observable<VehicleDetailsDto>;
-    public maintenanceRequestGetVehicleDetailsGet(registration_no?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<VehicleDetailsDto>>;
-    public maintenanceRequestGetVehicleDetailsGet(registration_no?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<VehicleDetailsDto>>;
-    public maintenanceRequestGetVehicleDetailsGet(registration_no?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
-
-
-        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
-        if (registration_no !== undefined && registration_no !== null) {
-            queryParameters = queryParameters.set('registration_no', <any>registration_no);
-        }
-
-        let headers = this.defaultHeaders;
-
-        // to determine the Accept header
-        let httpHeaderAccepts: string[] = [
-            'text/plain',
-            'application/json',
-            'text/json'
-        ];
-        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
-        if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set('Accept', httpHeaderAcceptSelected);
-        }
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-        ];
-
-        return this.httpClient.request<VehicleDetailsDto>('get',`${this.basePath}/MaintenanceRequest/GetVehicleDetails`,
-            {
-                params: queryParameters,
-                withCredentials: this.configuration.withCredentials,
-                headers: headers,
-                observe: observe,
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * 
-     * 
-     * @param hubName 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     */
-    public maintenanceRequestGetVehicleRegistrationNumbersGet(hubName?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<string>>;
-    public maintenanceRequestGetVehicleRegistrationNumbersGet(hubName?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<string>>>;
-    public maintenanceRequestGetVehicleRegistrationNumbersGet(hubName?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<string>>>;
-    public maintenanceRequestGetVehicleRegistrationNumbersGet(hubName?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
-
-
-        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
-        if (hubName !== undefined && hubName !== null) {
-            queryParameters = queryParameters.set('hubName', <any>hubName);
-        }
-
-        let headers = this.defaultHeaders;
-
-        // to determine the Accept header
-        let httpHeaderAccepts: string[] = [
-            'text/plain',
-            'application/json',
-            'text/json'
-        ];
-        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
-        if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set('Accept', httpHeaderAcceptSelected);
-        }
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-        ];
-
-        return this.httpClient.request<Array<string>>('get',`${this.basePath}/MaintenanceRequest/GetVehicleRegistrationNumbers`,
-            {
-                params: queryParameters,
-                withCredentials: this.configuration.withCredentials,
-                headers: headers,
-                observe: observe,
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * 
-     * 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     */
-    public maintenanceRequestGetVendorNamesGet(observe?: 'body', reportProgress?: boolean): Observable<Array<string>>;
-    public maintenanceRequestGetVendorNamesGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<string>>>;
-    public maintenanceRequestGetVendorNamesGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<string>>>;
-    public maintenanceRequestGetVendorNamesGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
-
-        let headers = this.defaultHeaders;
-
-        // to determine the Accept header
-        let httpHeaderAccepts: string[] = [
-            'text/plain',
-            'application/json',
-            'text/json'
-        ];
-        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
-        if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set('Accept', httpHeaderAcceptSelected);
-        }
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-        ];
-
-        return this.httpClient.request<Array<string>>('get',`${this.basePath}/MaintenanceRequest/GetVendorNames`,
-            {
-                withCredentials: this.configuration.withCredentials,
-                headers: headers,
-                observe: observe,
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * 
-     * 
      * @param body 
      * @param roleId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -604,13 +487,111 @@ export class MaintenanceRequestService {
      * 
      * 
      * @param body 
+     * @param roleId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateTicketDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateTicketDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateTicketDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateTicketDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public maintenanceRequestReopenTicketPut(body?: ApproveRejectDto, roleId?: number, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public maintenanceRequestReopenTicketPut(body?: ApproveRejectDto, roleId?: number, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public maintenanceRequestReopenTicketPut(body?: ApproveRejectDto, roleId?: number, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public maintenanceRequestReopenTicketPut(body?: ApproveRejectDto, roleId?: number, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (roleId !== undefined && roleId !== null) {
+            queryParameters = queryParameters.set('roleId', <any>roleId);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<any>('put',`${this.basePath}/MaintenanceRequest/ReopenTicket`,
+            {
+                body: body,
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public maintenanceRequestUpdateInvoiceDetailsPut(body?: InvoiceDetailsDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public maintenanceRequestUpdateInvoiceDetailsPut(body?: InvoiceDetailsDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public maintenanceRequestUpdateInvoiceDetailsPut(body?: InvoiceDetailsDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public maintenanceRequestUpdateInvoiceDetailsPut(body?: InvoiceDetailsDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<any>('put',`${this.basePath}/MaintenanceRequest/UpdateInvoiceDetails`,
+            {
+                body: body,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateMaintenanceTicketDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateMaintenanceTicketDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateMaintenanceTicketDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public maintenanceRequestUpdateMaintenanceRequestPut(body?: UpdateMaintenanceTicketDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
 
         let headers = this.defaultHeaders;
@@ -635,51 +616,6 @@ export class MaintenanceRequestService {
         }
 
         return this.httpClient.request<any>('put',`${this.basePath}/MaintenanceRequest/UpdateMaintenanceRequest`,
-            {
-                body: body,
-                withCredentials: this.configuration.withCredentials,
-                headers: headers,
-                observe: observe,
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * 
-     * 
-     * @param body 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     */
-    public maintenanceRequestUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public maintenanceRequestUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public maintenanceRequestUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public maintenanceRequestUpdateVehicleDetailsPut(body?: UpdateVehicleDetailsDto, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
-
-
-        let headers = this.defaultHeaders;
-
-        // to determine the Accept header
-        let httpHeaderAccepts: string[] = [
-        ];
-        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
-        if (httpHeaderAcceptSelected != undefined) {
-            headers = headers.set('Accept', httpHeaderAcceptSelected);
-        }
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json',
-            'text/json',
-            'application/_*+json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected != undefined) {
-            headers = headers.set('Content-Type', httpContentTypeSelected);
-        }
-
-        return this.httpClient.request<any>('put',`${this.basePath}/MaintenanceRequest/UpdateVehicleDetails`,
             {
                 body: body,
                 withCredentials: this.configuration.withCredentials,

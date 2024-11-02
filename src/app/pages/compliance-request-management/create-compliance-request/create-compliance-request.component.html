@@ -1,0 +1,756 @@
+<div class="card">
+  <div class="container">
+    <p-toast></p-toast>
+    <div class="row mb-2">
+      <div class="col-9">
+        <nav style="--bs-breadcrumb-divider: '>'" aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a
+                routerLink="/compliance-requests"
+                class="display-6 fs-5 text-decoration-none"
+                >Compliance Requests</a
+              >
+            </li>
+            <li
+              class="breadcrumb-item active display-6 fs-5"
+              aria-current="page"
+            >
+              {{ editMode ? "Edit" : "Create New" }} Compliance Request
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <form #addRequestDetails="ngForm" ngNativeValidate>
+      <p-stepper orientation="horizontal" [linear]="true">
+        <p-stepperPanel header="Vehicle Details">
+          <ng-template
+            pTemplate="content"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addVehicleDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleRegistrationNumber" class="form-label"
+                        >Vehicle Registration Number
+                        <span class="text-danger">*</span>
+                      </label>
+                      <p-dropdown
+                        #registrationNumber="ngModel"
+                        name="registrationNumber"
+                        [options]="registrationNumbers"
+                        [(ngModel)]="newTicket.registrationNumber"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        (ngModelChange)="loadVehicleDetails()"
+                        placeholder="Select Registration Number"
+                        [disabled]="editMode"
+                        required
+                        autofocus
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newTicket.registrationNumber &&
+                          registrationNumber.touched
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle registration number is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="vehicleAge" class="form-label"
+                        >Vehicle Age</label
+                      >
+                      <input
+                        #vehicleAge="ngModel"
+                        name="vehicleAge"
+                        class="form-control"
+                        id="vehicleAge"
+                        [(ngModel)]="newTicket.vehicleAge"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="manufacturer" class="form-label"
+                        >Manufacturer</label
+                      >
+                      <input
+                        #manufacturer="ngModel"
+                        name="manufacturer"
+                        class="form-control"
+                        id="manufacturer"
+                        [(ngModel)]="newTicket.manufacturer"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="model" class="form-label">Model</label>
+                      <input
+                        #model="ngModel"
+                        name="model"
+                        class="form-control"
+                        id="model"
+                        [(ngModel)]="newTicket.model"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-check mt-4">
+                      <label class="form-label" for="flexCheckDefault">
+                        Vehicle Off Road Status
+                      </label>
+                      <input
+                        #isVehicleOffroad="ngModel"
+                        name="isVehicleOffroad"
+                        id="isVehicleOffroad"
+                        class="form-check-input"
+                        [(ngModel)]="newTicket.isVehicleOffRoad"
+                        (ngModelChange)="goToBottomAfter(50)"
+                        type="checkbox"
+                        value="1"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-4" *ngIf="!newTicket.isVehicleOffRoad">
+                    <div class="field form-group">
+                      <label for="vehicleSubStatus" class="form-label"
+                        >Vehicle Sub Status
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #vehicleSubStatus="ngModel"
+                        name="vehicleSubStatus"
+                        id="vehicleSubStatus"
+                        [(ngModel)]="newTicket.vehicleSubStatus"
+                        [disabled]="newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Vehicle Sub Status
+                        </option>
+                        <option
+                          *ngFor="let entry of onRoadSubStatuses"
+                          [value]="entry"
+                        >
+                          {{ entry }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          vehicleSubStatus.invalid &&
+                          (vehicleSubStatus.dirty || vehicleSubStatus.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle sub status is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col-4" *ngIf="newTicket.isVehicleOffRoad">
+                    <div class="field form-group">
+                      <label for="offRoadReason" class="form-label"
+                        >Off Road Reason
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #offRoadReason="ngModel"
+                        name="offRoadReason"
+                        id="offRoadReason"
+                        [(ngModel)]="newTicket.offRoadReason"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        class="form-select {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Off Road Reason
+                        </option>
+                        <option
+                          *ngFor="let entry of offRoadReasons"
+                          [value]="entry.reason"
+                        >
+                          {{ entry.reason }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadReason.invalid &&
+                          (offRoadReason.dirty || offRoadReason.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle Off Road reason is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="row" *ngIf="newTicket.isVehicleOffRoad">
+                  <div class="col-4">
+                    <div class="field form-group">
+                      <label for="offRoadStatusChangeDate" class="form-label"
+                        >Off Road Status Change Date
+                        <span class="text-danger">*</span></label
+                      >
+                      <p-calendar
+                        #offRoadStatusChangeDate="ngModel"
+                        [(ngModel)]="dates.offRoadStatusChangeDate"
+                        (ngModelChange)="convertDateToString(2)"
+                        name="offRoadStatusChangeDate"
+                        [iconDisplay]="'input'"
+                        [showIcon]="true"
+                        class="d-flex flex-column {{
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                            ? 'ng-invalid ng-dirty'
+                            : ''
+                        }}"
+                        inputId="icondisplay"
+                        [disabled]="!newTicket.isVehicleOffRoad"
+                        [dateFormat]="dateFormat"
+                        showButtonBar
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        required
+                      ></p-calendar>
+                      <p
+                        *ngIf="
+                          newTicket.isVehicleOffRoad &&
+                          offRoadStatusChangeDate.invalid &&
+                          (offRoadStatusChangeDate.dirty ||
+                            offRoadStatusChangeDate.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vehicle off road status change date is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <hr />
+                <div class="row">
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="typeOfCompliance" class="form-label"
+                        >Type Of Compliance<span class="text-danger"
+                          >*</span
+                        ></label
+                      >
+                      <select
+                        #typeOfCompliance="ngModel"
+                        name="typeOfCompliance"
+                        id="typeOfCompliance"
+                        [(ngModel)]="newTicket.typeOfCompliance"
+                        class="form-select {{
+                          typeOfCompliance.invalid &&
+                          (typeOfCompliance.dirty || typeOfCompliance.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Type Of Compliance
+                        </option>
+                        <option
+                          *ngFor="let type of typeOfCompliances"
+                          [value]="type"
+                        >
+                          {{ type }}
+                        </option>
+                      </select>
+                      <p
+                        *ngIf="
+                          typeOfCompliance.invalid &&
+                          (typeOfCompliance.dirty || typeOfCompliance.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Type of Compliance is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="vendorName" class="form-label"
+                        >Vendor Name <span class="text-danger">*</span></label
+                      >
+                      <p-dropdown
+                        #vendorId="ngModel"
+                        name="vendorName"
+                        id="vendorName"
+                        [options]="vendors"
+                        optionLabel="name"
+                        optionValue="id"
+                        [virtualScroll]="true"
+                        [virtualScrollItemSize]="30"
+                        [(ngModel)]="newTicket.vendorId"
+                        [resetFilterOnHide]="true"
+                        class="{{
+                          !newTicket.vendorId && vendorId.touched
+                            ? 'ng-dirty ng-invalid'
+                            : ''
+                        }}"
+                        [filter]="true"
+                        [showClear]="true"
+                        placeholder="Select Vendor Name"
+                        required
+                      >
+                      </p-dropdown>
+                      <p
+                        *ngIf="
+                          !newTicket.vendorId &&
+                          (vendorId.touched || vendorId.dirty)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Vendor name is required
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="d-flex py-4 flex-row-reverse">
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    [disabled]="addVehicleDetails.invalid"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <p-stepperPanel header="Cost Details">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addCostDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="renewalFees" class="form-label"
+                        >Renewal Fees <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #renewalFees
+                          name="renewalFees"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newTicket.renewalFees"
+                          (ngModelChange)="updateComplianceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="agentFees" class="form-label"
+                        >Agent Fees <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #agentFees
+                          name="agentFees"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newTicket.agentFees"
+                          (ngModelChange)="updateComplianceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="miscAmount" class="form-label"
+                        >Misc Amount <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #miscAmount
+                          name="miscAmount"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newTicket.miscAmount"
+                          (ngModelChange)="updateComplianceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="penaltyFees" class="form-label"
+                        >Penalty Fees <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #penaltyFees
+                          name="penaltyFees"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newTicket.penaltyFees"
+                          (ngModelChange)="updateComplianceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="gstAmount" class="form-label"
+                        >GST <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #gstAmount
+                          name="gstAmount"
+                          type="number"
+                          class="form-control"
+                          [(ngModel)]="newTicket.gstAmount"
+                          (ngModelChange)="updateComplianceTotal()"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="0"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="form-group">
+                      <label for="finalAmount" class="form-label"
+                        >Final Amount</label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          type="text"
+                          disabled
+                          class="form-control"
+                          [value]="
+                            newTicket.finalAmount | number : '1.2-5' : 'en-IN'
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between py-4">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    icon="pi pi-arrow-right"
+                    [disabled]="
+                      addCostDetails.invalid || newTicket.finalAmount < 1
+                    "
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <p-stepperPanel header="Advance Details">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-nextCallback="nextCallback"
+            let-index="index"
+          >
+            <p-card>
+              <form #addAdvanceDetails="ngForm" ngNativeValidate>
+                <div class="row">
+                  <div class="col">
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="totalEstimatedCost" class="form-label"
+                          >Total Estimated Cost (With GST)</label
+                        >
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            type="text"
+                            disabled
+                            class="form-control"
+                            [value]="
+                              newTicket.finalAmount | number : '1.2-5' : 'en-IN'
+                            "
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-group">
+                      <label for="uploadQuotation" class="form-label"
+                        >Quotation Pic (acceptable formats: img/pdf)
+                      </label>
+                      <button
+                        *ngIf="!newTicket.quotationAttachment"
+                        pButton
+                        pRipple
+                        [rounded]="true"
+                        icon="pi pi-file-arrow-up"
+                        label="Upload Quotation Picture"
+                        type="button"
+                        class="p-button-primary m-0"
+                        (click)="toggleUploadQuotationDialog()"
+                      ></button>
+                    </div>
+                  </div>
+                </div>
+                <!-- End of Row -->
+                <hr />
+                <div class="row">
+                  <div class="col">
+                    <div class="field form-group">
+                      <label for="isAdvanceRequired" class="form-label"
+                        >Is Advance Payment Required?
+                        <span class="text-danger">*</span></label
+                      >
+                      <select
+                        #isAdvanceRequired="ngModel"
+                        name="isAdvanceRequired"
+                        id="isAdvanceRequired"
+                        [(ngModel)]="newTicket.isAdvanceRequired"
+                        (ngModelChange)="checkValidAdvanceAmount()"
+                        class="form-select {{
+                          isAdvanceRequired.invalid &&
+                          (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                            ? 'is-invalid'
+                            : ''
+                        }}"
+                        required
+                        autofocus
+                      >
+                        <option value="" disabled selected>
+                          Select Advance Payment Required
+                        </option>
+                        <option [ngValue]="false">No</option>
+                        <option [ngValue]="true">Yes</option>
+                      </select>
+                      <p
+                        *ngIf="
+                          isAdvanceRequired.invalid &&
+                          (isAdvanceRequired.dirty || isAdvanceRequired.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Select if advance payment is required
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div
+                      *ngIf="this.newTicket!.isAdvanceRequired"
+                      class="form-group"
+                    >
+                      <label for="advanceAmount" class="form-label"
+                        >Advance Amount
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #advanceAmount="ngModel"
+                          name="advanceAmount"
+                          type="number"
+                          class="form-control {{
+                            !isValidAdvanceAmount &&
+                            (advanceAmount.dirty || advanceAmount.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          [(ngModel)]="newTicket!.advanceAmount"
+                          (ngModelChange)="checkValidAdvanceAmount()"
+                          [disabled]="!newTicket.isAdvanceRequired"
+                          onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
+                          onpaste="return false"
+                          min="1"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          advanceAmount.invalid &&
+                          (advanceAmount.dirty || advanceAmount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Advance amount is required
+                      </p>
+                      <p
+                        *ngIf="
+                          newTicket.isAdvanceRequired &&
+                          !isValidAdvanceAmount &&
+                          (advanceAmount.dirty || advanceAmount.touched)
+                        "
+                        class="form-text text-danger"
+                      >
+                        Advance amount exceeds the permitted limit.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between py-4">
+                  <p-button
+                    label="Back"
+                    (onClick)="prevCallback.emit()"
+                    icon="pi pi-arrow-left"
+                    iconPos="left"
+                  />
+                  <p-button
+                    label="Next"
+                    (onClick)="nextCallback.emit()"
+                    icon="pi pi-arrow-right"
+                    [disabled]="
+                      addAdvanceDetails.invalid || !isValidAdvanceAmount
+                    "
+                    iconPos="right"
+                  />
+                </div>
+              </form>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+        <p-stepperPanel header="Confirmation">
+          <ng-template
+            pTemplate="content"
+            let-prevCallback="prevCallback"
+            let-index="index"
+          >
+            <p-card>
+              <p>
+                Are you sure you want to
+                {{ editMode ? "update" : "create" }} this compliance request for
+                vehicle with registration number
+                <strong>{{ newTicket.registrationNumber }}</strong> with total
+                estimated cost of
+                <strong
+                  >{{
+                    newTicket.finalAmount
+                      | currency : "INR" : "symbol-narrow" : "0.2-2"
+                  }} </strong
+                >? <br />
+                Please review the details and click on
+                {{ editMode ? "Update" : "Create" }} Compliance Request.
+              </p>
+              <div class="row mt-1">
+                <div class="col">
+                  <label for="comment" class="form-label"
+                    >Overall Comment</label
+                  >
+                  <textarea
+                    #overallComment
+                    name="overallComment"
+                    class="form-control"
+                    id="comment"
+                    rows="2"
+                    [(ngModel)]="newTicket!.overallComment"
+                  ></textarea>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between py-4">
+                <p-button
+                  label="Back"
+                  class="me-1"
+                  [disabled]="showLoader || formActionsDisabled"
+                  (onClick)="prevCallback.emit()"
+                  icon="pi pi-arrow-left"
+                  iconPos="left"
+                />
+                <p-button
+                  label="{{
+                    editMode ? 'Update' : 'Create'
+                  }} Compliance Request"
+                  (onClick)="submitComplianceRequest()"
+                  [disabled]="showLoader || formActionsDisabled"
+                  icon="pi pi-file-check"
+                  iconPos="right"
+                />
+              </div>
+            </p-card>
+          </ng-template>
+        </p-stepperPanel>
+      </p-stepper>
+    </form>
+  </div>
+</div>

@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserSyncService } from '../../services/user-sync.service';
-import { AdminService } from '../../../swagger';
 import { SharedService } from '../../services/shared.service';
 
 @Component({
@@ -16,7 +15,7 @@ export class SidebarComponent {
   isReportsRoute: boolean = false;
   isReportsMenuOpen: boolean = false;
   isSubMenuOpen: boolean = false;
-  isSidebarOpen: boolean = true;
+  isSidebarOpen: boolean = false;
   isAdminUser: boolean = false;
   showRoleSelectDialog: boolean = false;
   selectedRoleId: number | undefined = undefined;
@@ -40,15 +39,25 @@ export class SidebarComponent {
   ) {}
 
   ngOnInit(): void {
+    this.toggleSidebar();
     this.sharedService.init();
     const routeTitlesMap = new Map<string, string>([
-      ['create-request', 'Create Maintenance Request'],
+      ['create-maintenance-request', 'Create Maintenance Request'],
+      ['create-compliance-request', 'Create Compliance Request'],
+      ['create-battery-request', 'Create Battery Request'],
+      ['create-tyre-request', 'Create Tyre Request'],
+      ['dashboard/compliance-requests', 'Compliance Requests'],
+      ['tyre-requests', 'Tyre Requests'],
+      ['battery-requests', 'Battery Requests'],
+      ['compliance-requests', 'Compliance Requests'],
       ['dashboard', 'Maintenance Requests'],
       ['user-management', 'User Management'],
+      ['vehicle-off-road', 'Vehicle Off Road Report'],
       ['vehicle', 'Vehicle Management'],
       ['vendor', 'Vendor Management'],
       ['system-part', 'System And Part Management'],
       ['history', 'Upload History'],
+      ['compliance', 'Compliance Report'],
       ['fastag', 'Fastag Transactions'],
     ]);
 

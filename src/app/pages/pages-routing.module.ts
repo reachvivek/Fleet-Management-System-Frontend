@@ -11,29 +11,76 @@ import { VendorComponent } from './bulk-upload/vendor/vendor.component';
 import { SystemPartComponent } from './bulk-upload/system-part/system-part.component';
 import { HistoryComponent } from './bulk-upload/history/history.component';
 import { TransactionsComponent } from './transactions/transactions.component';
+import { ComplianceRequestManagementComponent } from './compliance-request-management/compliance-request-management.component';
+import { CreateComplianceRequestComponent } from './compliance-request-management/create-compliance-request/create-compliance-request.component';
+import { ComplianceComponent } from './reports/compliance/compliance.component';
+import { VehicleOffRoadComponent } from './reports/vehicle-off-road/vehicle-off-road.component';
+import { VehicleDetailsComponent } from './bulk-upload/vehicle/vehicle-details/vehicle-details.component';
+import { BatteryRequestManagementComponent } from './battery-request-management/battery-request-management.component';
+import { TyreRequestManagementComponent } from './tyre-request-management/tyre-request-management.component';
+import { CreateBatteryRequestComponent } from './battery-request-management/create-battery-request/create-battery-request.component';
+import { CreateTyreRequestComponent } from './tyre-request-management/create-tyre-request/create-tyre-request.component';
 
 const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
+    canActivate: [isLoggedIn],
     children: [
       {
         path: '',
         component: MaintenanceRequestManagementComponent,
         data: { title: 'Maintenance Requests' },
-        canActivate: [isLoggedIn],
       },
       {
-        path: 'create-request',
+        path: 'compliance-requests',
+        component: ComplianceRequestManagementComponent,
+        data: { title: 'Compliance Requests' },
+      },
+      {
+        path: 'battery-requests',
+        component: BatteryRequestManagementComponent,
+        data: { title: 'Battery Requests' },
+      },
+      {
+        path: 'tyre-requests',
+        component: TyreRequestManagementComponent,
+        data: { title: 'Tyre Requests' },
+      },
+      {
+        path: 'create-maintenance-request',
         component: CreateMaintenanceRequestComponent,
         data: { title: 'Create Maintenance Request' },
-        canActivate: [isLoggedIn],
+      },
+      {
+        path: 'create-compliance-request',
+        component: CreateComplianceRequestComponent,
+        data: { title: 'Create Compliance Request' },
+      },
+      {
+        path: 'create-battery-request',
+        component: CreateBatteryRequestComponent,
+        data: { title: 'Create Battery Request' },
+      },
+      {
+        path: 'create-tyre-request',
+        component: CreateTyreRequestComponent,
+        data: { title: 'Create Tyre Request' },
       },
       {
         path: 'reports/fastag',
         component: TransactionsComponent,
         data: { title: 'Transactions' },
-        canActivate: [isLoggedIn],
+      },
+      {
+        path: 'reports/compliance',
+        component: ComplianceComponent,
+        data: { title: 'Compliance Report' },
+      },
+      {
+        path: 'reports/vehicle-off-road',
+        component: VehicleOffRoadComponent,
+        data: { title: 'Vehicle Off Road Report' },
       },
       {
         path: 'user-management',
@@ -45,6 +92,16 @@ const routes: Routes = [
         path: 'bulk-upload/vehicle',
         component: VehicleComponent,
         data: { title: 'Vehicle Management' },
+        canActivate: [isLoggedIn, isAdminGuard],
+      },
+      {
+        path: 'bulk-upload/vehicle/add-vehicle',
+        component: VehicleDetailsComponent,
+        canActivate: [isLoggedIn, isAdminGuard],
+      },
+      {
+        path: 'bulk-upload/vehicle/vehicle-details/:Registration_No',
+        component: VehicleDetailsComponent,
         canActivate: [isLoggedIn, isAdminGuard],
       },
       {

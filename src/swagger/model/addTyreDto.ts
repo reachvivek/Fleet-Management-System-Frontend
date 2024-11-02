@@ -10,7 +10,14 @@
  * Do not edit the class manually.
  */
 
-export interface LocationZoneRegionDto { 
-    id?: number;
-    name?: string;
+export interface AddTyreDto { 
+    tyreManufacturer?: string;
+    tyreModel?: string;
+    tyreType?: string;
+    tyreSize?: string;
+    cost?: number;
+    fitmentDate?: Date;
+    vendorId?: string;
+    serialNumber?: string;
+    registrationNo?: string;
 }

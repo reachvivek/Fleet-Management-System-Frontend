@@ -56,11 +56,13 @@
     ></button>
   </ng-template>
 </p-dialog>
+
 <div class="sidebar {{ this.isSidebarOpen ? '' : 'close' }}">
   <div class="logo-details d-flex justify-content-center">
     <img class="p-1" src="assets/img/cms-w-lg.svg" alt="" />
   </div>
   <ul class="nav-links mt-3">
+    <!-- Maintenance Request -->
     <li
       routerLink="dashboard"
       routerLinkActive="active"
@@ -77,8 +79,68 @@
           <a class="link_name" href="#">Maintenance Requests</a>
         </li>
       </ul>
-      <!-- Sidebar Item -->
     </li>
+    <!-- End of Maintenance Request -->
+
+    <!-- Compliance Request -->
+    <li
+      routerLink="compliance-requests"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <div class="icon-link">
+        <a routerLink="/compliance-requests"
+          ><i class="bx bxs-shield-alt-2"></i>
+          <span class="link_name">Compliance Requests</span>
+        </a>
+      </div>
+      <ul class="sub-menu blank">
+        <li>
+          <a class="link_name" href="#">Compliance Requests</a>
+        </li>
+      </ul>
+    </li>
+    <!-- End of Compliance Request -->
+
+    <!-- Battery Request -->
+    <li
+      routerLink="battery-requests"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <div class="icon-link">
+        <a routerLink="/battery-requests"
+          ><i class="bx bxs-car-battery"></i>
+          <span class="link_name">Battery Requests</span>
+        </a>
+      </div>
+      <ul class="sub-menu blank">
+        <li>
+          <a class="link_name" href="#">Battery Requests</a>
+        </li>
+      </ul>
+    </li>
+    <!-- End of Battery Request -->
+
+    <!-- Tyre Request -->
+    <li
+      routerLink="tyre-requests"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <div class="icon-link">
+        <a routerLink="/tyre-requests"
+          ><i class="pi pi-cog"> </i>
+          <span class="link_name">Tyre Requests</span>
+        </a>
+      </div>
+      <ul class="sub-menu blank">
+        <li>
+          <a class="link_name" href="#">Tyre Requests</a>
+        </li>
+      </ul>
+    </li>
+    <!-- End of Tyre Request -->
     <li
       *ngIf="isAdminUser"
       routerLink="user-management"
@@ -160,6 +222,22 @@
             routerLinkActive="active"
             (click)="closeSubMenu()"
             >FASTag Transaction</a
+          >
+        </li>
+        <li>
+          <a
+            routerLink="/reports/compliance"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >Compliance</a
+          >
+        </li>
+        <li>
+          <a
+            routerLink="/reports/vehicle-off-road"
+            routerLinkActive="active"
+            (click)="closeSubMenu()"
+            >Vehicle Off Road</a
           >
         </li>
       </ul>

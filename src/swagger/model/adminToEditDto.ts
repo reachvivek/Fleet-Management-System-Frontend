@@ -22,4 +22,5 @@ export interface AdminToEditDto {
     empMobNo?: string;
     accessLevel?: string;
     accessScope?: string;
+    reportingTo?: string;
 }

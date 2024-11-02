@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { BehaviorSubject } from 'rxjs';
 
-export interface NewTicket {
+export interface NewMaintenanceTicket {
   id: any;
   zone: string;
   region: string;
@@ -19,7 +19,8 @@ export interface NewTicket {
   offRoadReason: string;
   offRoadStatusChangeDate: string;
   serviceRequestType: string;
-  vendorName: string;
+  vendorId: string | undefined;
+  vendorName: string | undefined;
   totalSpareCost: number;
   totalLaborCost: number;
   totalEstimatedCost: number;
@@ -36,9 +37,199 @@ export interface NewTicket {
       comment: string;
     }
   ];
+  invoiceTotalSpareCost: number;
+  invoiceTotalLaborCost: number;
+  invoiceTotalEstimatedCost: number;
+  actualServiceDetails: [
+    {
+      systemName: string;
+      partName: string;
+      partHSN: string;
+      partQty: number;
+      partNames: string[];
+      partCost: number;
+      partGst: number;
+      sacCode: number;
+      laborQty: number;
+      laborCost: number;
+      laborGst: number;
+      comment: string;
+    }
+  ];
+  invoiceType: string;
+  modeOfPayment: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  invoiceAmount: number;
+  serviceDate: string;
+  companyName: string;
+  invoiceAttachment: string;
+  jobcardAttachment: string;
   overallComment: string;
   isAdvanceRequired: boolean;
   advanceAmount: number;
+}
+
+export interface NewComplianceTicket {
+  id: any;
+  zone: string;
+  region: string;
+  branch: string;
+  hub: string;
+  registrationNumber: string | undefined;
+  vehicleAge: string;
+  manufacturer: string;
+  model: string;
+  vehicleSubStatus: string;
+  isVehicleOffRoad: boolean;
+  offRoadReason: string;
+  offRoadStatusChangeDate: string;
+  typeOfCompliance: string;
+  vendorId: string | undefined;
+  vendorName: string | undefined;
+  renewalFees: number;
+  agentFees: number;
+  miscAmount: number;
+  penaltyFees: number;
+  gstAmount: number;
+  finalAmount: number;
+  quotationAttachment: string;
+  hsn: string;
+  complianceQty: number;
+  complianceGst: number;
+  compliancePrice: number;
+  sacCode: number;
+  agentQty: number;
+  agentCost: number;
+  invoiceGst: number;
+  fromDate: string;
+  toDate: string;
+  invoiceType: string;
+  modeOfPayment: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  invoiceAmount: number;
+  companyName: string;
+  invoiceAttachment: string;
+  invoiceApprovalComment: string;
+  isAdvanceRequired: boolean;
+  advanceAmount: number;
+  overallComment: string;
+}
+
+export interface NewBatteryTicket {
+  id: any;
+  zone: string;
+  region: string;
+  branch: string;
+  hub: string;
+  registrationNumber: string | undefined;
+  vehicleAge: string;
+  manufacturer: string;
+  model: string;
+  vehicleSubStatus: string;
+  isVehicleOffRoad: boolean;
+  offRoadReason: string;
+  offRoadStatusChangeDate: string;
+
+  // Current Battery Details
+  battery_Serial_Number: string | undefined;
+  battery_Make: string | undefined;
+  battery_Model: string | undefined;
+  battery_Invoice_Date: string | undefined;
+  battery_Warranty: number;
+  battery_Vendor_Name: string | undefined;
+  battery_Cost: string | number | undefined;
+  battery_Age: number;
+  battery_Scrap_Value: string | number | undefined;
+
+  // New Battery Details
+  new_Battery_Make: string | undefined;
+  new_Battery_Model: string | undefined;
+  new_Battery_VendorId: string | number | undefined;
+  new_Battery_Cost: number;
+  new_Battery_GST: number;
+  new_Battery_Estimated_Cost: number;
+
+  current_Battery_Serial_Number: string | undefined;
+  quotationAttachment: string | undefined;
+  isAdvanceRequired: boolean;
+  advanceAmount: number;
+  overallComment: string;
+
+  createdOn: any | undefined;
+}
+
+export interface NewTyreTicket {
+  id: any;
+  zone: string;
+  region: string;
+  branch: string;
+  hub: string;
+  registrationNumber: string | undefined;
+  vehicleAge: string;
+  manufacturer: string;
+  model: string;
+  vehicleSubStatus: string;
+  isVehicleOffRoad: boolean;
+  offRoadReason: string;
+  offRoadStatusChangeDate: string;
+
+  tyreQty: number | undefined;
+
+  // Tyre Details
+  selected_tyre1_serial_number: string | undefined;
+  typed_tyre1_serial_number: string | undefined;
+  selected_tyre1_Manufacturer: string | undefined;
+  selected_tyre1_Model: string | undefined;
+  selected_tyre1_Size: string | undefined;
+  selected_tyre1_Fitment_Date: string | Date | undefined;
+  tyre1_attachment: string | undefined;
+
+  selected_tyre2_serial_number: string | undefined;
+  typed_tyre2_serial_number: string | undefined;
+  selected_tyre2_Manufacturer: string | undefined;
+  selected_tyre2_Model: string | undefined;
+  selected_tyre2_Size: string | undefined;
+  selected_tyre2_Fitment_Date: string | Date | undefined;
+  tyre2_attachment: string | undefined;
+
+  selected_tyre3_serial_number: string | undefined;
+  typed_tyre3_serial_number: string | undefined;
+  selected_tyre3_Manufacturer: string | undefined;
+  selected_tyre3_Model: string | undefined;
+  selected_tyre3_Size: string | undefined;
+  selected_tyre3_Fitment_Date: string | Date | undefined;
+  tyre3_attachment: string | undefined;
+
+  selected_tyre4_serial_number: string | undefined;
+  typed_tyre4_serial_number: string | undefined;
+  selected_tyre4_Manufacturer: string | undefined;
+  selected_tyre4_Model: string | undefined;
+  selected_tyre4_Size: string | undefined;
+  selected_tyre4_Fitment_Date: string | Date | undefined;
+  tyre4_attachment: string | undefined;
+
+  selected_tyre5_serial_number: string | undefined;
+  typed_tyre5_serial_number: string | undefined;
+  selected_tyre5_Manufacturer: string | undefined;
+  selected_tyre5_Model: string | undefined;
+  selected_tyre5_Size: string | undefined;
+  selected_tyre5_Fitment_Date: string | Date | undefined;
+  tyre5_attachment: string | undefined;
+
+  // Cost Details
+  estimated_Tyre_Cost: number;
+  estimated_Tyre_GST: number;
+  estimated_Tyre_Total: number;
+  selected_VendorId: string | number | undefined;
+
+  quotationAttachment: string | undefined;
+  isAdvanceRequired: boolean;
+  advanceAmount: number;
+  overallComment: string;
+
+  createdOn: any | undefined;
 }
 
 @Injectable({
@@ -153,47 +344,256 @@ export class SharedService {
     }
   }
 
-  private newTicketSubject = new BehaviorSubject<NewTicket>({
+  private newMaintenanceTicketSubject =
+    new BehaviorSubject<NewMaintenanceTicket>({
+      id: '',
+      zone: '',
+      region: '',
+      branch: '',
+      hub: '',
+      registrationNumber: undefined,
+      vehicleAge: '',
+      manufacturer: '',
+      model: '',
+      vehicleSubStatus: '',
+      isVehicleOffRoad: false,
+      dateOfLastService: '',
+      offRoadReason: '',
+      offRoadStatusChangeDate: '',
+      serviceRequestType: '',
+      vendorId: '',
+      vendorName: '',
+      totalSpareCost: 0,
+      totalLaborCost: 0,
+      totalEstimatedCost: 0,
+      quotationAttachment: '',
+      componentDetails: [
+        {
+          systemName: '',
+          partName: '',
+          partNames: [],
+          spareCost: 0,
+          spareGst: 0,
+          laborCost: 0,
+          laborGst: 0,
+          comment: '',
+        },
+      ],
+      invoiceTotalSpareCost: 0,
+      invoiceTotalLaborCost: 0,
+      invoiceTotalEstimatedCost: 0,
+      actualServiceDetails: [
+        {
+          systemName: '',
+          partName: '',
+          partHSN: '',
+          partQty: 0,
+          partNames: [],
+          partCost: 0,
+          partGst: 0,
+          sacCode: 0,
+          laborQty: 0,
+          laborCost: 0,
+          laborGst: 0,
+          comment: '',
+        },
+      ],
+      invoiceType: '',
+      modeOfPayment: '',
+      invoiceNumber: '',
+      invoiceDate: '',
+      invoiceAmount: 0,
+      serviceDate: '',
+      companyName: '',
+      invoiceAttachment: '',
+      jobcardAttachment: '',
+      overallComment: '',
+      isAdvanceRequired: false,
+      advanceAmount: 0,
+    });
+
+  private newComplianceTicketSubject = new BehaviorSubject<NewComplianceTicket>(
+    {
+      id: '',
+      zone: '',
+      region: '',
+      branch: '',
+      hub: '',
+      registrationNumber: undefined,
+      vehicleAge: '',
+      manufacturer: '',
+      model: '',
+      vehicleSubStatus: '',
+      isVehicleOffRoad: false,
+      offRoadReason: '',
+      offRoadStatusChangeDate: '',
+      typeOfCompliance: '',
+      vendorId: '',
+      vendorName: '',
+      renewalFees: 0,
+      agentFees: 0,
+      miscAmount: 0,
+      penaltyFees: 0,
+      gstAmount: 0,
+      finalAmount: 0,
+      quotationAttachment: '',
+      hsn: '',
+      complianceQty: 0,
+      complianceGst: 0,
+      compliancePrice: 0,
+      sacCode: 0,
+      agentQty: 0,
+      agentCost: 0,
+      invoiceGst: 0,
+      fromDate: '',
+      toDate: '',
+      invoiceType: '',
+      modeOfPayment: '',
+      invoiceNumber: '',
+      invoiceDate: '',
+      invoiceAmount: 0,
+      companyName: '',
+      invoiceAttachment: '',
+      invoiceApprovalComment: '',
+      isAdvanceRequired: false,
+      advanceAmount: 0,
+      overallComment: '',
+    }
+  );
+
+  private newBatteryTicketSubject = new BehaviorSubject<NewBatteryTicket>({
     id: '',
     zone: '',
     region: '',
     branch: '',
     hub: '',
-    registrationNumber: '',
+    registrationNumber: undefined,
     vehicleAge: '',
     manufacturer: '',
     model: '',
     vehicleSubStatus: '',
     isVehicleOffRoad: false,
-    dateOfLastService: '',
     offRoadReason: '',
     offRoadStatusChangeDate: '',
-    serviceRequestType: '',
-    vendorName: '',
-    totalSpareCost: 0,
-    totalLaborCost: 0,
-    totalEstimatedCost: 0,
-    quotationAttachment: '',
-    componentDetails: [
-      {
-        systemName: '',
-        partName: '',
-        partNames: [],
-        spareCost: 0,
-        spareGst: 0,
-        laborCost: 0,
-        laborGst: 0,
-        comment: '',
-      },
-    ],
-    overallComment: '',
+
+    // Current Battery Details
+    battery_Serial_Number: undefined,
+    battery_Make: '',
+    battery_Model: '',
+    battery_Invoice_Date: undefined,
+    battery_Warranty: 0,
+    battery_Vendor_Name: '',
+    battery_Cost: undefined,
+    battery_Age: 0,
+    battery_Scrap_Value: undefined,
+
+    // New Battery Details
+    new_Battery_Make: '',
+    new_Battery_Model: '',
+    new_Battery_VendorId: undefined,
+    new_Battery_Cost: 0,
+    new_Battery_GST: 0,
+    new_Battery_Estimated_Cost: 0,
+
+    quotationAttachment: undefined,
+
+    current_Battery_Serial_Number: undefined,
     isAdvanceRequired: false,
     advanceAmount: 0,
+    overallComment: '',
+
+    createdOn: undefined,
   });
 
-  newTicket$ = this.newTicketSubject.asObservable();
+  private newTyreTicketSubject = new BehaviorSubject<NewTyreTicket>({
+    id: '',
+    zone: '',
+    region: '',
+    branch: '',
+    hub: '',
+    registrationNumber: undefined,
+    vehicleAge: '',
+    manufacturer: '',
+    model: '',
+    vehicleSubStatus: '',
+    isVehicleOffRoad: false,
+    offRoadReason: '',
+    offRoadStatusChangeDate: '',
 
-  setNewTicket(newTicket: NewTicket) {
-    this.newTicketSubject.next(newTicket);
+    tyreQty: undefined,
+
+    // Tyre Details
+    selected_tyre1_serial_number: undefined,
+    typed_tyre1_serial_number: undefined,
+    selected_tyre1_Manufacturer: undefined,
+    selected_tyre1_Model: undefined,
+    selected_tyre1_Size: undefined,
+    selected_tyre1_Fitment_Date: undefined,
+    tyre1_attachment: undefined,
+
+    selected_tyre2_serial_number: undefined,
+    typed_tyre2_serial_number: undefined,
+    selected_tyre2_Manufacturer: undefined,
+    selected_tyre2_Model: undefined,
+    selected_tyre2_Size: undefined,
+    selected_tyre2_Fitment_Date: undefined,
+    tyre2_attachment: undefined,
+
+    selected_tyre3_serial_number: undefined,
+    typed_tyre3_serial_number: undefined,
+    selected_tyre3_Manufacturer: undefined,
+    selected_tyre3_Model: undefined,
+    selected_tyre3_Size: undefined,
+    selected_tyre3_Fitment_Date: undefined,
+    tyre3_attachment: undefined,
+
+    selected_tyre4_serial_number: undefined,
+    typed_tyre4_serial_number: undefined,
+    selected_tyre4_Manufacturer: undefined,
+    selected_tyre4_Model: undefined,
+    selected_tyre4_Size: undefined,
+    selected_tyre4_Fitment_Date: undefined,
+    tyre4_attachment: undefined,
+
+    selected_tyre5_serial_number: undefined,
+    typed_tyre5_serial_number: undefined,
+    selected_tyre5_Manufacturer: undefined,
+    selected_tyre5_Model: undefined,
+    selected_tyre5_Size: undefined,
+    selected_tyre5_Fitment_Date: undefined,
+    tyre5_attachment: undefined,
+
+    estimated_Tyre_Cost: 0.0,
+    estimated_Tyre_GST: 0.0,
+    estimated_Tyre_Total: 0.0,
+    selected_VendorId: undefined,
+    quotationAttachment: undefined,
+
+    isAdvanceRequired: false,
+    advanceAmount: 0,
+    overallComment: '',
+
+    createdOn: undefined,
+  });
+
+  newMaintenanceTicket$ = this.newMaintenanceTicketSubject.asObservable();
+  newComplianceTicket$ = this.newComplianceTicketSubject.asObservable();
+  newBatteryTicket$ = this.newBatteryTicketSubject.asObservable();
+  newTyreTicket$ = this.newTyreTicketSubject.asObservable();
+
+  setNewMaintenanceTicket(newTicket: NewMaintenanceTicket) {
+    this.newMaintenanceTicketSubject.next(newTicket);
+  }
+
+  setNewComplianceTicket(newTicket: NewComplianceTicket) {
+    this.newComplianceTicketSubject.next(newTicket);
+  }
+
+  setNewBatteryTicket(newTicket: NewBatteryTicket) {
+    this.newBatteryTicketSubject.next(newTicket);
+  }
+
+  setNewTyreTicket(newTicket: NewTyreTicket) {
+    this.newTyreTicketSubject.next(newTicket);
   }
 }

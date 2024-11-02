@@ -1,0 +1,205 @@
+<div class="card">
+  <p class="mb-0">
+    <b>From Date:</b> {{ dates.fromDate | date : "dd MMM, yyyy HH:mm:ss" }}
+  </p>
+  <p><b>To Date:</b> {{ dates.toDate | date : "dd MMM, yyyy HH:mm:ss" }}</p>
+  <p-table
+    #dt
+    [value]="records"
+    [rows]="25"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    styleClass="p-datatable-sm"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="offRoadReportColumns"
+    [exportFilename]="generateExportName(1)"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Daily Off Road Report</h5>
+        <div>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="dt.exportCSV()"
+            rounded="true"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr class="white-space-normal">
+        <th>SR. NO.</th>
+        <th>REGION</th>
+        <!-- <th>FLEET MANAGER NAME</th> -->
+        <!-- <th>RM NAME</th> -->
+        <th>TOTAL VEHICLE</th>
+        <th>SIZE OF THE FLEET WRT PAN INDIA</th>
+        <th>OFF ROAD VEHICLE</th>
+        <th>OFF ROADING PERCENTAGE</th>
+        <th>AVERAGE AGE IN DAYS</th>
+        <th>DOCUMENTATION</th>
+        <th>REPAIR WIP</th>
+        <th>TYRE BATTERY</th>
+        <th>ACCIDENT</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-data>
+      <tr class="white-space-normal">
+        <td>{{ data.id }}</td>
+        <td>{{ data.region }}</td>
+        <!-- <td></td> -->
+        <!-- <td></td> -->
+        <td>{{ data.totalVehicles }}</td>
+        <td>{{ data.totalVehiclesPercentage }}%</td>
+        <td
+          (click)="showVehicleAgeingDetails(data.region)"
+          style="cursor: pointer"
+        >
+          {{ data.offRoadVehicles }}
+        </td>
+        <td>{{ data.offRoadVehiclesPercentage }}%</td>
+        <td>{{ data.averageAgeInDays }}</td>
+        <td
+          (click)="showVehicleAgeingDetails(data.region, 'Compliance')"
+          style="cursor: pointer"
+        >
+          {{ data.documentation }}
+        </td>
+        <td
+          (click)="showVehicleAgeingDetails(data.region, 'Maintenance')"
+          style="cursor: pointer"
+        >
+          {{ data.repairWip }}
+        </td>
+        <td
+          (click)="showVehicleAgeingDetails(data.region, 'Tyre')"
+          style="cursor: pointer"
+        >
+          {{ data.tyreBattery }}
+        </td>
+        <td
+          (click)="showVehicleAgeingDetails(data.region, 'Accident')"
+          style="cursor: pointer"
+        >
+          {{ data.accidentVehicles }}
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="footer">
+      <tr>
+        <td></td>
+        <td>Grand Total</td>
+        <!-- <td></td> -->
+        <!-- <td></td> -->
+        <td>{{ grandTotal.totalVehicles }}</td>
+        <td>{{ grandTotal.totalVehiclesPercentage }}%</td>
+        <td>{{ grandTotal.offRoadVehicles }}</td>
+        <td>{{ grandTotal.offRoadVehiclesPercentage }}%</td>
+        <td>{{ grandTotal.averageAgeInDays }}</td>
+        <td>{{ grandTotal.documentation }}</td>
+        <td>{{ grandTotal.repairWip }}</td>
+        <td>{{ grandTotal.tyreBattery }}</td>
+        <td>{{ grandTotal.accidentVehicles }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="13">No Vehicle Off Road Records Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [(visible)]="showVehicleDetailsDialog"
+  maximizable="true"
+  [style]="{ width: '88vw', height: '85vh' }"
+  header="Drill Down of Off Road Report"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="card">
+      <p-table
+        #dt
+        [value]="vehicleDetails"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 25]"
+        [paginator]="true"
+        styleClass="p-datatable-sm"
+        [tableStyle]="{ 'min-width': '60rem' }"
+        [rowHover]="true"
+        dataKey="id"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [showCurrentPageReport]="true"
+        [columns]="vehicleDetailsColumns"
+        [exportFilename]="generateExportName(2)"
+      >
+        <ng-template pTemplate="caption">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="m-0">Vehicle Ageing Details</h5>
+            <div>
+              <button
+                pButton
+                pRipple
+                label="Export"
+                icon="pi pi-file-export"
+                class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+                (click)="dt.exportCSV()"
+                rounded="true"
+              ></button>
+            </div>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+          <tr class="white-space-normal">
+            <th>SR. NO.</th>
+            <th>DATE</th>
+            <th>ZONE</th>
+            <th>REGION</th>
+            <th>BRANCH</th>
+            <th>REGISTRATION NO</th>
+            <th>MODEL NAME</th>
+            <th>YEAR</th>
+            <th>OFF ROAD AGE IN DAYS</th>
+            <th>OFF ROAD TYPE</th>
+            <th>OFF ROAD DATE</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-data>
+          <tr class="white-space-normal">
+            <td>{{ data.id }}</td>
+            <td>{{ (data.date | date : "dd-MM-yyyy") || "NA" }}</td>
+            <td>{{ data.zone }}</td>
+            <td>{{ data.region }}</td>
+            <td>{{ data.branch }}</td>
+            <td>{{ data.registration_No }}</td>
+            <td>{{ data.model }}</td>
+            <td>{{ data.make_Year }}</td>
+            <td>{{ data.offRoad_Age }}</td>
+            <td>{{ data.offroad_Reason }}</td>
+            <td>
+              {{ (data.offroad_From_Date | date : "dd-MM-yyyy") || "NA" }}
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="11">No Vehicle Records Found!</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </ng-template></p-dialog
+>
+<app-loader *ngIf="showLoader"></app-loader>

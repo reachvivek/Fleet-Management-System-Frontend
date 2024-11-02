@@ -7,9 +7,12 @@ import { environment } from '../../environments/prod/environment';
 import {
   AdminService,
   AuthService,
+  BatteryRequestService,
   BulkUploadService,
+  ComplianceRequestService,
   MaintenanceRequestService,
   TransactionService,
+  TyreRequestService,
 } from '../../swagger';
 
 @Injectable({
@@ -22,10 +25,13 @@ export class UserSyncService {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private maintenanceRequestService: MaintenanceRequestService,
     private adminService: AdminService,
     private bulkUploadService: BulkUploadService,
-    private transactionService: TransactionService
+    private maintenanceRequestService: MaintenanceRequestService,
+    private complianceRequestService: ComplianceRequestService,
+    private transactionService: TransactionService,
+    private batteryService: BatteryRequestService,
+    private tyreService: TyreRequestService
   ) {}
 
   // private async refreshToken() {
@@ -215,6 +221,9 @@ export class UserSyncService {
     this.adminService.defaultHeaders = headers;
     this.bulkUploadService.defaultHeaders = headers;
     this.transactionService.defaultHeaders = headers;
+    this.complianceRequestService.defaultHeaders = headers;
+    this.batteryService.defaultHeaders = headers;
+    this.tyreService.defaultHeaders = headers;
   }
 
   public async logout() {
