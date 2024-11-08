@@ -7,14 +7,6 @@
     [rows]="5"
     [rowsPerPageOptions]="[5, 10, 25]"
     [paginator]="true"
-    [tableStyle]="{
-      'white-space': 'nowrap',
-      'font-family': 'Arial, sans-serif',
-      'font-size': '14px',
-      'border-collapse': 'collapse',
-      overflow: 'hidden',
-      'text-overflow': 'ellipsis'
-    }"
     styleClass="p-datatable-sm"
     [globalFilterFields]="[
       'region',
@@ -101,13 +93,13 @@
         </th>
         <th>
           <div pSortableColumn="isVehicleOffRoad">
-            Vehicle Status
+            Status
             <p-sortIcon field="isVehicleOffRoad"></p-sortIcon>
           </div>
         </th>
         <th>
           <div class="d-flex align-items-center">
-            Registration No
+            Reg No
             <p-columnFilter
               type="text"
               field="registrationNumber"
@@ -117,8 +109,14 @@
         </th>
         <th>
           <div class="d-flex align-items-center">
-            Status
+            Stage
             <p-columnFilter type="text" field="currentStage" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Service ID
+            <p-columnFilter type="text" field="serviceId" display="menu" />
           </div>
         </th>
         <th>
@@ -146,7 +144,9 @@
     </ng-template>
     <ng-template pTemplate="body" let-ticket>
       <tr>
-        <td>{{ ticket.region }}</td>
+        <td>
+          {{ ticket.region }}
+        </td>
         <td>{{ ticket.branch | removeParenthesisText }}</td>
         <td>
           {{
@@ -154,13 +154,14 @@
               | currency : "INR" : "symbol-narrow" : "0.2-2"
           }}
         </td>
-        <td>
+        <td style="white-space: nowrap !important">
           <p-tag [severity]="!ticket.isVehicleOffRoad ? 'success' : 'danger'">
             {{ ticket.isVehicleOffRoad ? "Off Road" : "On Road" }}</p-tag
           >
         </td>
         <td>{{ ticket.registrationNumber }}</td>
         <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.serviceId }}</td>
         <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
         <td>
           <div class="col d-flex justify-content-start">
@@ -277,7 +278,7 @@
         <div class="col-md-6">
           <div class="row mb-2">
             <div class="col-md-6"><strong>Service Id:</strong></div>
-            <div class="col-md-6">{{ selectedTicket.id }}</div>
+            <div class="col-md-6">{{ selectedTicket.serviceId }}</div>
           </div>
           <div class="row mb-2">
             <div class="col-md-6"><strong>Date of last service:</strong></div>
@@ -668,7 +669,7 @@
         <p-button
           *ngIf="showApproveRejectButtons()"
           label="{{
-            this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommend' : 'Approve'
           }}"
           (onClick)="toggleApproveTicketDialog()"
           icon="pi pi-check-circle"
@@ -695,7 +696,7 @@
     [(visible)]="showApproveTicketDialog"
     [style]="{ width: '50vw' }"
     header="{{
-      this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+      this.roleId == 3 || this.roleId == 6 ? 'Recommend' : 'Approve'
     }} Request"
     [modal]="true"
     appendTo="body"
@@ -704,14 +705,21 @@
     <ng-template pTemplate="content">
       <p>
         Are you sure you want to
-        {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }} the
+        {{ this.roleId == 3 || this.roleId == 6 ? "recommend" : "approve" }} the
         vehicle service request for vehicle with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-        estimated cost of
+        {{
+          this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+            ? "invoice amount"
+            : "estimated cost"
+        }}
+        of
         <strong
           >{{
-            selectedTicket.totalEstimatedCost
-              | currency : "INR" : "symbol-narrow" : "0.2-2"
+            (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? selectedTicket.invoiceAmount
+              : selectedTicket.finalAmount
+            ) | currency : "INR" : "symbol-narrow" : "0.2-2"
           }} </strong
         >?
       </p>
@@ -720,7 +728,7 @@
         <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
           <div class="form-group">
             <label for="uploadAttachment" class="form-label">
-              Attachment (acceptable formats: img/pdf)</label
+              Attachment (acceptable formats: png/jpg/pdf)</label
             >
             <div>
               <p-button
@@ -753,7 +761,7 @@
         <div class="d-flex justify-content-center mt-3">
           <p-button
             label="{{
-              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+              this.roleId == 3 || this.roleId == 6 ? 'Recommend' : 'Approve'
             }}"
             (onClick)="approveTicket()"
             icon="pi pi-check-circle"
@@ -780,11 +788,18 @@
         Are you sure you want to reject the vehicle service request for vehicle
         with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-        estimated cost of
+        {{
+          this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+            ? "invoice amount"
+            : "estimated cost"
+        }}
+        of
         <strong
           >{{
-            selectedTicket.totalEstimatedCost
-              | currency : "INR" : "symbol-narrow" : "0.2-2"
+            (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? selectedTicket.invoiceAmount
+              : selectedTicket.finalAmount
+            ) | currency : "INR" : "symbol-narrow" : "0.2-2"
           }} </strong
         >?
       </p>

@@ -24,6 +24,7 @@ export interface CreateBatteryRequestDto {
     offRoadReason?: string;
     offRoadStatusChangeDate?: string;
     battery_Serial_Number?: string;
+    typed_Serial_Number?: string;
     battery_Make?: string;
     battery_Model?: string;
     battery_Invoice_Date?: string;

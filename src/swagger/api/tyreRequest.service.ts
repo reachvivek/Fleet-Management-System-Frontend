@@ -23,6 +23,7 @@ import { CreateTyreRequestDto } from '../model/createTyreRequestDto';
 import { ResponseObject } from '../model/responseObject';
 import { TyreDetailsDto } from '../model/tyreDetailsDto';
 import { TyreInvoiceDetails } from '../model/tyreInvoiceDetails';
+import { TyreReportDto } from '../model/tyreReportDto';
 import { UpdateTyreRequestDto } from '../model/updateTyreRequestDto';
 
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -508,6 +509,67 @@ export class TyreRequestService {
 
         return this.httpClient.request<TyreDetailsDto>('get',`${this.basePath}/TyreRequest/GetTyreRequestDetailsById`,
             {
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param fromDate 
+     * @param toDate 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public tyreRequestGetTyreRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<TyreReportDto>>;
+    public tyreRequestGetTyreRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<TyreReportDto>>>;
+    public tyreRequestGetTyreRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<TyreReportDto>>>;
+    public tyreRequestGetTyreRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (fromDate !== undefined && fromDate !== null) {
+            queryParameters = queryParameters.set('fromDate', <any>fromDate);
+        }
+        if (toDate !== undefined && toDate !== null) {
+            queryParameters = queryParameters.set('toDate', <any>toDate);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<Array<TyreReportDto>>('post',`${this.basePath}/TyreRequest/GetTyreRequestsReport`,
+            {
+                body: body,
                 params: queryParameters,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,

@@ -12,6 +12,7 @@
 
 export interface ComplianceDetailsDto { 
     id?: number;
+    serviceId?: string;
     zone?: string;
     region?: string;
     hub?: string;
@@ -79,17 +80,18 @@ export interface ComplianceDetailsDto {
     isClosed?: number;
     closedTimestamp?: string;
     hasAdvanceApproved?: number;
+    hasAdvanceRejected?: number;
     advanceApprovedById?: number;
     advanceApprovalTimestamp?: string;
     advanceApprovalComment?: string;
     advanceApprovalAttachment?: string;
     hsn?: string;
     complianceQty?: number;
-    compliancePrice?: number;
     sacCode?: number;
     agentQty?: number;
-    agentCost?: number;
     invoiceGst?: number;
+    compliancePrice?: number;
+    agentCost?: number;
     complianceGst?: number;
     invoiceType?: string;
     modeOfPayment?: string;

@@ -6,14 +6,6 @@
     [rows]="5"
     [rowsPerPageOptions]="[5, 10, 25]"
     [paginator]="true"
-    [tableStyle]="{
-      'white-space': 'nowrap',
-      'font-family': 'Arial, sans-serif',
-      'font-size': '14px',
-      'border-collapse': 'collapse',
-      overflow: 'hidden',
-      'text-overflow': 'ellipsis'
-    }"
     styleClass="p-datatable-sm"
     [globalFilterFields]="[
       'region',
@@ -106,7 +98,7 @@
         </th>
         <th>
           <div pSortableColumn="isVehicleOffRoad">
-            Vehicle Status
+            Status
             <p-sortIcon field="isVehicleOffRoad"></p-sortIcon>
           </div>
         </th>
@@ -122,13 +114,19 @@
         </th>
         <th>
           <div class="d-flex align-items-center">
-            Status
+            Stage
             <p-columnFilter type="text" field="currentStage" display="menu" />
           </div>
         </th>
         <th>
           <div class="d-flex align-items-center">
-            Created On
+            Service ID
+            <p-columnFilter type="text" field="serviceId" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Created
             <p-columnFilter type="date" field="createdOn" display="menu">
               <ng-template
                 pTemplate="filter"
@@ -159,13 +157,14 @@
             ticket.finalAmount | currency : "INR" : "symbol-narrow" : "0.2-2"
           }}
         </td>
-        <td>
+        <td style="white-space: nowrap !important">
           <p-tag [severity]="!ticket.isVehicleOffRoad ? 'success' : 'danger'">
             {{ ticket.isVehicleOffRoad ? "Off Road" : "On Road" }}</p-tag
           >
         </td>
         <td>{{ ticket.registrationNumber }}</td>
         <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.serviceId }}</td>
         <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
         <td>
           <div class="col d-flex justify-content-start">
@@ -226,7 +225,7 @@
         <div class="col-md-6">
           <div class="row mb-2">
             <div class="col-md-6"><strong>Service Id:</strong></div>
-            <div class="col-md-6">{{ selectedTicket.id }}</div>
+            <div class="col-md-6">{{ selectedTicket.serviceId }}</div>
           </div>
           <!-- <div class="row mb-2">
             <div class="col-md-6"><strong>Vehicle Age:</strong></div>
@@ -411,34 +410,6 @@
               </div>
             </div>
             <div class="row mb-2">
-              <div class="col-md-6"><strong>HSN :</strong></div>
-              <div class="col-md-6">
-                {{ selectedTicket.hsn }}
-              </div>
-            </div>
-            <div class="row mb-2">
-              <div class="col-md-6"><strong>Compliance Price :</strong></div>
-              <div class="col-md-6">
-                {{
-                  selectedTicket.compliancePrice
-                    | currency : "INR" : "symbol-narrow" : "0.2-2"
-                }}
-              </div>
-            </div>
-            <div class="row mb-2">
-              <div class="col-md-6"><strong>Agent Cost :</strong></div>
-              <div class="col-md-6">
-                {{
-                  selectedTicket.agentCost
-                    | currency : "INR" : "symbol-narrow" : "0.2-2"
-                }}
-              </div>
-            </div>
-            <div class="row mb-2">
-              <div class="col-md-6"><strong>Agent GST :</strong></div>
-              <div class="col-md-6">{{ selectedTicket.invoiceGst }}%</div>
-            </div>
-            <div class="row mb-2">
               <div class="col-md-6"><strong>Ownership :</strong></div>
               <div class="col-md-6">NA</div>
             </div>
@@ -465,14 +436,16 @@
               </div>
             </div>
             <div class="row mb-2">
-              <div class="col-md-6"><strong>From Date :</strong></div>
+              <div class="col-md-6"><strong>Vendor Type :</strong></div>
               <div class="col-md-6">
-                {{ selectedTicket.fromDate | date : "MMM d, yyyy h:mm a" }}
+                {{ selectedTicket.vendorType || "NA" }}
               </div>
             </div>
             <div class="row mb-2">
-              <div class="col-md-6"><strong>Vendor Type :</strong></div>
-              <div class="col-md-6">NA</div>
+              <div class="col-md-6"><strong>From Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.fromDate | date : "MMM d, yyyy" }}
+              </div>
             </div>
           </div>
 
@@ -481,18 +454,6 @@
             <div class="row mb-2">
               <div class="col-md-6"><strong>Mode of Payment :</strong></div>
               <div class="col-md-6">{{ selectedTicket.modeOfPayment }}</div>
-            </div>
-            <div class="row mb-2">
-              <div class="col-md-6"><strong>Compliance Qty :</strong></div>
-              <div class="col-md-6">{{ selectedTicket.complianceQty }}</div>
-            </div>
-            <div class="row mb-2">
-              <div class="col-md-6"><strong>SAC Code :</strong></div>
-              <div class="col-md-6">{{ selectedTicket.sacCode }}</div>
-            </div>
-            <div class="row mb-2">
-              <div class="col-md-6"><strong>Agent Qty :</strong></div>
-              <div class="col-md-6">{{ selectedTicket.agentQty }}</div>
             </div>
             <div class="row mb-2">
               <div class="col-md-6"><strong>Invoice Number :</strong></div>
@@ -524,21 +485,76 @@
               </div>
             </div>
             <div class="row mb-2">
-              <div class="col-md-6"><strong>To Date :</strong></div>
-              <div class="col-md-6">
-                {{ selectedTicket.toDate | date : "MMM d, yyyy h:mm a" }}
-              </div>
-            </div>
-            <div class="row mb-2">
               <div class="col-md-6"><strong>Invoice Attachment :</strong></div>
               <div class="col-md-6">
                 <a href="#">Download Attachment</a>
               </div>
             </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>To Date :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.toDate | date : "MMM d, yyyy" }}
+              </div>
+            </div>
           </div>
         </div>
 
-        <hr />
+        <table
+          class="table table-bordered table-striped mt-2 table-sm table-fixed"
+        >
+          <thead class="thead-dark">
+            <tr class="white-space-normal">
+              <th>SR. NO.</th>
+              <th>HSN CODE</th>
+              <th>COMPLIANCE QTY</th>
+              <th>COMPLIANCE COST</th>
+              <th>SAC CODE</th>
+              <th>AGENT QTY</th>
+              <th>AGENT GST %</th>
+              <th>AGENT COST</th>
+              <th>TOTAL AGENT COST</th>
+              <th>GRAND TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>{{ selectedTicket.hsn }}</td>
+              <td>
+                {{ selectedTicket.complianceQty }}
+              </td>
+              <td>
+                {{
+                  selectedTicket.compliancePrice
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ selectedTicket.sacCode }}</td>
+              <td>{{ selectedTicket.agentQty }}</td>
+              <td>{{ selectedTicket.invoiceGst }}%</td>
+              <td>
+                {{
+                  selectedTicket.agentCost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  selectedTicket.agentQty *
+                    ((selectedTicket.agentCost || 0) *
+                      (1 + (selectedTicket.invoiceGst || 0) / 100))
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  selectedTicket.invoiceAmount
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <!-- End of Component Details Table -->
       </div>
 
@@ -573,7 +589,7 @@
         <p-button
           *ngIf="showApproveRejectButtons()"
           label="{{
-            this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommend' : 'Approve'
           }}"
           (onClick)="toggleApproveTicketDialog()"
           icon="pi pi-check-circle"
@@ -600,7 +616,7 @@
     [(visible)]="showApproveTicketDialog"
     [style]="{ width: '50vw' }"
     header="{{
-      this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+      this.roleId == 3 || this.roleId == 6 ? 'Recommend' : 'Approve'
     }} Request"
     [modal]="true"
     appendTo="body"
@@ -609,14 +625,21 @@
     <ng-template pTemplate="content">
       <p>
         Are you sure you want to
-        {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }} the
+        {{ this.roleId == 3 || this.roleId == 6 ? "recommend" : "approve" }} the
         compliance request for vehicle with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-        estimated cost of
+        {{
+          this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+            ? "invoice amount"
+            : "estimated cost"
+        }}
+        of
         <strong
           >{{
-            selectedTicket.finalAmount
-              | currency : "INR" : "symbol-narrow" : "0.2-2"
+            (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? selectedTicket.invoiceAmount
+              : selectedTicket.finalAmount
+            ) | currency : "INR" : "symbol-narrow" : "0.2-2"
           }} </strong
         >?
       </p>
@@ -625,7 +648,7 @@
         <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
           <div class="form-group">
             <label for="uploadAttachment" class="form-label">
-              Attachment (acceptable formats: img/pdf)</label
+              Attachment (acceptable formats: png/jpg/pdf)</label
             >
             <div>
               <p-button
@@ -658,7 +681,7 @@
         <div class="d-flex justify-content-center mt-3">
           <p-button
             label="{{
-              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+              this.roleId == 3 || this.roleId == 6 ? 'Recommend' : 'Approve'
             }}"
             (onClick)="approveTicket()"
             icon="pi pi-check-circle"
@@ -685,11 +708,18 @@
         Are you sure you want to reject the vehicle service request for vehicle
         with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-        estimated cost of
+        {{
+          this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+            ? "invoice amount"
+            : "estimated cost"
+        }}
+        of
         <strong
           >{{
-            selectedTicket.totalEstimatedCost
-              | currency : "INR" : "symbol-narrow" : "0.2-2"
+            (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? selectedTicket.invoiceAmount
+              : selectedTicket.finalAmount
+            ) | currency : "INR" : "symbol-narrow" : "0.2-2"
           }} </strong
         >?
       </p>
@@ -931,7 +961,8 @@
                   <div class="col">
                     <div class="form-group">
                       <label for="agentCost" class="form-label"
-                        >Agent Cost <span class="text-danger">*</span></label
+                        >Agent Cost (Without GST)
+                        <span class="text-danger">*</span></label
                       >
                       <div class="input-group">
                         <span class="input-group-text">₹</span>
@@ -1011,7 +1042,7 @@
                   <div class="col">
                     <div class="form-group">
                       <label for="invoiceTotalEstimatedCost" class="form-label"
-                        >Grand Total</label
+                        >Grand Total (Including GST)</label
                       >
                       <div class="input-group">
                         <span class="input-group-text">₹</span>
@@ -1380,6 +1411,7 @@
                         name="toDate"
                         [iconDisplay]="'input'"
                         [showIcon]="true"
+                        [minDate]="dates.fromDate"
                         class="d-flex flex-column {{
                           toDate.invalid && (toDate.dirty || toDate.touched)
                             ? 'ng-invalid ng-dirty'

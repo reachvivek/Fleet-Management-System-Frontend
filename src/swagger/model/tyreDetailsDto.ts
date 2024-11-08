@@ -64,9 +64,9 @@ export interface TyreDetailsDto {
     estimatedTyreGst?: number;
     estimatedTyreTotal?: number;
     selectedVendorId?: string;
-    quotationAttachment?: string;
     isAdvanceRequired?: number;
     advanceAmount?: number;
+    quotationAttachment?: string;
     overallComment?: string;
     currentStage?: string;
     status?: string;
@@ -111,6 +111,7 @@ export interface TyreDetailsDto {
     isClosed?: number;
     closedTimestamp?: string;
     hasAdvanceApproved?: number;
+    hasAdvanceRejected?: number;
     advanceApprovedById?: number;
     advanceApprovalTimestamp?: string;
     advanceApprovalComment?: string;

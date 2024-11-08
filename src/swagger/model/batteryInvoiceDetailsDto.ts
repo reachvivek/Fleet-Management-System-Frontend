@@ -16,6 +16,7 @@ export interface BatteryInvoiceDetailsDto {
     actual_Battery_Make?: string;
     actual_Battery_Model?: string;
     actual_Battery_Warranty_Months?: number;
+    warranty_Attachment?: string;
     actual_Battery_Voltage?: number;
     actual_Battery_Vendor_Id?: string;
     actual_Battery_Type?: string;

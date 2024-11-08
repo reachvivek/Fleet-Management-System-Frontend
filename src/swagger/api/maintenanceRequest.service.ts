@@ -20,6 +20,7 @@ import { Observable }                                        from 'rxjs';
 import { ApproveRejectDto } from '../model/approveRejectDto';
 import { CreateMaintenanceTicketDto } from '../model/createMaintenanceTicketDto';
 import { InvoiceDetailsDto } from '../model/invoiceDetailsDto';
+import { MaintenanceReportDto } from '../model/maintenanceReportDto';
 import { ServiceRequestTypeDto } from '../model/serviceRequestTypeDto';
 import { TicketDetailsDto } from '../model/ticketDetailsDto';
 import { TicketsForDashboardDto } from '../model/ticketsForDashboardDto';
@@ -254,6 +255,67 @@ export class MaintenanceRequestService {
         return this.httpClient.request<Array<TicketsForDashboardDto>>('post',`${this.basePath}/MaintenanceRequest/GetAllMaintenanceRequests`,
             {
                 body: body,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param body 
+     * @param fromDate 
+     * @param toDate 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public maintenanceRequestGetMaintenanceRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe?: 'body', reportProgress?: boolean): Observable<Array<MaintenanceReportDto>>;
+    public maintenanceRequestGetMaintenanceRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<MaintenanceReportDto>>>;
+    public maintenanceRequestGetMaintenanceRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<MaintenanceReportDto>>>;
+    public maintenanceRequestGetMaintenanceRequestsReportPost(body?: number, fromDate?: string, toDate?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+
+
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (fromDate !== undefined && fromDate !== null) {
+            queryParameters = queryParameters.set('fromDate', <any>fromDate);
+        }
+        if (toDate !== undefined && toDate !== null) {
+            queryParameters = queryParameters.set('toDate', <any>toDate);
+        }
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'text/json',
+            'application/_*+json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected != undefined) {
+            headers = headers.set('Content-Type', httpContentTypeSelected);
+        }
+
+        return this.httpClient.request<Array<MaintenanceReportDto>>('post',`${this.basePath}/MaintenanceRequest/GetMaintenanceRequestsReport`,
+            {
+                body: body,
+                params: queryParameters,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,

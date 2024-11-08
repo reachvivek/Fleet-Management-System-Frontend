@@ -106,6 +106,8 @@ export class CreateBatteryRequestComponent {
         await this.loadVendorNames();
         await this.loadBatteryMakes();
         await this.loadBatteryModels();
+        this.newTicket.hasAdvanceRejected =
+          res.hasAdvanceRejected == 0 ? false : true;
         this.newTicket.registrationNumber = res.registrationNumber!;
         this.newTicket.vehicleAge = res.vehicleAge!;
         this.newTicket.manufacturer = res.manufacturer!;
@@ -129,12 +131,8 @@ export class CreateBatteryRequestComponent {
           this.newTicket.offRoadReason = res.offRoadReason!;
         }
         this.newTicket.vehicleSubStatus = res.vehicleSubStatus!;
-
-        const fullSerialNumber = res.battery_Serial_Number;
-        const maskedSerialNumber =
-          '#'.repeat(fullSerialNumber!.length - 2) +
-          fullSerialNumber!.slice(-2);
-        this.newTicket.battery_Serial_Number = maskedSerialNumber;
+        this.newTicket.battery_Serial_Number = res.battery_Serial_Number!;
+        this.newTicket.current_Battery_Serial_Number = res.typed_Serial_Number!;
         this.newTicket.battery_Make = res.battery_Make;
         this.newTicket.battery_Model = res.battery_Model;
         this.newTicket.battery_Invoice_Date = res.battery_Invoice_Date;
@@ -163,6 +161,13 @@ export class CreateBatteryRequestComponent {
       this.showLoader = false;
     }
     this.showLoader = false;
+  }
+
+  hash(serialNumber: string | undefined): string | undefined {
+    if (!serialNumber) {
+      return;
+    }
+    return '#'.repeat(serialNumber.length - 2) + serialNumber.slice(-2);
   }
 
   async loadVehicleRegistrationNumbers() {
@@ -547,8 +552,8 @@ export class CreateBatteryRequestComponent {
 
   updateTotalEstimatedCost() {
     this.newTicket.new_Battery_Estimated_Cost =
-      (this.newTicket.new_Battery_Cost || 0) +
-      (this.newTicket.new_Battery_GST || 0);
+      (this.newTicket.new_Battery_Cost || 0) *
+      (1 + this.newTicket.new_Battery_GST / 100 || 0);
   }
 
   checkValidAdvanceAmount() {
@@ -565,7 +570,7 @@ export class CreateBatteryRequestComponent {
   }
 
   async submitBatteryRequest() {
-    console.log(this.newTicket);
+    // console.log(this.newTicket);
     this.showLoader = true;
     let ticket: any;
 
@@ -590,7 +595,8 @@ export class CreateBatteryRequestComponent {
     ticket.offRoadStatusChangeDate = this.newTicket.offRoadStatusChangeDate;
 
     // Battery details
-    ticket.battery_Serial_Number = this.newTicket.current_Battery_Serial_Number;
+    ticket.battery_Serial_Number = this.newTicket.battery_Serial_Number;
+    ticket.typed_Serial_Number = this.newTicket.current_Battery_Serial_Number;
     ticket.battery_Make = this.newTicket.battery_Make;
     ticket.battery_Model = this.newTicket.battery_Model;
     ticket.battery_Invoice_Date = this.newTicket.battery_Invoice_Date;

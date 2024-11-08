@@ -20,6 +20,7 @@ import { Observable }                                        from 'rxjs';
 import { AdminToAddDto } from '../model/adminToAddDto';
 import { AdminToEditDto } from '../model/adminToEditDto';
 import { FiltersDto } from '../model/filtersDto';
+import { Role } from '../model/role';
 import { UserAccessDto } from '../model/userAccessDto';
 import { UserToShowDto } from '../model/userToShowDto';
 
@@ -423,6 +424,44 @@ export class AdminService {
             {
                 body: body,
                 params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * 
+     * 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public adminGetRolesGet(observe?: 'body', reportProgress?: boolean): Observable<Array<Role>>;
+    public adminGetRolesGet(observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<Array<Role>>>;
+    public adminGetRolesGet(observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<Array<Role>>>;
+    public adminGetRolesGet(observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        let headers = this.defaultHeaders;
+
+        // to determine the Accept header
+        let httpHeaderAccepts: string[] = [
+            'text/plain',
+            'application/json',
+            'text/json'
+        ];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+        ];
+
+        return this.httpClient.request<Array<Role>>('get',`${this.basePath}/Admin/GetRoles`,
+            {
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,

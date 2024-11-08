@@ -8,7 +8,7 @@
   top: 0;
   left: 0;
   height: 100%;
-  width: 260px;
+  width: 240px;
   background: #11101d;
   z-index: 100;
   transition: all 0.5s ease;
@@ -208,7 +208,7 @@
   position: fixed;
   bottom: 0;
   background: #1d1b31;
-  width: 260px;
+  width: 240px;
   white-space: nowrap;
   transition: all 0.5s ease;
   cursor: pointer;
@@ -222,8 +222,8 @@
   position: relative;
   //   background: #e4e9e7;
   height: 100vh;
-  left: 260px;
-  width: calc(100% - 260px);
+  left: 240px;
+  width: calc(100% - 240px);
   transition: all 0.5s ease;
 }
 

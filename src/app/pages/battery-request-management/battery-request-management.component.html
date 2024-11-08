@@ -83,7 +83,11 @@
         <th>
           <div class="d-flex align-items-center">
             Estimate
-            <p-columnFilter type="text" field="finalAmount" display="menu" />
+            <p-columnFilter
+              type="text"
+              field="new_Battery_Total"
+              display="menu"
+            />
           </div>
         </th>
         <th>
@@ -104,20 +108,20 @@
         </th>
         <th>
           <div class="d-flex align-items-center">
-            Make
-            <p-columnFilter type="text" field="make" display="menu" />
-          </div>
-        </th>
-        <th>
-          <div class="d-flex align-items-center">
-            Model
-            <p-columnFilter type="text" field="model" display="menu" />
+            Brand
+            <p-columnFilter type="text" field="battery_Make" display="menu" />
           </div>
         </th>
         <th>
           <div class="d-flex align-items-center">
             Stage
             <p-columnFilter type="text" field="currentStage" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Service ID
+            <p-columnFilter type="text" field="serviceId" display="menu" />
           </div>
         </th>
         <th>
@@ -159,9 +163,9 @@
           >
         </td>
         <td>{{ ticket.registrationNumber }}</td>
-        <td>{{ ticket.battery_Make }}</td>
-        <td>{{ ticket.battery_Model || "NA" }}</td>
+        <td>{{ ticket.battery_Make + " " + ticket.battery_Model }}</td>
         <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.serviceId }}</td>
         <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
         <td>
           <div class="col d-flex justify-content-start">
@@ -500,7 +504,23 @@
               <strong>Serial Number:</strong>
             </div>
             <div class="col-md-6">
-              {{ selectedTicket.battery_Serial_Number }}
+              {{ hash(selectedTicket.battery_Serial_Number) }}
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-md-6">
+              <strong>Entered Serial Number:</strong>
+            </div>
+            <div class="col-md-6">
+              {{ selectedTicket.typed_Serial_Number }}
+              <span class="text-danger"
+                ><strong>{{
+                  selectedTicket.battery_Serial_Number !=
+                  selectedTicket.typed_Serial_Number
+                    ? "(DOES NOT MATCH)"
+                    : ""
+                }}</strong></span
+              >
             </div>
           </div>
           <div class="row mb-2">
@@ -643,8 +663,6 @@
       </table>
       <!-- End of Battery Request Approval/Rejection Timeline Details -->
 
-      <hr />
-
       <!-- Actual Battery Completion Details -->
       <div *ngIf="selectedTicket.isInvoiceUploaded">
         <strong>Battery Completion Details</strong>
@@ -659,6 +677,12 @@
                   selectedTicket.invoice_Total
                     | currency : "INR" : "symbol-narrow" : "0.2-2"
                 }}
+              </div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Ownership :</strong></div>
+              <div class="col-md-6">
+                {{ selectedTicket.ownership || "NA" }}
               </div>
             </div>
             <div class="row mb-2">
@@ -777,9 +801,96 @@
                 {{ selectedTicket.actual_Battery_Make }}
               </div>
             </div>
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <strong>Battery Serial Number :</strong>
+              </div>
+              <div class="col-md-6">
+                {{ selectedTicket.actual_Battery_Serial_Number }}
+              </div>
+            </div>
           </div>
         </div>
 
+        <table
+          class="table table-bordered table-striped mt-2 table-sm table-fixed"
+        >
+          <thead class="thead-dark">
+            <tr class="white-space-normal">
+              <th>SR. NO.</th>
+              <th>HSN</th>
+              <th>QTY</th>
+              <th>BATTERY COST</th>
+              <th>BATTERY GST %</th>
+              <th>BATTERY GST</th>
+              <th>TOTAL BATTERY COST</th>
+              <th>LABOR COST</th>
+              <th>LABOR GST %</th>
+              <th>LABOR GST</th>
+              <th>LABOR TOTAL</th>
+              <th>GRAND TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>{{ selectedTicket.hsn }}</td>
+              <td>
+                {{ selectedTicket.actual_Battery_Qty }}
+              </td>
+              <td>
+                {{
+                  selectedTicket.actual_Battery_Cost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ selectedTicket.actual_Battery_GST }}%</td>
+              <td>
+                {{
+                  (selectedTicket.actual_Battery_Cost || 0) *
+                    (1 + (selectedTicket.actual_Battery_GST || 0) / 100)
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  (selectedTicket.actual_Battery_Qty || 0) *
+                    ((selectedTicket.actual_Battery_Cost || 0) *
+                      (1 + (selectedTicket.actual_Battery_GST || 0) / 100))
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  selectedTicket.labor_Cost
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>{{ selectedTicket.labor_GST }}%</td>
+              <td>
+                {{
+                  (selectedTicket.labor_Cost || 0) *
+                    (1 + (selectedTicket.labor_GST || 0) / 100)
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  (selectedTicket.labor_Qty || 0) *
+                    ((selectedTicket.labor_Cost || 0) *
+                      (1 + (selectedTicket.labor_GST || 0) / 100))
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+              <td>
+                {{
+                  selectedTicket.invoice_Total || 0
+                    | currency : "INR" : "symbol-narrow" : "0.2-2"
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <hr />
         <!-- End of Component Details Table -->
       </div>
@@ -815,7 +926,7 @@
         <p-button
           *ngIf="showApproveRejectButtons()"
           label="{{
-            this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+            this.roleId == 4 || this.roleId == 6 ? 'Recommend' : 'Approve'
           }}"
           (onClick)="toggleApproveTicketDialog()"
           icon="pi pi-check-circle"
@@ -842,7 +953,7 @@
     [(visible)]="showApproveTicketDialog"
     [style]="{ width: '50vw' }"
     header="{{
-      this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+      this.roleId == 4 || this.roleId == 6 ? 'Recommend' : 'Approve'
     }} Request"
     [modal]="true"
     appendTo="body"
@@ -851,14 +962,21 @@
     <ng-template pTemplate="content">
       <p>
         Are you sure you want to
-        {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }} the
+        {{ this.roleId == 4 || this.roleId == 6 ? "recommend" : "approve" }} the
         battery request for vehicle with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-        estimated cost of
+        {{
+          this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+            ? "invoice amount"
+            : "estimated cost"
+        }}
+        of
         <strong
           >{{
-            selectedTicket.new_Battery_Total
-              | currency : "INR" : "symbol-narrow" : "0.2-2"
+            (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? selectedTicket.invoiceAmount
+              : selectedTicket.finalAmount
+            ) | currency : "INR" : "symbol-narrow" : "0.2-2"
           }} </strong
         >?
       </p>
@@ -867,7 +985,7 @@
         <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
           <div class="form-group">
             <label for="uploadAttachment" class="form-label">
-              Attachment (acceptable formats: img/pdf)</label
+              Attachment (acceptable formats: png/jpg/pdf)</label
             >
             <div>
               <p-button
@@ -900,7 +1018,7 @@
         <div class="d-flex justify-content-center mt-3">
           <p-button
             label="{{
-              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+              this.roleId == 4 || this.roleId == 6 ? 'Recommend' : 'Approve'
             }}"
             (onClick)="approveTicket()"
             icon="pi pi-check-circle"
@@ -927,11 +1045,18 @@
         Are you sure you want to reject the vehicle battery request for vehicle
         with registration number
         <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-        estimated cost of
+        {{
+          this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+            ? "invoice amount"
+            : "estimated cost"
+        }}
+        of
         <strong
           >{{
-            selectedTicket.new_Battery_Total
-              | currency : "INR" : "symbol-narrow" : "0.2-2"
+            (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? selectedTicket.invoiceAmount
+              : selectedTicket.finalAmount
+            ) | currency : "INR" : "symbol-narrow" : "0.2-2"
           }} </strong
         >?
       </p>
@@ -1167,6 +1292,7 @@
                         onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && !(event.charCode === 43 || event.charCode === 45)"
                         onpaste="return false"
                         maxlength="10"
+                        disabled
                         required
                       />
                       <p
@@ -1220,7 +1346,8 @@
                   <div class="col">
                     <div class="form-group">
                       <label for="batteryCost" class="form-label"
-                        >Battery Cost <span class="text-danger">*</span></label
+                        >Cost (Without GST)
+                        <span class="text-danger">*</span></label
                       >
                       <div class="input-group">
                         <span class="input-group-text">₹</span>
@@ -1316,6 +1443,7 @@
                         onkeypress="return (event.charCode == 8 || event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57) || (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122)) && !(event.charCode === 43 || event.charCode === 45)"
                         onpaste="return false"
                         maxlength="10"
+                        disabled
                         required
                       />
                       <p
@@ -1340,7 +1468,10 @@
                       </label>
                       <input
                         #warranty="ngModel"
+                        name="warranty"
                         type="number"
+                        inputmode="numeric"
+                        onkeydown="return event.keyCode >= 48 && event.keyCode <= 57 || event.keyCode === 8 || event.keyCode === 46"
                         class="form-control {{
                           warranty.invalid &&
                           (warranty.dirty || warranty.touched)
@@ -1349,7 +1480,6 @@
                         }}"
                         id="warranty"
                         [(ngModel)]="newInvoice.actual_Battery_Warranty_Months"
-                        name="warranty"
                         required
                       />
                       <p
@@ -1695,6 +1825,8 @@
                         id="batterySerialNumber"
                         [(ngModel)]="newInvoice.actual_Battery_Serial_Number"
                         (ngModelChange)="
+                          newInvoice.actual_Battery_Serial_Number =
+                            newInvoice.actual_Battery_Serial_Number!.toUpperCase();
                           checkSerialNumber(
                             newInvoice.actual_Battery_Serial_Number!
                           )
@@ -1923,7 +2055,7 @@
                   </div>
 
                   <!-- Upload Invoice -->
-                  <div class="col-2">
+                  <div class="col-4">
                     <div class="row">
                       <div class="col">
                         <div class="form-group">
@@ -1934,6 +2066,26 @@
                           <div>
                             <p-button
                               *ngIf="!newInvoice.invoice_Attachment"
+                              label="Browse"
+                              (onClick)="toggleUploadAttachmentDialog()"
+                              icon="pi pi-file-arrow-up"
+                              severity="info"
+                              [style]="{ width: 'fit-content' }"
+                              iconPos="right"
+                              autofocus="false"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col">
+                        <div class="form-group">
+                          <label for="uploadInvoicePic" class="form-label">
+                            Warranty Card
+                            <span class="text-danger">*</span></label
+                          >
+                          <div>
+                            <p-button
+                              *ngIf="!newInvoice.warranty_Attachment"
                               label="Browse"
                               (onClick)="toggleUploadAttachmentDialog()"
                               icon="pi pi-file-arrow-up"
@@ -1962,6 +2114,7 @@
                     (onClick)="nextCallback.emit()"
                     [disabled]="
                       invoiceDetails.invalid ||
+                      isSerialNumberTaken ||
                       newInvoice.invoice_Total! != newInvoice.grandTotal ||
                       newInvoice.invoice_Total! >
                         selectedTicket.new_Battery_Total! * 1.1

@@ -12,6 +12,7 @@
 
 export interface ComplianceForDashboardDto { 
     id?: number;
+    serviceId?: string;
     zone?: string;
     region?: string;
     branch?: string;

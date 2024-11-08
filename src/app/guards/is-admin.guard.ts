@@ -8,7 +8,7 @@ export const isAdminGuard: CanActivateFn = (route, state) => {
   let activated: boolean = false;
   sharedService.currentRoleId.subscribe((roleId) => {
     currentroleId = parseInt(roleId?.toString()!);
-    if (currentroleId == 9) {
+    if (currentroleId == 10) {
       activated = true;
     } else {
       activated = false;

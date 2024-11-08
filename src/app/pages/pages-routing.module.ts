@@ -20,6 +20,8 @@ import { BatteryRequestManagementComponent } from './battery-request-management/
 import { TyreRequestManagementComponent } from './tyre-request-management/tyre-request-management.component';
 import { CreateBatteryRequestComponent } from './battery-request-management/create-battery-request/create-battery-request.component';
 import { CreateTyreRequestComponent } from './tyre-request-management/create-tyre-request/create-tyre-request.component';
+import { roleRedirectGuard } from '../guards/role-redirect.guard';
+import { RequestsDumpComponent } from './reports/requests-dump/requests-dump.component';
 
 const routes: Routes = [
   {
@@ -31,21 +33,25 @@ const routes: Routes = [
         path: '',
         component: MaintenanceRequestManagementComponent,
         data: { title: 'Maintenance Requests' },
+        canActivate: [roleRedirectGuard],
       },
       {
         path: 'compliance-requests',
         component: ComplianceRequestManagementComponent,
         data: { title: 'Compliance Requests' },
+        canActivate: [roleRedirectGuard],
       },
       {
         path: 'battery-requests',
         component: BatteryRequestManagementComponent,
         data: { title: 'Battery Requests' },
+        canActivate: [roleRedirectGuard],
       },
       {
         path: 'tyre-requests',
         component: TyreRequestManagementComponent,
         data: { title: 'Tyre Requests' },
+        canActivate: [roleRedirectGuard],
       },
       {
         path: 'create-maintenance-request',
@@ -66,6 +72,10 @@ const routes: Routes = [
         path: 'create-tyre-request',
         component: CreateTyreRequestComponent,
         data: { title: 'Create Tyre Request' },
+      },
+      {
+        path: 'reports/requests-dump',
+        component: RequestsDumpComponent,
       },
       {
         path: 'reports/fastag',
@@ -92,7 +102,7 @@ const routes: Routes = [
         path: 'bulk-upload/vehicle',
         component: VehicleComponent,
         data: { title: 'Vehicle Management' },
-        canActivate: [isLoggedIn, isAdminGuard],
+        canActivate: [isLoggedIn],
       },
       {
         path: 'bulk-upload/vehicle/add-vehicle',
@@ -102,7 +112,7 @@ const routes: Routes = [
       {
         path: 'bulk-upload/vehicle/vehicle-details/:Registration_No',
         component: VehicleDetailsComponent,
-        canActivate: [isLoggedIn, isAdminGuard],
+        canActivate: [isLoggedIn],
       },
       {
         path: 'bulk-upload/vendor',

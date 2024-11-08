@@ -330,6 +330,8 @@ export class ComplianceRequestManagementComponent {
       isAdvanceRequired: false,
       advanceAmount: 0,
       invoiceApprovalComment: '',
+
+      hasAdvanceRejected: false,
     };
   }
 
@@ -671,7 +673,7 @@ export class ComplianceRequestManagementComponent {
         );
 
       // Role is RM
-      case 4:
+      case 5:
         return (
           ticket.isRMApprovalRequired &&
           ticket.hasHFMApproved &&
@@ -680,7 +682,7 @@ export class ComplianceRequestManagementComponent {
         );
 
       // Role is NFM
-      case 5:
+      case 6:
         return (
           ticket.isNFMApprovalRequired &&
           ticket.hasRMApproved &&
@@ -689,7 +691,7 @@ export class ComplianceRequestManagementComponent {
         );
 
       // Role is ZM
-      case 6:
+      case 7:
         return (
           ticket.isZMApprovalRequired &&
           ticket.hasNFMApproved &&
@@ -698,7 +700,7 @@ export class ComplianceRequestManagementComponent {
         );
 
       // Role is Vice President
-      case 7:
+      case 8:
         return (
           ticket.isVPApprovalRequired &&
           ticket.hasZMApproved &&
@@ -707,7 +709,7 @@ export class ComplianceRequestManagementComponent {
         );
 
       // Role is Finance
-      case 8:
+      case 9:
         return (
           (ticket.isAdvanceRequired &&
             !ticket.hasAdvanceApproved &&
@@ -762,7 +764,7 @@ export class ComplianceRequestManagementComponent {
   }
 
   showTicketReopenButton(): boolean {
-    if (this.roleId === 9) {
+    if (this.roleId === 10) {
       if (this.selectedTicket.isClosed) {
         return true;
       }
@@ -884,6 +886,7 @@ export class ComplianceRequestManagementComponent {
   }
 
   initInvoice() {
+    this.formActionsDisabled = false;
     this.newInvoice = {
       hsn: '9987',
       complianceQty: 1,
@@ -943,10 +946,10 @@ export class ComplianceRequestManagementComponent {
         this.messageService.add({
           severity: 'success',
           summary: `${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           }`,
           detail: `Compliance Request ${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           } Successfully`,
           life: 3000,
         });

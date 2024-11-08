@@ -38,6 +38,7 @@
           <h5 class="m-0">Vehicle Master</h5>
           <div>
             <button
+              *ngIf="roleId == 10"
               pButton
               pRipple
               label="Add"
@@ -47,6 +48,7 @@
               rounded="true"
             ></button>
             <button
+              *ngIf="roleId == 10"
               pButton
               pRipple
               label="Bulk Upload"

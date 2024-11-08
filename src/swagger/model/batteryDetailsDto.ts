@@ -12,6 +12,7 @@
 
 export interface BatteryDetailsDto { 
     id?: number;
+    serviceId?: string;
     zone?: string;
     region?: string;
     branch?: string;
@@ -25,10 +26,11 @@ export interface BatteryDetailsDto {
     offRoadReason?: string;
     offRoadStatusChangeDate?: string;
     battery_Serial_Number?: string;
+    typed_Serial_Number?: string;
+    battery_Warranty?: number;
     battery_Make?: string;
     battery_Model?: string;
     battery_Invoice_Date?: string;
-    battery_Warranty?: number;
     battery_Vendor_Name?: string;
     battery_Cost?: number;
     battery_Age?: number;
@@ -86,28 +88,29 @@ export interface BatteryDetailsDto {
     isClosed?: number;
     closedTimestamp?: string;
     hasAdvanceApproved?: number;
+    hasAdvanceRejected?: number;
     advanceApprovedById?: number;
     advanceApprovalTimestamp?: string;
     advanceApprovalComment?: string;
     advanceApprovalAttachment?: string;
-    actual_Battery_Serial_Number?: string;
     actual_Battery_Make?: string;
     actual_Battery_Model?: string;
     actual_Battery_Warranty_Months?: number;
-    actual_Battery_Voltage?: number;
-    actual_Battery_Vendor_Id?: string;
     actual_Battery_Type?: string;
+    actual_Battery_Voltage?: number;
     actual_Battery_Amp?: number;
+    actual_Battery_Invoice_Date?: string;
+    actual_Battery_Serial_Number?: string;
+    actual_Battery_Vendor_Id?: string;
+    invoice_Total?: number;
     actual_Battery_Qty?: number;
+    actual_Battery_Invoice_Number?: string;
     actual_Battery_Cost?: number;
     actual_Battery_GST?: number;
-    actual_Battery_Invoice_Date?: string;
-    actual_Battery_Invoice_Number?: string;
     company_Name?: string;
     labor_Cost?: number;
     labor_GST?: number;
     labor_Qty?: number;
-    invoice_Total?: number;
     hsn?: string;
     saC_Code?: number;
     invoiceType?: string;

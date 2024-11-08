@@ -129,6 +129,7 @@
                         class="form-check-input"
                         [(ngModel)]="newTicket.isVehicleOffRoad"
                         (ngModelChange)="goToBottomAfter(50)"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         type="checkbox"
                         value="1"
                       />
@@ -153,6 +154,7 @@
                             ? 'is-invalid'
                             : ''
                         }}"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                         autofocus
                       >
@@ -197,6 +199,7 @@
                             ? 'is-invalid'
                             : ''
                         }}"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                         autofocus
                       >
@@ -247,6 +250,7 @@
                         }}"
                         inputId="icondisplay"
                         [disabled]="!newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         [dateFormat]="dateFormat"
                         showButtonBar
                         [minDate]="minDate"
@@ -287,6 +291,7 @@
                             ? 'is-invalid'
                             : ''
                         }}"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                         autofocus
                       >
@@ -335,6 +340,7 @@
                         [filter]="true"
                         [showClear]="true"
                         placeholder="Select Vendor Name"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                       >
                       </p-dropdown>
@@ -391,6 +397,7 @@
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
                           min="0"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           required
                         />
                       </div>
@@ -413,6 +420,7 @@
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
                           min="0"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           required
                         />
                       </div>
@@ -437,6 +445,7 @@
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
                           min="0"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           required
                         />
                       </div>
@@ -459,6 +468,7 @@
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
                           min="0"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           required
                         />
                       </div>
@@ -483,6 +493,7 @@
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
                           min="0"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           required
                         />
                       </div>
@@ -561,7 +572,7 @@
                   <div class="col-6">
                     <div class="form-group">
                       <label for="uploadQuotation" class="form-label"
-                        >Quotation Pic (acceptable formats: img/pdf)
+                        >Quotation Pic (acceptable formats: png/jpg/pdf)
                       </label>
                       <button
                         *ngIf="!newTicket.quotationAttachment"
@@ -573,6 +584,7 @@
                         type="button"
                         class="p-button-primary m-0"
                         (click)="toggleUploadQuotationDialog()"
+                        [disabled]="newTicket.hasAdvanceRejected"
                       ></button>
                     </div>
                   </div>
@@ -644,6 +656,7 @@
                           [disabled]="!newTicket.isAdvanceRequired"
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           min="1"
                           required
                         />

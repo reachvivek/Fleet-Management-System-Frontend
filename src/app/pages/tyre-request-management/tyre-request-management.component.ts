@@ -289,6 +289,10 @@ export class TyreRequestManagementComponent {
 
   vendors: VendorForSelectDto[] = [];
 
+  tyreSerialNumbers: string[] = [];
+  duplicateIndices: boolean[] = [false, false, false, false, false];
+  hasDuplicates: boolean = false; // For highlighting duplicates
+
   invoiceTypes: string[] = ['GST', 'NON GST'];
   companyNames: string[] = ['CMS', 'CMS-SIPL(Div)', 'SIPL'];
   modeOfPayments: string[] = ['HO', 'Imprest'];
@@ -487,7 +491,7 @@ export class TyreRequestManagementComponent {
 
       // Cost Details
       estimated_Tyre_Cost: 0.0,
-      estimated_Tyre_GST: 0.0,
+      estimated_Tyre_GST: 28,
       estimated_Tyre_Total: 0.0,
       selected_VendorId: undefined,
 
@@ -495,6 +499,8 @@ export class TyreRequestManagementComponent {
       isAdvanceRequired: false,
       advanceAmount: 0,
       overallComment: '',
+
+      hasAdvanceRejected: false,
 
       createdOn: undefined,
     };
@@ -768,7 +774,7 @@ export class TyreRequestManagementComponent {
         );
 
       // Role is HFM
-      case 3:
+      case 4:
         return (
           ticket.isRMApprovalRequired &&
           ticket.hasFSMApproved &&
@@ -777,7 +783,7 @@ export class TyreRequestManagementComponent {
         );
 
       // Role is RM
-      case 4:
+      case 5:
         return (
           ticket.isRMApprovalRequired &&
           ticket.hasHFMApproved &&
@@ -786,7 +792,7 @@ export class TyreRequestManagementComponent {
         );
 
       // Role is NFM
-      case 5:
+      case 6:
         return (
           ticket.isNFMApprovalRequired &&
           ticket.hasRMApproved &&
@@ -795,7 +801,7 @@ export class TyreRequestManagementComponent {
         );
 
       // Role is ZM
-      case 6:
+      case 7:
         return (
           ticket.isZMApprovalRequired &&
           ticket.hasNFMApproved &&
@@ -804,7 +810,7 @@ export class TyreRequestManagementComponent {
         );
 
       // Role is Vice President
-      case 7:
+      case 8:
         return (
           ticket.isVPApprovalRequired &&
           ticket.hasZMApproved &&
@@ -813,7 +819,7 @@ export class TyreRequestManagementComponent {
         );
 
       // Role is Finance
-      case 8:
+      case 9:
         return (
           (ticket.isAdvanceRequired &&
             !ticket.hasAdvanceApproved &&
@@ -875,7 +881,7 @@ export class TyreRequestManagementComponent {
   }
 
   showTicketReopenButton(): boolean {
-    if (this.roleId === 9) {
+    if (this.roleId === 10) {
       if (this.selectedTicket.isClosed) {
         return true;
       }
@@ -993,13 +999,31 @@ export class TyreRequestManagementComponent {
     this.loadTyreSizes();
     this.loadTyreTypes();
     this.initInvoice();
+    this.loadTyreSerialNumbers();
     this.newInvoice.tyreQuantity = this.selectedTicket.tyreQuantity;
     this.newInvoice.actualTyreVendorId = this.selectedTicket.selectedVendorId;
     this.newInvoice.advanceAmount = this.selectedTicket.advanceAmount;
     this.showUploadInvoiceDialog = !this.showUploadInvoiceDialog;
   }
 
+  async loadTyreSerialNumbers() {
+    this.showLoader = true;
+    try {
+      const res = await firstValueFrom(
+        this.tyreService.tyreRequestGetAllTyreSerialNumbersGet()
+      );
+      if (res.success && res.data.length) {
+        this.tyreSerialNumbers = res.data;
+      }
+      this.showLoader = false;
+    } catch (err: any) {
+      console.error(err);
+      this.showLoader = false;
+    }
+  }
+
   initInvoice() {
+    this.formActionsDisabled = false;
     this.newInvoice = {
       id: undefined,
       invoiceDate: '',
@@ -1151,10 +1175,10 @@ export class TyreRequestManagementComponent {
         this.messageService.add({
           severity: 'success',
           summary: `${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           }`,
           detail: `Tyre Request ${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           } Successfully`,
           life: 3000,
         });
@@ -1201,23 +1225,42 @@ export class TyreRequestManagementComponent {
   }
 
   updateTotalCost() {
+    if (this.newInvoice.newTyre1Cost) {
+      switch (this.newInvoice.tyreQuantity) {
+        case 2:
+          this.newInvoice.newTyre2Cost = this.newInvoice.newTyre1Cost;
+          break;
+        case 3:
+          this.newInvoice.newTyre3Cost = this.newInvoice.newTyre2Cost =
+            this.newInvoice.newTyre1Cost;
+          break;
+        case 4:
+          this.newInvoice.newTyre4Cost =
+            this.newInvoice.newTyre3Cost =
+            this.newInvoice.newTyre2Cost =
+              this.newInvoice.newTyre1Cost;
+          break;
+        case 5:
+          this.newInvoice.newTyre5Cost =
+            this.newInvoice.newTyre4Cost =
+            this.newInvoice.newTyre3Cost =
+            this.newInvoice.newTyre2Cost =
+              this.newInvoice.newTyre1Cost;
+          break;
+      }
+    }
     if (this.newInvoice.invoiceType == 'NON GST')
       this.newInvoice.actualTyreGst = this.newInvoice.laborGst = 0;
     this.newInvoice.grandTotal =
-      this.newInvoice.newTyre1Cost! *
-        (1 + this.newInvoice.actualTyreGst! / 100) +
-      (this.newInvoice.newTyre2Cost! *
-        (1 + this.newInvoice.actualTyreGst! / 100) || 0) +
-      (this.newInvoice.newTyre3Cost! *
-        (1 + this.newInvoice.actualTyreGst! / 100) || 0) +
-      (this.newInvoice.newTyre4Cost! *
-        (1 + this.newInvoice.actualTyreGst! / 100) || 0) +
-      (this.newInvoice.newTyre5Cost! *
-        (1 + this.newInvoice.actualTyreGst! / 100) || 0) +
+      this.newInvoice.tyreQuantity! *
+        (this.newInvoice.newTyre1Cost! *
+          (1 + this.newInvoice.actualTyreGst! / 100)) +
       this.newInvoice.laborQuantity! *
         (this.newInvoice.laborCost! * (1 + this.newInvoice.laborGst! / 100) ||
           0);
-    console.log(this.newInvoice.grandTotal);
+    this.newInvoice.grandTotal = parseFloat(
+      this.newInvoice.grandTotal.toFixed(2)
+    );
   }
 
   convertDateToString(id: number) {
@@ -1242,6 +1285,42 @@ export class TyreRequestManagementComponent {
       default:
         throw new Error('Invalid Function Call');
     }
+  }
+
+  checkSerialNumberExists(index: number): void {
+    // Get the entered serial numbers up to the active fields based on tyreQuantity
+    const enteredSerialNumbers = [
+      this.newInvoice.newTyre1SerialNumber,
+      this.newInvoice.newTyre2SerialNumber,
+      this.newInvoice.newTyre3SerialNumber,
+      this.newInvoice.newTyre4SerialNumber,
+      this.newInvoice.newTyre5SerialNumber,
+    ].slice(0, this.newInvoice.tyreQuantity);
+
+    // Reset the specific index for duplicate indicator
+    this.duplicateIndices[index] = false;
+
+    const currentSerial = enteredSerialNumbers[index];
+
+    if (currentSerial) {
+      // Check if the serial number exists in the database
+      if (this.tyreSerialNumbers.includes(currentSerial)) {
+        this.duplicateIndices[index] = true;
+        this.hasDuplicates = true; // Set hasDuplicates to true
+        return;
+      }
+
+      // Check for duplicates among other active entered serial numbers
+      for (let i = 0; i < enteredSerialNumbers.length; i++) {
+        if (i !== index && enteredSerialNumbers[i] === currentSerial) {
+          this.duplicateIndices[index] = true;
+          this.hasDuplicates = true; // Set hasDuplicates to true
+          break;
+        }
+      }
+    }
+
+    this.hasDuplicates = this.duplicateIndices.some((val) => val === true);
   }
 
   async submitInvoiceDetails() {

@@ -656,7 +656,7 @@ export class VehicleDetailsComponent {
     }
   }
 
-  checkSerialNumber(serialNumber: string): void {
+  checkBatterySerialNumber(serialNumber: string): void {
     if (serialNumber) {
       this.isSerialNumberTaken =
         this.batterySerialNumbers.includes(serialNumber);

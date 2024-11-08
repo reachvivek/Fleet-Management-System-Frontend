@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { AdminService, Role } from '../../swagger';
 
 export interface NewMaintenanceTicket {
   id: any;
@@ -68,6 +69,7 @@ export interface NewMaintenanceTicket {
   overallComment: string;
   isAdvanceRequired: boolean;
   advanceAmount: number;
+  hasAdvanceRejected: boolean;
 }
 
 export interface NewComplianceTicket {
@@ -115,6 +117,7 @@ export interface NewComplianceTicket {
   isAdvanceRequired: boolean;
   advanceAmount: number;
   overallComment: string;
+  hasAdvanceRejected: boolean;
 }
 
 export interface NewBatteryTicket {
@@ -158,6 +161,7 @@ export interface NewBatteryTicket {
   overallComment: string;
 
   createdOn: any | undefined;
+  hasAdvanceRejected: boolean;
 }
 
 export interface NewTyreTicket {
@@ -229,6 +233,8 @@ export interface NewTyreTicket {
   advanceAmount: number;
   overallComment: string;
 
+  hasAdvanceRejected: boolean;
+
   createdOn: any | undefined;
 }
 
@@ -244,7 +250,7 @@ export class SharedService {
 
   currentRoleId = this.roleIdSource.asObservable();
 
-  constructor(private router: Router) {
+  constructor(private router: Router, public adminService: AdminService) {
     this.loadRoleIds();
     this.loadRoles();
     this.setRoleId();
@@ -291,19 +297,15 @@ export class SharedService {
     }
   }
 
-  public loadRoles() {
+  get currentRole() {
+    return this.roleIdSource.value;
+  }
+
+  public async loadRoles() {
     // Define roles with their IDs and names
-    const allRoles: { [key: number]: string } = {
-      1: 'Branch Manager',
-      2: 'FSM',
-      3: 'HFM',
-      4: 'Regional Manager',
-      5: 'National Fleet Manager',
-      6: 'Zonal Manager',
-      7: 'Vice President',
-      8: 'Finance',
-      9: 'Admin',
-    };
+    const roles = await firstValueFrom(this.adminService.adminGetRolesGet());
+
+    const allRoles = this.convertRolesToKeyValue(roles);
 
     // Map available role IDs to role names
     this.roleOptions = this.roleIds.map((roleId) => ({
@@ -312,6 +314,16 @@ export class SharedService {
     }));
     // Update the BehaviorSubject
     this.roleOptions$.next(this.roleOptions);
+  }
+
+  convertRolesToKeyValue(roles: Role[]): Record<number, string> {
+    return roles.reduce((acc, role) => {
+      if (role.roleName) {
+        // Ensure roleName is defined
+        acc[role.roleID!] = role.roleName;
+      }
+      return acc;
+    }, {} as Record<number, string>);
   }
 
   userHasMultipleRoles(): boolean {
@@ -410,6 +422,7 @@ export class SharedService {
       overallComment: '',
       isAdvanceRequired: false,
       advanceAmount: 0,
+      hasAdvanceRejected: false,
     });
 
   private newComplianceTicketSubject = new BehaviorSubject<NewComplianceTicket>(
@@ -458,6 +471,7 @@ export class SharedService {
       isAdvanceRequired: false,
       advanceAmount: 0,
       overallComment: '',
+      hasAdvanceRejected: false,
     }
   );
 
@@ -503,6 +517,7 @@ export class SharedService {
     overallComment: '',
 
     createdOn: undefined,
+    hasAdvanceRejected: false,
   });
 
   private newTyreTicketSubject = new BehaviorSubject<NewTyreTicket>({
@@ -574,6 +589,7 @@ export class SharedService {
     overallComment: '',
 
     createdOn: undefined,
+    hasAdvanceRejected: false,
   });
 
   newMaintenanceTicket$ = this.newMaintenanceTicketSubject.asObservable();

@@ -104,14 +104,24 @@
         </th>
         <th>
           <div class="d-flex align-items-center">
+            Service ID
+            <p-columnFilter type="text" field="serviceId" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
             Estimate
-            <p-columnFilter type="text" field="finalAmount" display="menu" />
+            <p-columnFilter
+              type="text"
+              field="estimatedTyreTotal"
+              display="menu"
+            />
           </div>
         </th>
         <th>
           <div class="d-flex align-items-center">
             Qty
-            <p-columnFilter type="text" field="finalAmount" display="menu" />
+            <p-columnFilter type="text" field="tyreQuantity" display="menu" />
           </div>
         </th>
         <th>
@@ -148,6 +158,7 @@
         </td>
         <td>{{ ticket.registrationNumber }}</td>
         <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.serviceId }}</td>
         <td>
           {{
             ticket.estimatedTyreTotal
@@ -281,12 +292,7 @@
             </div>
             <div class="row mb-2">
               <div class="col-md-6"><strong>GST:</strong></div>
-              <div class="col-md-6">
-                {{
-                  selectedTicket.estimatedTyreGst
-                    | currency : "INR" : "symbol-narrow" : "0.2-2"
-                }}
-              </div>
+              <div class="col-md-6">{{ selectedTicket.estimatedTyreGst }}%</div>
             </div>
 
             <div class="row mb-2">
@@ -302,7 +308,9 @@
           <!-- Right Side Columns -->
           <div class="col-md-6">
             <div class="row mb-2">
-              <div class="col-md-6"><strong>Tyre Cost:</strong></div>
+              <div class="col-md-6">
+                <strong>Tyre Cost (Without GST):</strong>
+              </div>
               <div class="col-md-6">
                 {{
                   selectedTicket.estimatedTyreCost
@@ -317,7 +325,9 @@
               </div>
             </div>
             <div class="row mb-2">
-              <div class="col-md-6"><strong>Total Estimated Cost:</strong></div>
+              <div class="col-md-6">
+                <strong>Total Cost (With GST):</strong>
+              </div>
               <div class="col-md-6">
                 {{
                   selectedTicket.estimatedTyreTotal
@@ -521,6 +531,12 @@
                 </div>
               </div>
               <div class="row mb-2">
+                <div class="col-md-6"><strong>Ownership :</strong></div>
+                <div class="col-md-6">
+                  {{ selectedTicket.ownership || "NA" }}
+                </div>
+              </div>
+              <div class="row mb-2">
                 <div class="col-md-6"><strong>Vendor Name :</strong></div>
                 <div class="col-md-6">
                   {{ selectedTicket.actualTyreVendorName }}
@@ -553,14 +569,6 @@
               <div class="row mb-2">
                 <div class="col-md-6"><strong>SAC Code :</strong></div>
                 <div class="col-md-6">{{ selectedTicket.sacCode }}</div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-md-6">
-                  <strong>Invoice Attachment :</strong>
-                </div>
-                <div class="col-md-6">
-                  <a href="#">Download Attachment</a>
-                </div>
               </div>
             </div>
 
@@ -603,6 +611,14 @@
                 <div class="col-md-6"><strong>HSN :</strong></div>
                 <div class="col-md-6">
                   {{ selectedTicket.hsn }}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6">
+                  <strong>Invoice Attachment :</strong>
+                </div>
+                <div class="col-md-6">
+                  <a href="#">Download Attachment</a>
                 </div>
               </div>
             </div>
@@ -835,7 +851,7 @@
           <p-button
             *ngIf="showApproveRejectButtons()"
             label="{{
-              this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+              this.roleId == 4 || this.roleId == 6 ? 'Recommend' : 'Approve'
             }}"
             (onClick)="toggleApproveTicketDialog()"
             icon="pi pi-check-circle"
@@ -865,7 +881,7 @@
       [(visible)]="showApproveTicketDialog"
       [style]="{ width: '50vw' }"
       header="{{
-        this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+        this.roleId == 4 || this.roleId == 6 ? 'Recommend' : 'Approve'
       }} Request"
       [modal]="true"
       appendTo="body"
@@ -874,14 +890,21 @@
       <ng-template pTemplate="content">
         <p>
           Are you sure you want to
-          {{ this.roleId == 3 || this.roleId == 5 ? "recommend" : "approve" }}
+          {{ this.roleId == 4 || this.roleId == 6 ? "recommend" : "approve" }}
           the tyre request for vehicle with registration number
           <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-          estimated cost of
+          {{
+            this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? "invoice amount"
+              : "estimated cost"
+          }}
+          of
           <strong
             >{{
-              selectedTicket.new_Battery_Total
-                | currency : "INR" : "symbol-narrow" : "0.2-2"
+              (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+                ? selectedTicket.invoiceAmount
+                : selectedTicket.finalAmount
+              ) | currency : "INR" : "symbol-narrow" : "0.2-2"
             }} </strong
           >?
         </p>
@@ -890,7 +913,7 @@
           <div class="row" *ngIf="!this.selectedTicket.isInvoiceUploaded">
             <div class="form-group">
               <label for="uploadAttachment" class="form-label">
-                Attachment (acceptable formats: img/pdf)</label
+                Attachment (acceptable formats: png/jpg/pdf)</label
               >
               <div>
                 <p-button
@@ -923,7 +946,7 @@
           <div class="d-flex justify-content-center mt-3">
             <p-button
               label="{{
-                this.roleId == 3 || this.roleId == 5 ? 'Recommend' : 'Approve'
+                this.roleId == 4 || this.roleId == 6 ? 'Recommend' : 'Approve'
               }}"
               (onClick)="approveTicket()"
               icon="pi pi-check-circle"
@@ -950,11 +973,18 @@
           Are you sure you want to reject the vehicle tyre request for vehicle
           with registration number
           <strong>{{ selectedTicket.registrationNumber }}</strong> with total
-          estimated cost of
+          {{
+            this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+              ? "invoice amount"
+              : "estimated cost"
+          }}
+          of
           <strong
             >{{
-              selectedTicket.estimatedTyreTotal
-                | currency : "INR" : "symbol-narrow" : "0.2-2"
+              (this.selectedTicket.isInvoiceUploaded && this.roleId == 9
+                ? selectedTicket.invoiceAmount
+                : selectedTicket.finalAmount
+              ) | currency : "INR" : "symbol-narrow" : "0.2-2"
             }} </strong
           >?
         </p>
@@ -1279,39 +1309,6 @@
                               </div>
                             </div>
 
-                            <!-- Cost -->
-                            <div class="col-3">
-                              <div class="form-group">
-                                <label for="cost" class="form-label">
-                                  Cost <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                  <span class="input-group-text">₹</span>
-                                  <input
-                                    type="number"
-                                    class="form-control {{
-                                      cost.invalid &&
-                                      (cost.dirty || cost.touched)
-                                        ? 'is-invalid'
-                                        : ''
-                                    }}"
-                                    id="cost"
-                                    [(ngModel)]="newInvoice.newTyre1Cost"
-                                    (ngModelChange)="updateTotalCost()"
-                                    name="cost"
-                                    required
-                                    #cost="ngModel"
-                                  />
-                                </div>
-                                <p
-                                  *ngIf="cost.invalid && cost.touched"
-                                  class="text-danger"
-                                >
-                                  Cost is required
-                                </p>
-                              </div>
-                            </div>
-
                             <!-- Fitment Date -->
                             <div class="col-3">
                               <div class="form-group">
@@ -1361,18 +1358,30 @@
                                       ? 'is-invalid'
                                       : ''
                                   }}"
+                                  [ngClass]="{
+                                    'is-invalid': duplicateIndices[0]
+                                  }"
                                   id="serialNumber"
                                   [(ngModel)]="newInvoice.newTyre1SerialNumber"
+                                  (ngModelChange)="checkSerialNumberExists(0)"
                                   name="serialNumber"
                                   required
                                 />
                                 <p
                                   *ngIf="
-                                    serialNumber.invalid && serialNumber.touched
+                                    serialNumber.invalid &&
+                                    serialNumber.touched &&
+                                    !duplicateIndices[0]
                                   "
                                   class="text-danger"
                                 >
                                   Serial number is required
+                                </p>
+                                <p
+                                  *ngIf="duplicateIndices[0]"
+                                  class="text-danger"
+                                >
+                                  Duplicate serial number
                                 </p>
                               </div>
                             </div>
@@ -1665,40 +1674,6 @@
                               </div>
                             </div>
 
-                            <!-- Cost -->
-                            <div class="col-3">
-                              <div class="form-group">
-                                <label for="cost2" class="form-label"
-                                  >Cost
-                                  <span class="text-danger">*</span></label
-                                >
-                                <div class="input-group">
-                                  <span class="input-group-text">₹</span>
-                                  <input
-                                    type="number"
-                                    class="form-control {{
-                                      cost2.invalid &&
-                                      (cost2.dirty || cost2.touched)
-                                        ? 'is-invalid'
-                                        : ''
-                                    }}"
-                                    id="cost2"
-                                    [(ngModel)]="newInvoice.newTyre2Cost"
-                                    (ngModelChange)="updateTotalCost()"
-                                    name="cost2"
-                                    required
-                                    #cost2="ngModel"
-                                  />
-                                </div>
-                                <p
-                                  *ngIf="cost2.invalid && cost2.touched"
-                                  class="text-danger"
-                                >
-                                  Cost is required
-                                </p>
-                              </div>
-                            </div>
-
                             <!-- Fitment Date -->
                             <div class="col-3">
                               <div class="form-group">
@@ -1749,19 +1724,30 @@
                                       ? 'is-invalid'
                                       : ''
                                   }}"
+                                  [ngClass]="{
+                                    'is-invalid': duplicateIndices[1]
+                                  }"
                                   id="serialNumber2"
                                   [(ngModel)]="newInvoice.newTyre2SerialNumber"
+                                  (ngModelChange)="checkSerialNumberExists(1)"
                                   name="serialNumber2"
                                   required
                                 />
                                 <p
                                   *ngIf="
                                     serialNumber2.invalid &&
-                                    serialNumber2.touched
+                                    serialNumber2.touched &&
+                                    !duplicateIndices[1]
                                   "
                                   class="text-danger"
                                 >
                                   Serial number is required
+                                </p>
+                                <p
+                                  *ngIf="duplicateIndices[1]"
+                                  class="text-danger"
+                                >
+                                  Duplicate serial number
                                 </p>
                               </div>
                             </div>
@@ -2061,40 +2047,6 @@
                               </div>
                             </div>
 
-                            <!-- Cost -->
-                            <div class="col-3">
-                              <div class="form-group">
-                                <label for="cost3" class="form-label"
-                                  >Cost
-                                  <span class="text-danger">*</span></label
-                                >
-                                <div class="input-group">
-                                  <span class="input-group-text">₹</span>
-                                  <input
-                                    type="number"
-                                    class="form-control {{
-                                      cost3.invalid &&
-                                      (cost3.dirty || cost3.touched)
-                                        ? 'is-invalid'
-                                        : ''
-                                    }}"
-                                    id="cost3"
-                                    [(ngModel)]="newInvoice.newTyre3Cost"
-                                    (ngModelChange)="updateTotalCost()"
-                                    name="cost3"
-                                    required
-                                    #cost3="ngModel"
-                                  />
-                                </div>
-                                <p
-                                  *ngIf="cost3.invalid && cost3.touched"
-                                  class="text-danger"
-                                >
-                                  Cost is required
-                                </p>
-                              </div>
-                            </div>
-
                             <!-- Fitment Date -->
                             <div class="col-3">
                               <div class="form-group">
@@ -2145,19 +2097,30 @@
                                       ? 'is-invalid'
                                       : ''
                                   }}"
+                                  [ngClass]="{
+                                    'is-invalid': duplicateIndices[2]
+                                  }"
                                   id="serialNumber2"
                                   [(ngModel)]="newInvoice.newTyre3SerialNumber"
+                                  (ngModelChange)="checkSerialNumberExists(2)"
                                   name="serialNumber2"
                                   required
                                 />
                                 <p
                                   *ngIf="
                                     serialNumber2.invalid &&
-                                    serialNumber2.touched
+                                    serialNumber2.touched &&
+                                    !duplicateIndices[2]
                                   "
                                   class="text-danger"
                                 >
                                   Serial number is required
+                                </p>
+                                <p
+                                  *ngIf="duplicateIndices[2]"
+                                  class="text-danger"
+                                >
+                                  Duplicate serial number
                                 </p>
                               </div>
                             </div>
@@ -2452,40 +2415,6 @@
                               </div>
                             </div>
 
-                            <!-- Cost -->
-                            <div class="col-3">
-                              <div class="form-group">
-                                <label for="cost4" class="form-label"
-                                  >Cost
-                                  <span class="text-danger">*</span></label
-                                >
-                                <div class="input-group">
-                                  <span class="input-group-text">₹</span>
-                                  <input
-                                    type="number"
-                                    class="form-control {{
-                                      cost4.invalid &&
-                                      (cost4.dirty || cost4.touched)
-                                        ? 'is-invalid'
-                                        : ''
-                                    }}"
-                                    id="cost4"
-                                    [(ngModel)]="newInvoice.newTyre4Cost"
-                                    (ngModelChange)="updateTotalCost()"
-                                    name="cost4"
-                                    required
-                                    #cost4="ngModel"
-                                  />
-                                </div>
-                                <p
-                                  *ngIf="cost4.invalid && cost4.touched"
-                                  class="text-danger"
-                                >
-                                  Cost is required
-                                </p>
-                              </div>
-                            </div>
-
                             <!-- Fitment Date -->
                             <div class="col-3">
                               <div class="form-group">
@@ -2536,19 +2465,30 @@
                                       ? 'is-invalid'
                                       : ''
                                   }}"
+                                  [ngClass]="{
+                                    'is-invalid': duplicateIndices[3]
+                                  }"
                                   id="serialNumber4"
                                   [(ngModel)]="newInvoice.newTyre4SerialNumber"
+                                  (ngModelChange)="checkSerialNumberExists(3)"
                                   name="serialNumber4"
                                   required
                                 />
                                 <p
                                   *ngIf="
                                     serialNumber4.invalid &&
-                                    serialNumber4.touched
+                                    serialNumber4.touched &&
+                                    !duplicateIndices[3]
                                   "
                                   class="text-danger"
                                 >
                                   Serial number is required
+                                </p>
+                                <p
+                                  *ngIf="duplicateIndices[3]"
+                                  class="text-danger"
+                                >
+                                  Duplicate serial number
                                 </p>
                               </div>
                             </div>
@@ -2846,40 +2786,6 @@
                               </div>
                             </div>
 
-                            <!-- Cost -->
-                            <div class="col-3">
-                              <div class="form-group">
-                                <label for="cost5" class="form-label"
-                                  >Cost
-                                  <span class="text-danger">*</span></label
-                                >
-                                <div class="input-group">
-                                  <span class="input-group-text">₹</span>
-                                  <input
-                                    type="number"
-                                    class="form-control {{
-                                      cost5.invalid &&
-                                      (cost5.dirty || cost5.touched)
-                                        ? 'is-invalid'
-                                        : ''
-                                    }}"
-                                    id="cost5"
-                                    [(ngModel)]="newInvoice.newTyre5Cost"
-                                    (ngModelChange)="updateTotalCost()"
-                                    name="cost5"
-                                    required
-                                    #cost5="ngModel"
-                                  />
-                                </div>
-                                <p
-                                  *ngIf="cost5.invalid && cost5.touched"
-                                  class="text-danger"
-                                >
-                                  Cost is required
-                                </p>
-                              </div>
-                            </div>
-
                             <!-- Fitment Date -->
                             <div class="col-3">
                               <div class="form-group">
@@ -2930,19 +2836,30 @@
                                       ? 'is-invalid'
                                       : ''
                                   }}"
+                                  [ngClass]="{
+                                    'is-invalid': duplicateIndices[4]
+                                  }"
                                   id="serialNumber5"
                                   [(ngModel)]="newInvoice.newTyre5SerialNumber"
+                                  (ngModelChange)="checkSerialNumberExists(4)"
                                   name="serialNumber5"
                                   required
                                 />
                                 <p
                                   *ngIf="
                                     serialNumber5.invalid &&
-                                    serialNumber5.touched
+                                    serialNumber5.touched &&
+                                    !duplicateIndices[4]
                                   "
                                   class="text-danger"
                                 >
                                   Serial number is required
+                                </p>
+                                <p
+                                  *ngIf="duplicateIndices[4]"
+                                  class="text-danger"
+                                >
+                                  Duplicate serial number
                                 </p>
                               </div>
                             </div>
@@ -2964,7 +2881,7 @@
                     <p-button
                       label="Next"
                       (onClick)="nextCallback.emit()"
-                      [disabled]="allTyreDetails.invalid"
+                      [disabled]="allTyreDetails.invalid || hasDuplicates"
                       icon="pi pi-arrow-right"
                       iconPos="right"
                     />
@@ -3029,10 +2946,10 @@
                       </div>
                     </div>
 
-                    <div class="col">
+                    <div class="col-1">
                       <div class="field form-group">
                         <label for="tyreCount" class="form-label">
-                          Tyre Quantity
+                          Qty
                           <span class="text-danger">*</span>
                         </label>
                         <select
@@ -3069,6 +2986,38 @@
                       </div>
                     </div>
 
+                    <!-- Cost -->
+                    <div class="col">
+                      <div class="form-group">
+                        <label for="cost" class="form-label">
+                          Cost (Without GST) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text">₹</span>
+                          <input
+                            type="number"
+                            class="form-control {{
+                              cost.invalid && (cost.dirty || cost.touched)
+                                ? 'is-invalid'
+                                : ''
+                            }}"
+                            id="cost"
+                            [(ngModel)]="newInvoice.newTyre1Cost"
+                            (ngModelChange)="updateTotalCost()"
+                            name="cost"
+                            required
+                            #cost="ngModel"
+                          />
+                        </div>
+                        <p
+                          *ngIf="cost.invalid && cost.touched"
+                          class="text-danger"
+                        >
+                          Cost is required
+                        </p>
+                      </div>
+                    </div>
+
                     <div class="col">
                       <div class="form-group">
                         <label for="actualTyreGst" class="form-label"
@@ -3096,7 +3045,7 @@
                               disabled
                               selected
                             >
-                              Select GST
+                              Select %
                             </option>
                             <option [ngValue]="0">0</option>
                             <option [ngValue]="28">28</option>
@@ -3254,7 +3203,7 @@
                           <p
                             *ngIf="
                               newInvoice.grandTotal! >
-                              selectedTicket.new_Battery_Total! * 1.1
+                              selectedTicket.estimatedTyreTotal! * 1.1
                             "
                             class="form-text text-danger"
                           >
@@ -3557,7 +3506,7 @@
                         <div class="col">
                           <div class="form-group">
                             <label for="uploadInvoicePic" class="form-label">
-                              Upload Invoice (acceptable formats: img/pdf)
+                              Upload Invoice (acceptable formats: png/jpg/pdf)
                               <span class="text-danger">*</span></label
                             >
                             <div>
@@ -3650,7 +3599,7 @@
                   </li>
                   <li class="col-md-4">
                     <strong>Tyre GST :</strong>
-                    {{ newInvoice.actualTyreGst }}
+                    {{ newInvoice.actualTyreGst }}%
                   </li>
                   <li class="col-md-4">
                     <strong>Labour GST :</strong>

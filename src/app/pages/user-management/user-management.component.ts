@@ -1,5 +1,10 @@
 import { Component } from '@angular/core';
-import { AdminService, AdminToAddDto, AdminToEditDto } from '../../../swagger';
+import {
+  AdminService,
+  AdminToAddDto,
+  AdminToEditDto,
+  Role,
+} from '../../../swagger';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
@@ -16,27 +21,18 @@ export class UserManagementComponent {
   oldSelectedRoles: any[] = [];
   oldSelectedAccessScopes: string[] = [];
   selectedRoles: any[] = [];
-  roles = [
-    'Branch Manager',
-    'FSM',
-    'HFM',
-    'Regional Manager',
-    'National Fleet Manager',
-    'Zonal Manager',
-    'Vice President',
-    'Finance',
-    'Admin',
-  ];
+  roles!: Record<number, string>;
 
   assignableRoles = [
     { name: 'Branch Manager', id: 1 },
     { name: 'FSM', id: 2 },
     { name: 'HFM', id: 3 },
-    { name: 'Regional Manager', id: 4 },
-    { name: 'National Fleet Manager', id: 5 },
-    { name: 'Zonal Manager', id: 6 },
-    { name: 'Vice President', id: 7 },
-    { name: 'Finance', id: 8 },
+    { name: 'HFM (Battery & Tyre)', id: 4 },
+    { name: 'Regional Manager', id: 5 },
+    { name: 'National Fleet Manager', id: 6 },
+    { name: 'Zonal Manager', id: 7 },
+    { name: 'Vice President', id: 8 },
+    { name: 'Finance', id: 9 },
   ];
 
   statuses: any = [
@@ -70,6 +66,7 @@ export class UserManagementComponent {
   ngOnInit(): void {
     this.loadUsers();
     this.loadEmails();
+    this.loadRoles();
   }
 
   async loadUsers() {
@@ -94,8 +91,31 @@ export class UserManagementComponent {
     }
   }
 
+  async loadRoles() {
+    this.showLoader = true;
+    try {
+      const res = await firstValueFrom(this.adminService.adminGetRolesGet());
+      if (res && res.length) {
+        this.roles = this.convertRolesToKeyValue(res);
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+    this.showLoader = false;
+  }
+
+  convertRolesToKeyValue(roles: Role[]): Record<number, string> {
+    return roles.reduce((acc, role) => {
+      if (role.roleName) {
+        // Ensure roleName is defined
+        acc[role.roleID!] = role.roleName;
+      }
+      return acc;
+    }, {} as Record<number, string>);
+  }
+
   getRole(id: any) {
-    return this.roles[parseInt(id) - 1];
+    return this.roles[parseInt(id)];
   }
 
   updateRoles() {

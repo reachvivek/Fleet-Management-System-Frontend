@@ -64,6 +64,7 @@
   <ul class="nav-links mt-3">
     <!-- Maintenance Request -->
     <li
+      *ngIf="!isHFMBT"
       routerLink="dashboard"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -84,6 +85,7 @@
 
     <!-- Compliance Request -->
     <li
+      *ngIf="!isHFMBT"
       routerLink="compliance-requests"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -104,6 +106,7 @@
 
     <!-- Battery Request -->
     <li
+      *ngIf="!isHFM"
       routerLink="battery-requests"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -124,6 +127,7 @@
 
     <!-- Tyre Request -->
     <li
+      *ngIf="!isHFM"
       routerLink="tyre-requests"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
@@ -141,6 +145,7 @@
       </ul>
     </li>
     <!-- End of Tyre Request -->
+
     <li
       *ngIf="isAdminUser"
       routerLink="user-management"
@@ -162,7 +167,6 @@
     </li>
 
     <li
-      *ngIf="isAdminUser"
       [routerLinkActive]="isUploadRoute ? 'active' : ''"
       class="{{ isSubMenuOpen ? 'showMenu' : '' }}"
     >
@@ -182,18 +186,21 @@
             >Vehicle</a
           >
           <a
+            *ngIf="isAdminUser"
             routerLink="/bulk-upload/vendor"
             routerLinkActive="active"
             (click)="closeSubMenu()"
             >Vendor</a
           >
           <a
+            *ngIf="isAdminUser"
             routerLink="/bulk-upload/system-part"
             routerLinkActive="active"
             (click)="closeSubMenu()"
             >System and Part</a
           >
           <a
+            *ngIf="isAdminUser"
             routerLink="/bulk-upload/history"
             routerLinkActive="active"
             (click)="closeSubMenu()"
@@ -218,9 +225,17 @@
       <ul class="sub-menu">
         <li>
           <a
+            routerLink="/reports/requests-dump"
+            routerLinkActive="active"
+            (click)="closeReportsMenu()"
+            >Requests Insights</a
+          >
+        </li>
+        <li>
+          <a
             routerLink="/reports/fastag"
             routerLinkActive="active"
-            (click)="closeSubMenu()"
+            (click)="closeReportsMenu()"
             >FASTag Transaction</a
           >
         </li>
@@ -228,15 +243,15 @@
           <a
             routerLink="/reports/compliance"
             routerLinkActive="active"
-            (click)="closeSubMenu()"
-            >Compliance</a
+            (click)="closeReportsMenu()"
+            >Compliance Status</a
           >
         </li>
         <li>
           <a
             routerLink="/reports/vehicle-off-road"
             routerLinkActive="active"
-            (click)="closeSubMenu()"
+            (click)="closeReportsMenu()"
             >Vehicle Off Road</a
           >
         </li>

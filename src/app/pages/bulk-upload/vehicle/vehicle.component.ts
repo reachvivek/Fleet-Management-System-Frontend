@@ -6,6 +6,7 @@ import { MessageService } from 'primeng/api';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/prod/environment';
 import { Router } from '@angular/router';
+import { SharedService } from '../../../services/shared.service';
 
 @Component({
   selector: 'app-vehicle',
@@ -14,6 +15,7 @@ import { Router } from '@angular/router';
 })
 export class VehicleComponent {
   showLoader: boolean = false;
+  roleId!: number;
   vehicles: VehicleForDashboard[] = [];
   showUploadDialog: boolean = false;
   uploadedFiles: File[] = [];
@@ -180,13 +182,17 @@ export class VehicleComponent {
     private papa: Papa,
     private messageService: MessageService,
     private http: HttpClient,
-    public router: Router
+    public router: Router,
+    private sharedService: SharedService
   ) {}
 
   ngOnInit(): void {
-    this.loadVehicles();
-    //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
-    //Add 'implements OnInit' to the class.
+    this.sharedService.currentRoleId.subscribe((roleId) => {
+      this.roleId = parseInt(roleId?.toString()!);
+      if (this.roleId) {
+        this.loadVehicles();
+      }
+    });
   }
 
   editVehicle(Registration_No: string) {

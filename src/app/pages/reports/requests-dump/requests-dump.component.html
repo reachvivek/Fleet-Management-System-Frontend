@@ -1,0 +1,300 @@
+<div class="card">
+  <div class="container">
+    <div class="d-flex">
+      <!-- Requests Tabs -->
+      <ul class="nav nav-tabs mb-2 mt-1">
+        <li class="nav-item">
+          <button
+            class="nav-link cursor {{ active_index == 1 ? 'active' : '' }}"
+            (click)="loadRequests(1)"
+          >
+            Maintenance
+          </button>
+        </li>
+        <li class="nav-item">
+          <button
+            class="nav-link  {{ active_index == 2 ? 'active' : '' }}"
+            (click)="loadRequests(2)"
+          >
+            Compliance
+          </button>
+        </li>
+        <li class="nav-item">
+          <button
+            class="nav-link  {{ active_index == 3 ? 'active' : '' }}"
+            (click)="loadRequests(3)"
+          >
+            Battery
+          </button>
+        </li>
+        <li class="nav-item">
+          <button
+            class="nav-link  {{ active_index == 4 ? 'active' : '' }}"
+            (click)="loadRequests(4)"
+          >
+            Tyre
+          </button>
+        </li>
+      </ul>
+      <!-- End of Requests Tab -->
+    </div>
+    <!-- Filter Options -->
+    <div class="row mt-1">
+      <div class="col-3">
+        <div class="row">
+          <label for="dateRange" class="form-label m-0">
+            Select Date Range
+          </label>
+          <p-calendar
+            [style]="{ width: '240px' }"
+            [(ngModel)]="rangeDates"
+            (ngModelChange)="applyDates()"
+            dateFormat="dd/mm/yy"
+            selectionMode="range"
+            [maxDate]="maxDate"
+            [readonlyInput]="true"
+            showIcon="true"
+            [iconDisplay]="'input'"
+          />
+        </div>
+      </div>
+      <div class="col mt-3">
+        <button
+          *ngIf="rangeDates.length"
+          pButton
+          pRipple
+          icon="pi pi-filter-slash"
+          iconPos="right"
+          class="p-element p-button-secondary p-button p-component ng-star-inserted rounded-pill mt-1"
+          (click)="clearFilters()"
+          rounded="true"
+        ></button>
+      </div>
+    </div>
+    <!-- End of Filter Options -->
+  </div>
+
+  <!-- Table Preview -->
+  <p-table
+    #dt
+    [value]="filteredTickets"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [paginator]="true"
+    styleClass="p-datatable-sm"
+    [globalFilterFields]="[
+      'region',
+      'branch',
+      'hub',
+      'registrationNumber',
+      'currentStage'
+    ]"
+    [tableStyle]="{ 'min-width': '50rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [showCurrentPageReport]="true"
+    [columns]="columnsForMaintenanceReport || columnsForComplianceReport"
+    [exportFilename]="generateExportName()"
+  >
+    <ng-template pTemplate="caption">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">{{ generateHeaderName() }}</h5>
+        <div>
+          <button
+            pButton
+            pRipple
+            label="{{ isFilterApplied ? 'Modify' : 'Filter' }}"
+            icon="{{ isFilterApplied ? 'pi pi-filter-slash' : 'pi pi-filter' }}"
+            class="m-1 p-element p-button-info p-button p-component ng-star-inserted rounded-pill mr-2"
+            (click)="toggleFilterDialog()"
+          ></button>
+          <button
+            pButton
+            pRipple
+            label="Export"
+            icon="pi pi-file-export"
+            class="m-1 p-element p-button-primary p-button p-component ng-star-inserted rounded-pill"
+            (click)="exportToXlsx()"
+            rounded="true"
+          ></button>
+          <span class="p-input-icon-left m-1">
+            <i class="pi pi-search"></i>
+            <input
+              #searchInput
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal(searchInput.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th>
+          <div class="d-flex align-items-center">
+            Service ID
+            <p-columnFilter type="text" field="id" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Created On
+            <p-columnFilter type="date" field="createdOn" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-calendar
+                  #calendar
+                  dateFormat="dd-mm-yy"
+                  [ngModel]="value"
+                  (onSelect)="filter(calendar.value)"
+                ></p-calendar>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Stage
+            <p-columnFilter type="text" field="currentStage" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Updated On
+            <p-columnFilter type="date" field="updatedOn" display="menu">
+              <ng-template
+                pTemplate="filter"
+                let-value
+                let-filter="filterCallback"
+              >
+                <p-calendar
+                  #calendar
+                  dateFormat="dd-mm-yy"
+                  [ngModel]="value"
+                  (onSelect)="filter(calendar.value)"
+                ></p-calendar>
+              </ng-template>
+            </p-columnFilter>
+          </div>
+        </th>
+        <th>
+          <div pSortableColumn="isVehicleOffRoad">
+            Status
+            <p-sortIcon field="isVehicleOffRoad"></p-sortIcon>
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Reg No
+            <p-columnFilter
+              type="text"
+              field="registrationNumber"
+              display="menu"
+            />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Branch
+            <p-columnFilter type="text" field="branch" display="menu" />
+          </div>
+        </th>
+        <th>
+          <div class="d-flex align-items-center">
+            Hub
+            <p-columnFilter type="text" field="hub" display="menu" />
+          </div>
+        </th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-ticket>
+      <tr>
+        <td>{{ ticket.serviceId }}</td>
+        <td>{{ ticket.createdOn | date : "dd MMM, yyyy hh:mm a" }}</td>
+        <td>{{ ticket.currentStage }}</td>
+        <td>{{ ticket.updatedOn | date : "dd MMM, yyyy hh:mm a" }}</td>
+        <td>
+          <p-tag [severity]="!ticket.isVehicleOffRoad ? 'success' : 'danger'">
+            {{ ticket.isVehicleOffRoad ? "Off Road" : "On Road" }}</p-tag
+          >
+        </td>
+        <td>{{ ticket.registrationNumber }}</td>
+        <td>
+          {{ ticket.branch }}
+        </td>
+        <td>
+          {{ ticket.hub }}
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="8">No Requests Found!</td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <!-- End of Table Preview -->
+
+  <!-- Filter Requests Dialog -->
+  <p-dialog
+    [(visible)]="showFilterDialog"
+    header="Filter Requests"
+    modal="true"
+    [style]="{ width: '500px', height: '500px' }"
+  >
+    <ng-template pTemplate="content">
+      <div class="container">
+        <p-tree
+          [value]="filters"
+          selectionMode="checkbox"
+          class="w-full md:w-30rem"
+          [(selection)]="selectedZones"
+          (onNodeSelect)="viewNodes($event)"
+        >
+        </p-tree>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        pRipple
+        type="button"
+        label="Cancel"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="toggleFilterDialog()"
+      ></button>
+      <button
+        *ngIf="isFilterApplied"
+        pButton
+        pRipple
+        label="Reset"
+        icon="pi pi-undo"
+        class="p-button-text"
+        iconPos="right"
+        type="button"
+        (click)="resetFilters()"
+      ></button>
+      <button
+        pButton
+        pRipple
+        label="Apply"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        class="p-button-text"
+        type="button"
+        (click)="applyFilter()"
+        [disabled]="!hasSelections()"
+      ></button>
+    </ng-template>
+  </p-dialog>
+  <!-- End of Filter Requests Dialog -->
+</div>
+
+<app-loader *ngIf="showLoader"></app-loader>

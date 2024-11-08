@@ -12,6 +12,7 @@
 
 export interface TicketDetailsDto { 
     id?: number;
+    serviceId?: string;
     zone?: string;
     region?: string;
     hub?: string;
@@ -77,6 +78,7 @@ export interface TicketDetailsDto {
     isClosed?: number;
     closedTimestamp?: string;
     hasAdvanceApproved?: number;
+    hasAdvanceRejected?: number;
     advanceApprovedById?: number;
     advanceApprovalTimestamp?: string;
     advanceApprovalComment?: string;
@@ -86,8 +88,8 @@ export interface TicketDetailsDto {
     invoiceTotalEstimatedCost?: number;
     actualServiceDetails?: string;
     invoiceType?: string;
-    modeOfPayment?: string;
     invoiceNumber?: string;
+    modeOfPayment?: string;
     invoiceDate?: string;
     invoiceAmount?: number;
     serviceDate?: string;

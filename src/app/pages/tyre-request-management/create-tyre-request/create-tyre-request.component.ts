@@ -108,6 +108,8 @@ export class CreateTyreRequestComponent {
         await this.loadVehicleOffRoadReasons();
         await this.loadVendorNames();
         await this.loadTyreSerialNumbers();
+        this.newTicket.hasAdvanceRejected =
+          res.hasAdvanceRejected == 0 ? false : true;
         this.newTicket.vehicleAge = res.vehicleAge!;
         this.newTicket.manufacturer = res.manufacturer!;
         this.newTicket.model = res.model!;
@@ -577,8 +579,8 @@ export class CreateTyreRequestComponent {
   updateTotalEstimatedCost() {
     this.newTicket.estimated_Tyre_Total =
       this.newTicket.tyreQty *
-      ((this.newTicket.estimated_Tyre_Cost || 0) +
-        (this.newTicket.estimated_Tyre_GST || 0));
+      ((this.newTicket.estimated_Tyre_Cost || 0) *
+        (1 + this.newTicket.estimated_Tyre_GST / 100 || 0));
   }
 
   checkValidAdvanceAmount() {

@@ -221,6 +221,8 @@ export class CreateComplianceRequestComponent {
         await this.loadVehicleOffRoadReasons();
         await this.loadTypesOfCompliances();
         await this.loadVendorNames();
+        this.newTicket.hasAdvanceRejected =
+          res.hasAdvanceRejected == 0 ? false : true;
         this.newTicket.registrationNumber = res.registrationNumber!;
         this.newTicket.vehicleAge = res.vehicleAge!;
         this.newTicket.manufacturer = res.manufacturer!;

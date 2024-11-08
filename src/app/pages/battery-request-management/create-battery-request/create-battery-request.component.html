@@ -130,6 +130,7 @@
                         [(ngModel)]="newTicket.isVehicleOffRoad"
                         (ngModelChange)="goToBottomAfter(50)"
                         type="checkbox"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         value="1"
                       />
                     </div>
@@ -146,6 +147,7 @@
                         id="vehicleSubStatus"
                         [(ngModel)]="newTicket.vehicleSubStatus"
                         [disabled]="newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         class="form-select {{
                           newTicket.isVehicleOffRoad &&
                           vehicleSubStatus.invalid &&
@@ -197,6 +199,7 @@
                             ? 'is-invalid'
                             : ''
                         }}"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                         autofocus
                       >
@@ -248,6 +251,7 @@
                         }}"
                         inputId="icondisplay"
                         [disabled]="!newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         [dateFormat]="dateFormat"
                         showButtonBar
                         [minDate]="minDate"
@@ -290,135 +294,158 @@
             let-index="index"
           >
             <p-card>
-              <div class="row">
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Make" class="form-label">Make</label>
-                    <input
-                      #battery_Make="ngModel"
-                      name="battery_Make"
-                      class="form-control"
-                      id="battery_Make"
-                      [(ngModel)]="newTicket.battery_Make"
-                      disabled="true"
-                    />
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Model" class="form-label">Model</label>
-                    <input
-                      #battery_Model="ngModel"
-                      name="battery_Model"
-                      class="form-control"
-                      id="battery_Model"
-                      [(ngModel)]="newTicket.battery_Model"
-                      disabled="true"
-                    />
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Serial_Number" class="form-label"
-                      >Serial Number</label
-                    >
-                    <input
-                      #batterySerialNumber="ngModel"
-                      name="batterySerialNumber"
-                      class="form-control"
-                      id="battery_Serial_Number"
-                      [(ngModel)]="newTicket.battery_Serial_Number"
-                      disabled="true"
-                    />
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Warranty" class="form-label"
-                      >Warranty (Months)</label
-                    >
-                    <input
-                      #batteryWarranty="ngModel"
-                      name="batteryWarranty"
-                      class="form-control"
-                      id="battery_Warranty"
-                      [(ngModel)]="newTicket.battery_Warranty"
-                      disabled="true"
-                    />
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="batteryCost" class="form-label">Cost</label>
-                    <div class="input-group">
-                      <span class="input-group-text">₹</span>
+              <form #currentBatteryDetails="ngForm" ngValidate>
+                <div class="row">
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Make" class="form-label">Make</label>
                       <input
-                        #batteryCost="ngModel"
-                        name="batteryCost"
-                        type="number"
+                        #battery_Make="ngModel"
+                        name="battery_Make"
                         class="form-control"
-                        id="batteryCost"
-                        [(ngModel)]="newTicket.battery_Cost"
-                        disabled
+                        id="battery_Make"
+                        [(ngModel)]="newTicket.battery_Make"
+                        disabled="true"
                       />
                     </div>
                   </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Vendor_Name" class="form-label"
-                      >Vendor Name</label
-                    >
-                    <input
-                      #batteryVendorName="ngModel"
-                      name="batteryVendorName"
-                      class="form-control"
-                      id="battery_Vendor_Name"
-                      [(ngModel)]="newTicket.battery_Vendor_Name"
-                      disabled="true"
-                    />
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Age" class="form-label"
-                      >Battery Age (Months)</label
-                    >
-                    <input
-                      #batteryAge="ngModel"
-                      name="batteryAge"
-                      class="form-control"
-                      id="battery_Age"
-                      [(ngModel)]="newTicket.battery_Age"
-                      disabled="true"
-                    />
-                    <p
-                      *ngIf="newTicket.battery_Age < newTicket.battery_Warranty"
-                      class="text-danger"
-                    >
-                      The battery is still under warranty.
-                    </p>
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label for="battery_Scrap_Value" class="form-label"
-                      >Battery Scrap Value</label
-                    >
-                    <div class="input-group">
-                      <span class="input-group-text">₹</span>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Model" class="form-label"
+                        >Model</label
+                      >
                       <input
-                        #batteryScrapValue="ngModel"
-                        name="batteryScrapValue"
-                        type="number"
+                        #battery_Model="ngModel"
+                        name="battery_Model"
                         class="form-control"
-                        id="batteryScrapValue"
-                        [(ngModel)]="newTicket.battery_Scrap_Value"
+                        id="battery_Model"
+                        [(ngModel)]="newTicket.battery_Model"
+                        disabled="true"
                       />
                     </div>
                   </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Serial_Number" class="form-label"
+                        >Serial Number</label
+                      >
+                      <input
+                        #batterySerialNumber
+                        name="batterySerialNumber"
+                        class="form-control"
+                        id="battery_Serial_Number"
+                        [placeholder]="hash(newTicket.battery_Serial_Number)"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Warranty" class="form-label"
+                        >Warranty (Months)</label
+                      >
+                      <input
+                        #batteryWarranty="ngModel"
+                        name="batteryWarranty"
+                        class="form-control"
+                        id="battery_Warranty"
+                        [(ngModel)]="newTicket.battery_Warranty"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="batteryCost" class="form-label">Cost</label>
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #batteryCost="ngModel"
+                          name="batteryCost"
+                          type="number"
+                          class="form-control"
+                          id="batteryCost"
+                          [(ngModel)]="newTicket.battery_Cost"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Vendor_Name" class="form-label"
+                        >Vendor Name</label
+                      >
+                      <input
+                        #batteryVendorName="ngModel"
+                        name="batteryVendorName"
+                        class="form-control"
+                        id="battery_Vendor_Name"
+                        [(ngModel)]="newTicket.battery_Vendor_Name"
+                        disabled="true"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Age" class="form-label"
+                        >Battery Age (Months)</label
+                      >
+                      <input
+                        #batteryAge="ngModel"
+                        name="batteryAge"
+                        class="form-control"
+                        id="battery_Age"
+                        [(ngModel)]="newTicket.battery_Age"
+                        disabled="true"
+                      />
+                      <p
+                        *ngIf="
+                          newTicket.battery_Age < newTicket.battery_Warranty
+                        "
+                        class="text-danger"
+                      >
+                        The battery is still under warranty.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label for="battery_Scrap_Value" class="form-label"
+                        >Battery Scrap Value
+                        <span class="text-danger">*</span></label
+                      >
+                      <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input
+                          #batteryScrapValue="ngModel"
+                          name="batteryScrapValue"
+                          type="number"
+                          class="form-control {{
+                            batteryScrapValue.invalid &&
+                            (batteryScrapValue.dirty ||
+                              batteryScrapValue.touched)
+                              ? 'is-invalid'
+                              : ''
+                          }}"
+                          id="batteryScrapValue"
+                          [(ngModel)]="newTicket.battery_Scrap_Value"
+                          [disabled]="newTicket.hasAdvanceRejected"
+                          required
+                        />
+                      </div>
+                      <p
+                        *ngIf="
+                          batteryScrapValue.invalid && batteryScrapValue.touched
+                        "
+                        class="text-danger"
+                      >
+                        Battery scrap value is required
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </form>
               <div class="d-flex justify-content-between py-4">
                 <p-button
                   label="Back"
@@ -430,7 +457,8 @@
                   label="Next"
                   (onClick)="nextCallback.emit()"
                   [disabled]="
-                    newTicket.battery_Age < newTicket.battery_Warranty
+                    newTicket.battery_Age < newTicket.battery_Warranty ||
+                    currentBatteryDetails.invalid
                   "
                   icon="pi pi-arrow-right"
                   iconPos="right"
@@ -438,6 +466,7 @@
               </div>
             </p-card> </ng-template
         ></p-stepperPanel>
+
         <p-stepperPanel header="New Battery Details">
           <ng-template
             pTemplate="content"
@@ -466,6 +495,7 @@
                           ? 'is-invalid'
                           : ''
                       }}"
+                      [disabled]="newTicket.hasAdvanceRejected"
                       required
                     >
                       <option value="" disabled selected>
@@ -502,6 +532,7 @@
                       id="batteryModel"
                       [(ngModel)]="newTicket.new_Battery_Model"
                       name="batteryModel"
+                      [disabled]="newTicket.hasAdvanceRejected"
                       required
                     >
                       <option value="" disabled selected>
@@ -547,6 +578,7 @@
                       [filter]="true"
                       [showClear]="true"
                       placeholder="Select Vendor Name"
+                      [disabled]="newTicket.hasAdvanceRejected"
                       required
                     >
                     </p-dropdown>
@@ -566,7 +598,8 @@
                 <div class="col-4">
                   <div class="form-group">
                     <label for="cost" class="form-label">
-                      Battery Cost <span class="text-danger">*</span>
+                      Battery Cost (Without GST)
+                      <span class="text-danger">*</span>
                     </label>
                     <div class="input-group">
                       <span class="input-group-text">₹</span>
@@ -581,6 +614,7 @@
                         [(ngModel)]="newTicket.new_Battery_Cost"
                         (ngModelChange)="updateTotalEstimatedCost()"
                         name="cost"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                         #cost="ngModel"
                       />
@@ -598,7 +632,6 @@
                       GST <span class="text-danger">*</span>
                     </label>
                     <div class="input-group">
-                      <span class="input-group-text">₹</span>
                       <input
                         #battery_gst="ngModel"
                         name="battery_gst"
@@ -612,8 +645,10 @@
                         id="battery_gst"
                         [(ngModel)]="newTicket.new_Battery_GST"
                         (ngModelChange)="updateTotalEstimatedCost()"
+                        disabled
                         required
                       />
+                      <span class="input-group-text">%</span>
                     </div>
                     <p
                       *ngIf="battery_gst.invalid && battery_gst.touched"
@@ -647,7 +682,7 @@
                 <div class="col-6">
                   <div class="form-group">
                     <label for="uploadQuotation" class="form-label"
-                      >Quotation Pic (acceptable formats: img/pdf)
+                      >Quotation Pic (acceptable formats: png/jpg/pdf)
                       <span class="text-danger">*</span>
                     </label>
                     <button
@@ -660,6 +695,7 @@
                       type="button"
                       class="p-button-primary m-0"
                       (click)="toggleUploadQuotationDialog()"
+                      [disabled]="newTicket.hasAdvanceRejected"
                     ></button>
                   </div>
                 </div>
@@ -695,10 +731,13 @@
                       id="current_Battery_Serial_Number"
                       [(ngModel)]="newTicket.current_Battery_Serial_Number"
                       (ngModelChange)="
+                        newTicket.current_Battery_Serial_Number =
+                          newTicket.current_Battery_Serial_Number!.toUpperCase();
                         checkSerialNumber(
                           newTicket.current_Battery_Serial_Number!
                         )
                       "
+                      [disabled]="newTicket.hasAdvanceRejected"
                       required
                     />
                     <p
@@ -794,6 +833,7 @@
                         [(ngModel)]="newTicket!.advanceAmount"
                         (ngModelChange)="checkValidAdvanceAmount()"
                         [disabled]="!newTicket.isAdvanceRequired"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                         onpaste="return false"
                         min="1"
@@ -834,9 +874,7 @@
                   label="Next"
                   (onClick)="nextCallback.emit()"
                   [disabled]="
-                    addBatteryDetails.invalid ||
-                    !doesSerialNumberMatch ||
-                    !isValidAdvanceAmount
+                    addBatteryDetails.invalid || !isValidAdvanceAmount
                   "
                   icon="pi pi-arrow-right"
                   iconPos="right"

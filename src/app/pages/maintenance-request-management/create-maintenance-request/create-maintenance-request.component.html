@@ -150,6 +150,7 @@
                         class="form-check-input"
                         [(ngModel)]="newTicket.isVehicleOffRoad"
                         (ngModelChange)="goToBottomAfter(50)"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         type="checkbox"
                         value="1"
                       />
@@ -223,6 +224,7 @@
                             : ''
                         }}"
                         required
+                        [disabled]="newTicket.hasAdvanceRejected"
                         autofocus
                       >
                         <option value="" disabled selected>
@@ -270,6 +272,7 @@
                         }}"
                         inputId="icondisplay"
                         [disabled]="!newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         [dateFormat]="dateFormat"
                         showButtonBar
                         [minDate]="minDate"
@@ -310,6 +313,7 @@
                             ? 'is-invalid'
                             : ''
                         }}"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         required
                         autofocus
                       >
@@ -358,6 +362,7 @@
                         }}"
                         [filter]="true"
                         [showClear]="true"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         placeholder="Select Vendor Name"
                         required
                       >
@@ -441,6 +446,7 @@
                               : ''
                           }}"
                           required
+                          [disabled]="newTicket.hasAdvanceRejected"
                           autofocus
                         >
                           <option value="" disabled selected>
@@ -481,6 +487,7 @@
                               ? 'is-invalid'
                               : ''
                           }}"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           required
                           autofocus
                         >
@@ -522,6 +529,7 @@
                             class="form-control"
                             [(ngModel)]="detail.spareCost"
                             (ngModelChange)="updateTotalSpareCost()"
+                            [disabled]="newTicket.hasAdvanceRejected"
                             onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                             onpaste="return false"
                             min="0"
@@ -543,6 +551,7 @@
                             class="form-control"
                             [(ngModel)]="detail.spareGst"
                             (ngModelChange)="updateTotalSpareCost()"
+                            [disabled]="newTicket.hasAdvanceRejected"
                             onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                             onpaste="return false"
                             min="0"
@@ -566,6 +575,7 @@
                             class="form-control"
                             [(ngModel)]="detail.laborCost"
                             (ngModelChange)="updateTotalLaborCost()"
+                            [disabled]="newTicket.hasAdvanceRejected"
                             onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                             onpaste="return false"
                             min="0"
@@ -587,6 +597,7 @@
                             class="form-control"
                             [(ngModel)]="detail.laborGst"
                             (ngModelChange)="updateTotalLaborCost()"
+                            [disabled]="newTicket.hasAdvanceRejected"
                             onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                             onpaste="return false"
                             min="0"
@@ -609,6 +620,7 @@
                         id="comment{{ i }}"
                         rows="2"
                         [(ngModel)]="detail.comment"
+                        [disabled]="newTicket.hasAdvanceRejected"
                       ></textarea>
                     </div>
                     <div class="col">
@@ -634,6 +646,7 @@
                         label="Add Section"
                         class="p-element p-button p-button-success p-component ng-star-inserted"
                         (click)="addSection()"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         icon="pi pi-plus"
                         *ngIf="i === newTicket.componentDetails.length - 1"
                       ></button>
@@ -735,7 +748,7 @@
                   <div class="col-6">
                     <div class="form-group">
                       <label for="uploadQuotation" class="form-label"
-                        >Quotation Pic (acceptable formats: img/pdf)
+                        >Quotation Pic (acceptable formats: png/jpg/pdf)
                         <span class="text-danger">*</span></label
                       >
                       <button
@@ -748,6 +761,7 @@
                         type="button"
                         class="p-button-primary m-0"
                         (click)="toggleUploadQuotationDialog()"
+                        [disabled]="newTicket.hasAdvanceRejected"
                       ></button>
                     </div>
                   </div>
@@ -817,6 +831,7 @@
                           [(ngModel)]="newTicket!.advanceAmount"
                           (ngModelChange)="checkValidAdvanceAmount()"
                           [disabled]="!newTicket.isAdvanceRequired"
+                          [disabled]="newTicket.hasAdvanceRejected"
                           onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                           onpaste="return false"
                           min="1"

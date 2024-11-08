@@ -2,6 +2,9 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserSyncService } from '../../services/user-sync.service';
 import { SharedService } from '../../services/shared.service';
+import { firstValueFrom } from 'rxjs';
+import { AdminService, Role } from '../../../swagger';
+import { roleRedirectGuard } from '../../guards/role-redirect.guard';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,25 +20,18 @@ export class SidebarComponent {
   isSubMenuOpen: boolean = false;
   isSidebarOpen: boolean = false;
   isAdminUser: boolean = false;
+  isHFMBT: boolean = false;
+  isHFM: boolean = false;
   showRoleSelectDialog: boolean = false;
   selectedRoleId: number | undefined = undefined;
   role: string = '';
-  roles = [
-    'Branch Manager',
-    'FSM',
-    'HFM',
-    'Regional Manager',
-    'National Fleet Manager',
-    'Zonal Manager',
-    'Vice President',
-    'Finance',
-    'Admin',
-  ];
+  roles!: Record<number, string>;
 
   constructor(
     private router: Router,
     private userSyncService: UserSyncService,
-    public sharedService: SharedService
+    public sharedService: SharedService,
+    private adminService: AdminService
   ) {}
 
   ngOnInit(): void {
@@ -52,12 +48,13 @@ export class SidebarComponent {
       ['compliance-requests', 'Compliance Requests'],
       ['dashboard', 'Maintenance Requests'],
       ['user-management', 'User Management'],
+      ['requests-dump', 'Requests Insights'],
       ['vehicle-off-road', 'Vehicle Off Road Report'],
       ['vehicle', 'Vehicle Management'],
       ['vendor', 'Vendor Management'],
       ['system-part', 'System And Part Management'],
       ['history', 'Upload History'],
-      ['compliance', 'Compliance Report'],
+      ['compliance', 'Compliance Status'],
       ['fastag', 'Fastag Transactions'],
     ]);
 
@@ -79,13 +76,28 @@ export class SidebarComponent {
       }
     });
     this.userSyncService.loadState();
-    // this.checkUserIsAdmin();
-    this.validateRole();
-    this.fetchRole();
-    this.sharedService.currentRoleId.subscribe((roleId) => {
-      this.role = this.roles[roleId! - 1];
-      this.isAdminUser = this.role == 'Admin';
-    });
+    this.loadRoles();
+  }
+
+  async loadRoles() {
+    this.showLoader = true;
+    try {
+      const res = await firstValueFrom(this.adminService.adminGetRolesGet());
+      if (res && res.length) {
+        this.roles = this.convertRolesToKeyValue(res);
+      }
+      this.validateRole();
+      this.fetchCurrentRole();
+      this.sharedService.currentRoleId.subscribe((roleId: any) => {
+        this.role = this.roles[roleId!];
+        this.isAdminUser = this.role == 'Admin';
+        this.isHFM = this.role == 'HFM';
+        this.isHFMBT = this.role == 'HFM (Battery & Tyre)';
+      });
+    } catch (err: any) {
+      console.error(err);
+    }
+    this.showLoader = false;
   }
 
   validateRole() {
@@ -113,20 +125,26 @@ export class SidebarComponent {
     this.showRoleSelectDialog = !this.showRoleSelectDialog;
   }
 
-  async checkUserIsAdmin() {
-    this.isAdminUser =
-      (await this.userSyncService.checkUserPrivileges()) as boolean;
+  convertRolesToKeyValue(roles: Role[]): Record<number, string> {
+    return roles.reduce((acc, role) => {
+      if (role.roleName) {
+        // Ensure roleName is defined
+        acc[role.roleID!] = role.roleName;
+      }
+      return acc;
+    }, {} as Record<number, string>);
   }
 
-  fetchRole() {
+  fetchCurrentRole() {
     if (localStorage.getItem('rid')) {
-      this.role = this.roles[parseInt(localStorage.getItem('rid')!) - 1];
+      this.role = this.roles[parseInt(localStorage.getItem('rid')!)];
     }
   }
 
   assignRole() {
     // Assign the default role ID if only one role is available
     this.sharedService.updateRoleId(this.selectedRoleId!);
+    window.location.reload();
     this.showRoleSelectDialog = false;
   }
 
@@ -144,6 +162,10 @@ export class SidebarComponent {
 
   closeSubMenu() {
     this.isSubMenuOpen = false;
+  }
+
+  closeReportsMenu() {
+    this.isReportsMenuOpen = false;
   }
 
   async logout() {

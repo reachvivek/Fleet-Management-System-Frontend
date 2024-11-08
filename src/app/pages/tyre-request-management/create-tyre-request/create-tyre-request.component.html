@@ -128,6 +128,7 @@
                         id="isVehicleOffroad"
                         class="form-check-input"
                         [(ngModel)]="newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         type="checkbox"
                         value="1"
                       />
@@ -145,6 +146,7 @@
                         id="vehicleSubStatus"
                         [(ngModel)]="newTicket.vehicleSubStatus"
                         [disabled]="newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         class="form-select {{
                           newTicket.isVehicleOffRoad &&
                           vehicleSubStatus.invalid &&
@@ -189,6 +191,7 @@
                         id="offRoadReason"
                         [(ngModel)]="newTicket.offRoadReason"
                         [disabled]="!newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         class="form-select {{
                           newTicket.isVehicleOffRoad &&
                           offRoadReason.invalid &&
@@ -247,6 +250,7 @@
                         }}"
                         inputId="icondisplay"
                         [disabled]="!newTicket.isVehicleOffRoad"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         [dateFormat]="dateFormat"
                         showButtonBar
                         [minDate]="minDate"
@@ -282,6 +286,7 @@
                         name="tyreCount"
                         id="tyreCount"
                         [(ngModel)]="newTicket.tyreQty"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         class="form-select {{
                           tyreCount.invalid &&
                           (tyreCount.dirty || tyreCount.touched)
@@ -381,6 +386,7 @@
                                         newTicket.selected_tyre1_serial_number
                                       )
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 required
                               ></p-dropdown>
                             </div>
@@ -419,6 +425,7 @@
                                 [disabled]="
                                   !newTicket.selected_tyre1_serial_number
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 required
                               />
                               <p
@@ -528,7 +535,7 @@
                           <div class="col-6">
                             <div class="form-group">
                               <label for="uploadQuotation" class="form-label"
-                                >Tyre 1 Image (acceptable formats: img/pdf)
+                                >Tyre 1 Image (acceptable formats: png/jpg/pdf)
                                 <span class="text-danger">*</span>
                               </label>
                               <button
@@ -541,6 +548,7 @@
                                 type="button"
                                 class="p-button-primary m-0"
                                 (click)="toggleUploadQuotationDialog()"
+                                [disabled]="newTicket.hasAdvanceRejected"
                               ></button>
                             </div>
                           </div>
@@ -593,6 +601,7 @@
                                 (ngModelChange)="
                                   onTyreSerialNumberChange(2, $event)
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [placeholder]="
                                   newTicket.selected_tyre2_serial_number ==
                                   undefined
@@ -639,6 +648,7 @@
                                 [disabled]="
                                   !newTicket.selected_tyre2_serial_number
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 required
                               />
                               <p
@@ -748,7 +758,7 @@
                           <div class="col-6">
                             <div class="form-group">
                               <label for="uploadQuotation" class="form-label"
-                                >Tyre 2 Image (acceptable formats: img/pdf)
+                                >Tyre 2 Image (acceptable formats: png/jpg/pdf)
                                 <span class="text-danger">*</span>
                               </label>
                               <button
@@ -761,6 +771,7 @@
                                 type="button"
                                 class="p-button-primary m-0"
                                 (click)="toggleUploadQuotationDialog()"
+                                [disabled]="newTicket.hasAdvanceRejected"
                               ></button>
                             </div>
                           </div>
@@ -811,6 +822,7 @@
                                 [(ngModel)]="
                                   newTicket.selected_tyre3_serial_number
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [resetFilterOnHide]="true"
                                 [filter]="true"
                                 [showClear]="true"
@@ -860,6 +872,7 @@
                                   newTicket.typed_tyre3_serial_number
                                 "
                                 (ngModelChange)="doesSerialNumberMatch(3)"
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [disabled]="
                                   !newTicket.selected_tyre3_serial_number
                                 "
@@ -971,7 +984,7 @@
                           <div class="col-6">
                             <div class="form-group">
                               <label for="uploadTyreImage" class="form-label"
-                                >Tyre 3 Image (acceptable formats: img/pdf)
+                                >Tyre 3 Image (acceptable formats: png/jpg/pdf)
                                 <span class="text-danger">*</span>
                               </label>
                               <button
@@ -984,6 +997,7 @@
                                 type="button"
                                 class="p-button-primary m-0"
                                 (click)="toggleUploadQuotationDialog()"
+                                [disabled]="newTicket.hasAdvanceRejected"
                               ></button>
                             </div>
                           </div>
@@ -1041,6 +1055,7 @@
                                 (ngModelChange)="
                                   onTyreSerialNumberChange(4, $event)
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [placeholder]="
                                   newTicket.selected_tyre4_serial_number ==
                                   undefined
@@ -1084,6 +1099,7 @@
                                   newTicket.typed_tyre4_serial_number
                                 "
                                 (ngModelChange)="doesSerialNumberMatch(4)"
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [disabled]="
                                   !newTicket.selected_tyre4_serial_number
                                 "
@@ -1196,7 +1212,7 @@
                           <div class="col-6">
                             <div class="form-group">
                               <label for="uploadTyreImage" class="form-label"
-                                >Tyre 4 Image (acceptable formats: img/pdf)
+                                >Tyre 4 Image (acceptable formats: png/jpg/pdf)
                                 <span class="text-danger">*</span>
                               </label>
                               <button
@@ -1209,6 +1225,7 @@
                                 type="button"
                                 class="p-button-primary m-0"
                                 (click)="toggleUploadQuotationDialog()"
+                                [disabled]="newTicket.hasAdvanceRejected"
                               ></button>
                             </div>
                           </div>
@@ -1259,6 +1276,7 @@
                                 [(ngModel)]="
                                   newTicket.selected_tyre5_serial_number
                                 "
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [resetFilterOnHide]="true"
                                 [filter]="true"
                                 [showClear]="true"
@@ -1308,6 +1326,7 @@
                                   newTicket.typed_tyre5_serial_number
                                 "
                                 (ngModelChange)="doesSerialNumberMatch(5)"
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 [disabled]="
                                   !newTicket.selected_tyre5_serial_number
                                 "
@@ -1420,7 +1439,7 @@
                           <div class="col-6">
                             <div class="form-group">
                               <label for="uploadTyreImage" class="form-label"
-                                >Tyre 5 Image (acceptable formats: img/pdf)
+                                >Tyre 5 Image (acceptable formats: png/jpg/pdf)
                                 <span class="text-danger">*</span>
                               </label>
                               <button
@@ -1432,6 +1451,7 @@
                                 label="Upload Tyre 5 Image"
                                 type="button"
                                 class="p-button-primary m-0"
+                                [disabled]="newTicket.hasAdvanceRejected"
                                 (click)="toggleUploadQuotationDialog()"
                               ></button>
                             </div>
@@ -1482,7 +1502,7 @@
                 <div class="col-4">
                   <div class="form-group">
                     <label for="cost" class="form-label">
-                      Tyre Cost (Excluding GST)
+                      Tyre Cost (Without GST)
                       <span class="text-danger">*</span>
                     </label>
                     <div class="input-group">
@@ -1497,6 +1517,7 @@
                         id="cost"
                         [(ngModel)]="newTicket.estimated_Tyre_Cost"
                         (ngModelChange)="updateTotalEstimatedCost()"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         name="cost"
                         required
                         #cost="ngModel"
@@ -1515,7 +1536,6 @@
                       GST <span class="text-danger">*</span>
                     </label>
                     <div class="input-group">
-                      <span class="input-group-text">₹</span>
                       <input
                         #tyre_Gst="ngModel"
                         name="tyre_Gst"
@@ -1530,7 +1550,9 @@
                         [(ngModel)]="newTicket.estimated_Tyre_GST"
                         (ngModelChange)="updateTotalEstimatedCost()"
                         required
+                        disabled
                       />
+                      <span class="input-group-text">%</span>
                     </div>
                     <p
                       *ngIf="tyre_Gst.invalid && tyre_Gst.touched"
@@ -1585,6 +1607,7 @@
                       [filter]="true"
                       [showClear]="true"
                       placeholder="Select Vendor Name"
+                      [disabled]="newTicket.hasAdvanceRejected"
                       required
                     >
                     </p-dropdown>
@@ -1603,7 +1626,7 @@
                 <div class="col-6">
                   <div class="form-group">
                     <label for="uploadQuotation" class="form-label"
-                      >Quotation Pic (acceptable formats: img/pdf)
+                      >Quotation Pic (acceptable formats: png/jpg/pdf)
                       <span class="text-danger">*</span>
                     </label>
                     <button
@@ -1616,6 +1639,7 @@
                       type="button"
                       class="p-button-primary m-0"
                       (click)="toggleUploadQuotationDialog()"
+                      [disabled]="newTicket.hasAdvanceRejected"
                     ></button>
                   </div>
                 </div>
@@ -1685,6 +1709,7 @@
                         [(ngModel)]="newTicket!.advanceAmount"
                         (ngModelChange)="checkValidAdvanceAmount()"
                         [disabled]="!newTicket.isAdvanceRequired"
+                        [disabled]="newTicket.hasAdvanceRejected"
                         onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 46 || (event.charCode >= 48 && event.charCode <= 57)) && event.charCode !== 43 && event.charCode !== 45"
                         onpaste="return false"
                         min="1"
@@ -1752,7 +1777,7 @@
                   }} </strong
                 >? <br />
                 Please review the details and click on
-                {{ editMode ? "Update" : "Create" }} Battery Request.
+                {{ editMode ? "Update" : "Create" }} Tyre Request.
               </p>
               <div class="row mt-1">
                 <div class="col">

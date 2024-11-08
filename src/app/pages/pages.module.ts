@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { PagesRoutingModule } from './pages-routing.module';
@@ -46,6 +46,7 @@ import { CreateBatteryRequestComponent } from './battery-request-management/crea
 import { TyreRequestManagementComponent } from './tyre-request-management/tyre-request-management.component';
 import { CreateTyreRequestComponent } from './tyre-request-management/create-tyre-request/create-tyre-request.component';
 import { ScrapRequestManagementComponent } from './scrap-request-management/scrap-request-management.component';
+import { RequestsDumpComponent } from './reports/requests-dump/requests-dump.component';
 
 @NgModule({
   declarations: [
@@ -70,6 +71,7 @@ import { ScrapRequestManagementComponent } from './scrap-request-management/scra
     TyreRequestManagementComponent,
     CreateTyreRequestComponent,
     ScrapRequestManagementComponent,
+    RequestsDumpComponent,
   ],
   imports: [
     ReactiveFormsModule,
@@ -96,6 +98,6 @@ import { ScrapRequestManagementComponent } from './scrap-request-management/scra
     TooltipModule,
     TreeModule,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService, DatePipe, CurrencyPipe],
 })
 export class PagesModule {}

@@ -12,6 +12,7 @@ import {
   BulkUploadService,
   CreateMaintenanceTicketDto,
   MaintenanceRequestService,
+  TicketDetailsDto,
   UpdateMaintenanceTicketDto,
   UpdateVehicleDetailsDto,
   VehicleDetailsDto,
@@ -112,6 +113,8 @@ export class CreateMaintenanceRequestComponent {
         await this.loadServiceRequestTypes();
         await this.loadVendorNames();
         await this.loadSystemNames();
+        this.newTicket.hasAdvanceRejected =
+          res.hasAdvanceRejected! == 0 ? false : true;
         this.newTicket.registrationNumber = res.registrationNumber!;
         this.newTicket.dateOfLastService = res.dateOfLastService!;
         this.newTicket.vehicleAge = res.vehicleAge!;

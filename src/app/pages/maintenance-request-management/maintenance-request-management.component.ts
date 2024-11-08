@@ -585,6 +585,7 @@ export class MaintenanceRequestManagementComponent {
   }
 
   initInvoice() {
+    this.formActionsDisabled = false;
     this.newInvoice = {
       invoiceTotalSpareCost: 0,
       invoiceTotalLaborCost: 0,
@@ -689,6 +690,7 @@ export class MaintenanceRequestManagementComponent {
       overallComment: '',
       isAdvanceRequired: false,
       advanceAmount: 0,
+      hasAdvanceRejected: false,
     };
   }
 
@@ -726,7 +728,7 @@ export class MaintenanceRequestManagementComponent {
         );
 
       // Role is RM
-      case 4:
+      case 5:
         return (
           ticket.isRMApprovalRequired &&
           ticket.hasHFMApproved &&
@@ -735,7 +737,7 @@ export class MaintenanceRequestManagementComponent {
         );
 
       // Role is NFM
-      case 5:
+      case 6:
         return (
           ticket.isNFMApprovalRequired &&
           ticket.hasRMApproved &&
@@ -744,7 +746,7 @@ export class MaintenanceRequestManagementComponent {
         );
 
       // Role is ZM
-      case 6:
+      case 7:
         return (
           ticket.isZMApprovalRequired &&
           ticket.hasNFMApproved &&
@@ -753,7 +755,7 @@ export class MaintenanceRequestManagementComponent {
         );
 
       // Role is Vice President
-      case 7:
+      case 8:
         return (
           ticket.isVPApprovalRequired &&
           ticket.hasZMApproved &&
@@ -762,7 +764,7 @@ export class MaintenanceRequestManagementComponent {
         );
 
       // Role is Finance
-      case 8:
+      case 9:
         return (
           (ticket.isAdvanceRequired &&
             !ticket.hasAdvanceApproved &&
@@ -947,10 +949,10 @@ export class MaintenanceRequestManagementComponent {
         this.messageService.add({
           severity: 'success',
           summary: `${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           }`,
           detail: `Maintenance Request ${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           } Successfully`,
           life: 3000,
         });
@@ -1061,7 +1063,7 @@ export class MaintenanceRequestManagementComponent {
   }
 
   showTicketReopenButton(): boolean {
-    if (this.roleId === 9) {
+    if (this.roleId === 10) {
       if (this.selectedTicket.isClosed) {
         return true;
       }

@@ -307,7 +307,7 @@ export class BatteryRequestManagementComponent {
       new_Battery_Model: '',
       new_Battery_VendorId: undefined,
       new_Battery_Cost: 0,
-      new_Battery_GST: 0,
+      new_Battery_GST: 28,
       new_Battery_Estimated_Cost: 0,
 
       quotationAttachment: undefined,
@@ -316,6 +316,7 @@ export class BatteryRequestManagementComponent {
       advanceAmount: 0,
       overallComment: '',
 
+      hasAdvanceRejected: false,
       createdOn: undefined,
     };
   }
@@ -415,6 +416,13 @@ export class BatteryRequestManagementComponent {
       }
     } catch (err: any) {}
     this.showLoader = false;
+  }
+
+  hash(serialNumber: string | undefined): string | undefined {
+    if (!serialNumber) {
+      return;
+    }
+    return '#'.repeat(serialNumber.length - 2) + serialNumber.slice(-2);
   }
 
   private mapFiltersToTreeNodes(filters: FiltersDto): TreeNode[] {
@@ -595,15 +603,18 @@ export class BatteryRequestManagementComponent {
         if (res2 && res2.name) {
           this.selectedTicket.new_Battery_Vendor_Name = res2.name;
         }
-        const res3 = await firstValueFrom(
-          this.commonService.bulkUploadGetVendorDetailsGet(
-            this.selectedTicket.actual_Battery_Vendor_Id
-          )
-        );
-        if (res3 && res3.name) {
-          this.selectedTicket.vendor_Name = res3.name;
-          this.selectedTicket.vendor_Pan = res3.pan;
-          this.selectedTicket.vendorGst = res3.gsT_NO;
+        if (this.selectedTicket.isInvoiceUploaded) {
+          const res3 = await firstValueFrom(
+            this.commonService.bulkUploadGetVendorDetailsGet(
+              this.selectedTicket.actual_Battery_Vendor_Id
+            )
+          );
+
+          if (res3 && res3.name) {
+            this.selectedTicket.vendor_Name = res3.name;
+            this.selectedTicket.vendor_Pan = res3.pan;
+            this.selectedTicket.vendorGst = res3.gsT_NO;
+          }
         }
       }
     } catch (err: any) {
@@ -658,7 +669,7 @@ export class BatteryRequestManagementComponent {
         );
 
       // Role is HFM
-      case 3:
+      case 4:
         return (
           ticket.isRMApprovalRequired &&
           ticket.hasFSMApproved &&
@@ -667,7 +678,7 @@ export class BatteryRequestManagementComponent {
         );
 
       // Role is RM
-      case 4:
+      case 5:
         return (
           ticket.isRMApprovalRequired &&
           ticket.hasHFMApproved &&
@@ -676,7 +687,7 @@ export class BatteryRequestManagementComponent {
         );
 
       // Role is NFM
-      case 5:
+      case 6:
         return (
           ticket.isNFMApprovalRequired &&
           ticket.hasRMApproved &&
@@ -685,7 +696,7 @@ export class BatteryRequestManagementComponent {
         );
 
       // Role is ZM
-      case 6:
+      case 7:
         return (
           ticket.isZMApprovalRequired &&
           ticket.hasNFMApproved &&
@@ -694,7 +705,7 @@ export class BatteryRequestManagementComponent {
         );
 
       // Role is Vice President
-      case 7:
+      case 8:
         return (
           ticket.isVPApprovalRequired &&
           ticket.hasZMApproved &&
@@ -703,7 +714,7 @@ export class BatteryRequestManagementComponent {
         );
 
       // Role is Finance
-      case 8:
+      case 9:
         return (
           (ticket.isAdvanceRequired &&
             !ticket.hasAdvanceApproved &&
@@ -758,7 +769,7 @@ export class BatteryRequestManagementComponent {
   }
 
   showTicketReopenButton(): boolean {
-    if (this.roleId === 9) {
+    if (this.roleId === 10) {
       if (this.selectedTicket.isClosed) {
         return true;
       }
@@ -884,6 +895,7 @@ export class BatteryRequestManagementComponent {
   }
 
   initInvoice() {
+    this.formActionsDisabled = false;
     this.newInvoice = {
       id: undefined,
       actual_Battery_Serial_Number: '',
@@ -1022,10 +1034,10 @@ export class BatteryRequestManagementComponent {
         this.messageService.add({
           severity: 'success',
           summary: `${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           }`,
           detail: `Battery Request ${
-            this.roleId == 3 || this.roleId == 5 ? 'Recommended' : 'Approved'
+            this.roleId == 3 || this.roleId == 6 ? 'Recommended' : 'Approved'
           } Successfully`,
           life: 3000,
         });
